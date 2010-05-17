@@ -1,0 +1,7 @@
+
+{
+	"name"        : "Testimappi",
+	"author"      : "Joonas",
+	"description" : "Testimappi on hyva mappi",
+	"scripts"     : ["main.js"]
+}
