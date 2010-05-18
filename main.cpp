@@ -1,7 +1,6 @@
 #include "StdAfx.h"
 
 #include "Engine.h"
-#include "World.h"
 
 #include <iostream>
 
@@ -13,7 +12,9 @@ int main()
 
 	Sarona::Engine engine;
 	
-	engine.CreateWorldFromFolder("testlevel/");
+	engine.LoadFolder("testlevel/");
+
+	engine.SetupLocal();
 
 	engine.Run();
 }

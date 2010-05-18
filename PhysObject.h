@@ -1,44 +1,40 @@
 #pragma once
 #include "StdAfx.h"
+#include "BaseObject.h"
 #include "Util.h"
 
 namespace Sarona
 {
-	class World;
-	class Object
+	class PhysWorld;
+	class PhysObject : public BaseObject
 	{
 	private:
 
 		// Global obj refs
-		IrrlichtDevice*						m_device;
 		btDynamicsWorld*					m_world;
-
-
-		// Irrlicht node
-		scene::ISceneNode*					m_scenenode;
 
 		// Bullet fields
 		scoped_ptr<btCollisionShape>		m_shape;
 		scoped_ptr<btMotionState>			m_motionstate;
 		scoped_ptr<btRigidBody>				m_rigidbody;
 
-	friend class World;
-		Object(IrrlichtDevice* dev, btDynamicsWorld* world, scene::ISceneNode* node, btCollisionShape* shape, const btTransform& initialpos);
+	friend class PhysWorld;
+		PhysObject(IrrlichtDevice* dev, scene::ISceneNode* node, btDynamicsWorld* world, btCollisionShape* shape, const btTransform& initialpos);
 
 	public:
 		void setMass(btScalar kilos = -1);
-		~Object(void);
+		~PhysObject(void);
 	};
 
-	class ObjectMotionState : public btMotionState
+	class PhysObjectMotionState : public btMotionState
 	{
 	public:
-		ObjectMotionState(const btTransform &initialpos, scene::ISceneNode *node) {
+		PhysObjectMotionState(const btTransform &initialpos, scene::ISceneNode *node) {
 			m_node = node;
 			mPos1 = initialpos;
 		}
 
-		virtual ~ObjectMotionState() {
+		virtual ~PhysObjectMotionState() {
 		}
 
 		void setNode(scene::ISceneNode *node) {

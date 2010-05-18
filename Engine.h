@@ -1,14 +1,16 @@
 #pragma once
 #include "StdAfx.h"
 #include "Camera.h"
-#include "World.h"
+#include "BaseWorld.h"
+#include "NetworkCtx.h"
 
 namespace Sarona
 {
 	class Engine
 	{
-		scoped_ptr<World> m_world;
+		scoped_ptr<BaseWorld> m_world;
 		scoped_ptr<Camera> m_camera;
+		scoped_ptr<NetworkCtx> m_netctx;
 
 		intrusive_ptr<IrrlichtDevice> m_device;
 
@@ -16,10 +18,12 @@ namespace Sarona
 		Engine(void);
 		~Engine(void);
 
-		void CreateWorldFromSPKG(const std::string& filename);
-	//#ifdef _DEBUG
-		void CreateWorldFromFolder(const std::string& filename);
-	//#endif
+		bool LoadZip(const std::string& filename);
+		bool LoadFolder(const std::string& filename);
+
+		void SetupLocal();
+		void SetupServer(int port, int remoteplayers);
+		void SetupClient(std::string hostname, int port);
 
 		void Run();
 	};

@@ -170,6 +170,14 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
+				RelativePath=".\BaseObject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\BaseWorld.cpp"
+				>
+			</File>
+			<File
 				RelativePath=".\Camera.cpp"
 				>
 			</File>
@@ -190,19 +198,27 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\Object.cpp"
+				RelativePath=".\NetworkCtx.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\NetWorld.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PhysObject.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PhysWorld.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\PhysWorld_static.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Util.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\World.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\World_static.cpp"
 				>
 			</File>
 		</Filter>
@@ -212,6 +228,14 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
+				RelativePath=".\BaseObject.h"
+				>
+			</File>
+			<File
+				RelativePath=".\BaseWorld.h"
+				>
+			</File>
+			<File
 				RelativePath=".\Camera.h"
 				>
 			</File>
@@ -220,7 +244,19 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Object.h"
+				RelativePath=".\NetworkCtx.h"
+				>
+			</File>
+			<File
+				RelativePath=".\NetWorld.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PhysObject.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PhysWorld.h"
 				>
 			</File>
 			<File
@@ -229,10 +265,6 @@
 			</File>
 			<File
 				RelativePath=".\Util.h"
-				>
-			</File>
-			<File
-				RelativePath=".\World.h"
 				>
 			</File>
 		</Filter>

@@ -15,6 +15,7 @@ using boost::scoped_ptr;
 
 #include <boost/intrusive_ptr.hpp>
 using boost::intrusive_ptr;
+using boost::get_pointer;
 
 #include <boost/ptr_container/ptr_vector.hpp>
 using boost::ptr_vector;

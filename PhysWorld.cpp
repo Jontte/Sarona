@@ -1,80 +1,22 @@
 #include "StdAfx.h"
-#include "World.h"
-#include "Util.h"
+#include "PhysWorld.h"
 
 #include <stdexcept>
 
 namespace Sarona
 {
-	World::World(intrusive_ptr<IrrlichtDevice> device) : m_device(device)
+	PhysWorld::PhysWorld(IrrlichtDevice* device, NetworkCtx* netctx) : BaseWorld(device, netctx)
 	{
-		// Read index json..
-		
-		std::string json_source;
-		readFile(get_pointer(m_device), "index.json", json_source);
-
-		// Parse index json..
-		Json::Value root;   
-		Json::Reader reader;
-		if ( !reader.parse( json_source, root ) )
-		{
-			// report to the user the failure and their locations in the document.
-			std::cout  << "Failed to parse configuration\n"
-					   << reader.getFormatedErrorMessages();
-			throw std::invalid_argument("Parse error");
-		}
-
-		m_name = root.get("name", "name missing").asString();
-		m_description = root.get("description", "description missing").asString();
-		m_author = root.get("author", "author missing").asString();
-
-		// Load scripts into the engine
+		// Load script, initialize components
 		CreateV8Context();
-
-		Json::Value scripts = root.get("scripts", Json::nullValue);
-		for(unsigned index = 0; index < scripts.size(); ++index)
-		{
-			// Read script source into string
-
-			std::string source;
-
-			if(!readFile(get_pointer(m_device), scripts[index].asString().c_str(), source))
-			{
-				// Read failed..
-				continue;
-			}
-			
-
-			v8::HandleScope handle_scope;
-			v8::Context::Scope context_scope(m_jscontext);
-			
-			v8::Handle<v8::String> jssource = v8::String::New(source.c_str());
-
-			v8::Handle<v8::Script> jsscript = v8::Script::Compile(jssource);
-
-			v8::TryCatch trycatch;
-
-			v8::Handle<v8::Value> result = jsscript->Run();
-			
-			if(result.IsEmpty())
-			{
-				v8::Handle<v8::Value> exception = trycatch.Exception();
-				v8::String::AsciiValue exception_str(exception);
-
-				std::cout << "Exception: " << *exception_str << std::endl;
-			}
-		}
-
-		// Start physics
-		CreateBulletContext();
 	}
 
-	World::~World(void)
+	PhysWorld::~PhysWorld(void)
 	{
-		m_jscontext.Dispose();
+		m_objects.clear(); // Objects must die before the phys engine dies...
 	}
 
-	void World::CreateV8Context()
+	void PhysWorld::CreateV8Context()
 	{
 		v8::HandleScope handle_scope;
 
@@ -83,11 +25,11 @@ namespace Sarona
 		// Scene
 		v8::Handle<v8::ObjectTemplate> scene = v8::ObjectTemplate::New();
 		scene->SetInternalFieldCount(1);
-		scene->Set(v8::String::New("create"), v8::FunctionTemplate::New(World::JSSceneCreate));
-		scene->SetAccessor(v8::String::New("gravity"), World::JSSceneGetter, World::JSSceneSetter);
+		scene->Set(v8::String::New("create"), v8::FunctionTemplate::New(PhysWorld::JSSceneCreate));
+		scene->SetAccessor(v8::String::New("gravity"), PhysWorld::JSSceneGetter, PhysWorld::JSSceneSetter);
 
 		// Static functions
-		global->Set(v8::String::New("print"), v8::FunctionTemplate::New(World::JSPrint));
+		global->Set(v8::String::New("print"), v8::FunctionTemplate::New(PhysWorld::JSPrint));
 
 		// Objects
 		global->Set(v8::String::New("scene"), scene);
@@ -107,7 +49,7 @@ namespace Sarona
 		//m_jscontext->Global()->Get(v8::String::New("scene"))->ToObject()->Get(v8::String::New("create"))->ToObject()->SetInternalField(0, myself);
 	}
 
-	void World::CreateBulletContext()
+	void PhysWorld::CreateBulletContext()
 	{
 		m_broadphase.reset(new btDbvtBroadphase());
 
@@ -125,8 +67,11 @@ namespace Sarona
 		m_dynamicsWorld->setGravity(btVector3(0,0,-9.80665f));
 	}
 
-	void World::Start()
+	void PhysWorld::Start()
 	{
+		// Start physics
+		CreateBulletContext();
+
 		// Call 'level_start' defined in script
 
 		v8::HandleScope handle_scope;
@@ -150,7 +95,7 @@ namespace Sarona
 	}
 
 
-	Object* World::CreateCube(const btVector3& position, const btScalar& length)
+	PhysObject* PhysWorld::CreateCube(const btVector3& position, const btScalar& length)
 	{
 		scene::IMeshSceneNode* node;
 
@@ -170,24 +115,24 @@ namespace Sarona
 		
 		shape = new btBoxShape(btVector3(length/2, length/2, length/2));
 
-		Object* obj = new Object(get_pointer(m_device), get_pointer(m_dynamicsWorld), node, shape, btTransform(btQuaternion(0,0,0,1),position));
+		PhysObject* obj = new PhysObject(get_pointer(m_device), node, get_pointer(m_dynamicsWorld), shape, btTransform(btQuaternion(0,0,0,1),position));
 		obj->setMass(1);
 		m_objects.push_back(obj);
 		return obj;
 	}
 	
-	Object* World::CreateSphere(const btVector3& position, const btScalar& radius)
+	PhysObject* PhysWorld::CreateSphere(const btVector3& position, const btScalar& radius)
 	{
 		return NULL;
 	}
 	
-	Object* World::CreatePlane(const btVector3& position, const btVector3& normal)
+	PhysObject* PhysWorld::CreatePlane(const btVector3& position, const btVector3& normal)
 	{
 		scene::ISceneNode* node;
 		btCollisionShape* shape;
 
 		// Create mesh
-		scene::IMesh* mesh = m_device->getSceneManager()->addHillPlaneMesh("hillplane", core::dimension2d<f32>(10.0f, 10.0f), core::dimension2d<u32>(10,10))
+		scene::IMesh* mesh = m_device->getSceneManager()->addHillPlaneMesh("hillplane", core::dimension2d<f32>(10.0f, 10.0f), core::dimension2d<u32>(100,100))
 				->getMesh(0);
 
 		// Rotate it properly (z-axis is up)
@@ -201,18 +146,18 @@ namespace Sarona
 		node = m_device->getSceneManager()->addMeshSceneNode(mesh);
 		shape = new btStaticPlaneShape(normal, 0);
 
-		Object* obj = new Object(get_pointer(m_device), get_pointer(m_dynamicsWorld), node, shape, btTransform(btQuaternion(0,0,0,1),position));
+		PhysObject* obj = new PhysObject(get_pointer(m_device), node, get_pointer(m_dynamicsWorld), shape, btTransform(btQuaternion(0,0,0,1),position));
 		m_objects.push_back(obj);
 		return obj;
 	}
 
-	void World::Step(float dt)
+	void PhysWorld::Step(float dt)
 	{
-		m_dynamicsWorld->stepSimulation(dt,10);
+		m_dynamicsWorld->stepSimulation(dt,1);
 	}
 
 
-	v8::Handle<v8::Value> World::SceneCreate(const v8::Arguments& args)
+	v8::Handle<v8::Value> PhysWorld::SceneCreate(const v8::Arguments& args)
 	{
 		if(args.Length() != 2)
 			return v8::ThrowException(v8::String::New("scene.create() must be called with exactly 2 arguments"));
@@ -283,11 +228,11 @@ namespace Sarona
 		
 		return v8::Handle<v8::Value>();
 	}
-	v8::Handle<v8::Value> World::SceneGetter(v8::Local<v8::String> property, const v8::AccessorInfo& info)
+	v8::Handle<v8::Value> PhysWorld::SceneGetter(v8::Local<v8::String> property, const v8::AccessorInfo& info)
 	{
 		return v8::Handle<v8::Value>();
 	}
-	void World::SceneSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
+	void PhysWorld::SceneSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
 	{
 		return;
 	}

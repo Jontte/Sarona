@@ -70,9 +70,9 @@ function level_start()
 		shapes : [{
 			shape: 'cube',
 			length: 50,
-			mass: 75
+			mass: 6000
 		}]
-	}, [25,25,500]);
+	}, [25,25,125]);
 }
 
 function level_end()
