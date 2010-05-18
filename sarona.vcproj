@@ -40,7 +40,8 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(InputDir)/jsoncpp/include&quot;;&quot;$(InputDir)/bullet3d&quot;"
+				AdditionalIncludeDirectories="&quot;$(InputDir)/jsoncpp/include&quot;;&quot;$(InputDir)/enet/include&quot;;&quot;$(InputDir)/bullet3d&quot;"
+				PreprocessorDefinitions="WIN32"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="3"
@@ -114,7 +115,8 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(InputDir)/jsoncpp/include&quot;;&quot;$(InputDir)/bullet3d&quot;"
+				AdditionalIncludeDirectories="&quot;$(InputDir)/jsoncpp/include&quot;;&quot;$(InputDir)/bullet3d&quot;;&quot;$(InputDir)/enet/include&quot;"
+				PreprocessorDefinitions="WIN32"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
 				UsePrecompiledHeader="2"
@@ -249,6 +251,10 @@
 			</File>
 			<File
 				RelativePath=".\NetWorld.h"
+				>
+			</File>
+			<File
+				RelativePath=".\PacketDef.h"
 				>
 			</File>
 			<File

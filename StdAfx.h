@@ -1,9 +1,7 @@
 #include <string>
-
 #include <json/json.h>
-
+#include <enet/enet.h>
 #include <v8.h>
-
 #include <irrlicht.h>
 using namespace irr;
 
@@ -22,6 +20,7 @@ using boost::ptr_vector;
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/serialization/serialization.hpp>
 
 void intrusive_ptr_add_ref(IReferenceCounted* t);
 void intrusive_ptr_release(IReferenceCounted* t);

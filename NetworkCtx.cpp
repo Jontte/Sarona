@@ -1,5 +1,6 @@
 #include "StdAfx.h"
 #include "NetworkCTX.h"
+#include "PacketDef.h"
 
 namespace Sarona
 {
