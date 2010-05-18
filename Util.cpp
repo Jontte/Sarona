@@ -37,3 +37,25 @@ void btTransformFromIrrlichtMatrix(const irr::core::matrix4& irrmat, btTransform
     transform.setFromOpenGLMatrix(irrmat.pointer()); 
 }
 
+namespace Sarona
+{
+	int serialize(const s16& in, char* bin)
+	{
+		if(bin)
+		{
+			union{char data[2]; s16 val;};
+			val = htons(in);
+			bin[0]=data[0];
+			bin[1]=data[1];
+		}
+		return 2;
+	}
+	
+
+
+	void OutputArchive::SaveTo(vector<s8>& to)
+	{
+		swap(m_data, to);
+	}
+}
+

@@ -1,74 +1,54 @@
 #pragma once
 #include "StdAfx.h"
-
+#include "Util.h"
 /*
 	This file defines all the packets used by the protocol
 
 	Each message begins with a two-byte id denoting the packet id
 */
 
-#include <boost/preprocessor/seq/for_each.hpp>
-#include <boost/preprocessor/tuple/elem.hpp>
-
-#include <boost/serialization/serialization.hpp>
-#include <boost/serialization/level.hpp>
-#include <boost/serialization/tracking.hpp>
-
-#
-
 namespace Sarona
 {
 	namespace Protocol
 	{
-		// Simple types 
-		typedef uint8_t 	u8;
-		typedef uint16_t	u16;
-		typedef uint32_t	u32;
-		typedef uint64_t	u64;
-
 		template<unsigned Id> struct PID {
 			static const int ID = Id;
 		};
 
 		// Macro hackery
-
 		#define FIELDDEF(AUX, DATA, ELEM) BOOST_PP_TUPLE_ELEM(2, 0, ELEM) BOOST_PP_TUPLE_ELEM(2, 1, ELEM) ;
 		#define SERIALIZEDEF(AUX, DATA, ELEM) DATA & BOOST_PP_TUPLE_ELEM(2, 1, ELEM) ;
 
 		#define DEF(ID, NAME, FIELDS) \
-		namespace Sarona { namespace Protocol { \
 		struct NAME : public PID<ID> \
 		{\
 			BOOST_PP_SEQ_FOR_EACH(FIELDDEF, _, FIELDS)\
 			template<class Archive> \
-			void serialize(Archive & ar, const unsigned int version) \
+			void serialize(Archive & ar) \
 			{ \
 				BOOST_PP_SEQ_FOR_EACH(SERIALIZEDEF, ar, FIELDS)\
 			} \
-		}; }}\
-		BOOST_CLASS_IMPLEMENTATION(Sarona::Protocol::NAME, boost::serialization::object_serializable);\
-		BOOST_CLASS_TRACKING(Sarona::Protocol::NAME, boost::serialization::track_never);
-		// Close namespaces temporarily BOOST_CLASS_* lines above can't stand it otherwise.
-	} 
-}
+		};
 
-// - - - - - - - - - - P A C K E T   D E F I N I T I O N S - - - - - - - - - -
-// Namespaces :
-// 0x0000 - Connection management packages
-// 0x0100 - World updates
-// 0x0200 - Events
+		// - - - - - - - - - - P A C K E T   D E F I N I T I O N S - - - - - - - - - -
+		// Namespaces :
+		// 0x0000 - Connection management packages
+		// 0x0100 - World updates
+		// 0x0200 - Events
 
-DEF(0x0000, VersionCheck,		((int, major))((int, minor)));
-//DEF(0x0100, PositionUpdate,		((int, major))((int, minor)));
-//DEF(0x0200, CompactEvent,		((int, major))((int, minor)));
+		DEF(0x0000, VersionCheck,		((s16, major)) ((s16, minor)));
+		DEF(0x0001, LevelHashCheck,		((string, sha1)));
 
+		DEF(0x0100, PositionUpdate,	
+			((	u32	, object_id						))	
+			((	s32, x  ))(( s32, y  ))(( s32, z	))	// Position
+			((	s32, vx ))(( s32, vy ))(( s32, vz	))  // Velocity
+				// TODO: Orientation, Omega...
+			);
 
-// Reopen namespaces
+		DEF(0x0200, GlobalEvent,		((s32, message_id))((string, message)));
+		DEF(0x0201, QuickEvent,			((s32, object_id))((string, message)));
 
-namespace Sarona
-{
-	namespace Protocol
-	{
 
 		// Utility functions
 
@@ -101,8 +81,6 @@ namespace Sarona
 		#undef DEF
 		#undef FIELDDEF
 		#undef SERIALIZEDEF
-
 	}
-
 }
 
