@@ -3,8 +3,9 @@
 #include "Util.h"
 
 namespace Sarona
-	{
-	BaseWorld::BaseWorld(IrrlichtDevice* dev, NetworkCtx* netctx) : m_device(dev), m_netctx(netctx)
+{
+	BaseWorld::BaseWorld(IrrlichtDevice* dev) 
+		: m_device(dev)
 	{
 	}
 
@@ -14,8 +15,28 @@ namespace Sarona
 		m_jscontext.Dispose(); 
 	}
 
-	void BaseWorld::LoadLevel()
+	void BaseWorld::RegisterZComObjects()
 	{
+		// has to be called after initialization, before any connections are made
+		m_objectId = this->ZCom_registerClass("Object");
+	}
+
+	void BaseWorld::LoadLevel(std::string level)
+	{
+		// Load folder
+		
+		bool success = m_device->getFileSystem()->addFileArchive(
+			level.c_str(),
+			false, /* ignore case */
+			false, /* ignore paths */
+			io::EFAT_FOLDER
+			);
+
+		if(! success)
+		{
+			throw std::invalid_argument(string("Unable to load folder ") + level);
+		}
+
 		// Read index json..
 		
 		std::string json_source;
@@ -37,6 +58,9 @@ namespace Sarona
 		m_author = root.get("author", "author missing").asString();
 
 		Json::Value scripts = root.get("scripts", Json::nullValue);
+
+		v8::Locker locker;
+
 		for(unsigned index = 0; index < scripts.size(); ++index)
 		{
 			// Read script source into string
@@ -71,4 +95,5 @@ namespace Sarona
 		}
 	}
 
+	int BaseWorld::m_objectId;
 }

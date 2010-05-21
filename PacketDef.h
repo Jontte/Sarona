@@ -51,7 +51,7 @@ namespace Sarona
 
 
 		// Utility functions
-
+/*
 		// Check if raw data contains a packet
 		template <class PacketClass>
 		bool PacketIs(byte*& data, int& count)
@@ -76,7 +76,7 @@ namespace Sarona
 		{
 			return PacketClass::ID;
 		}
-
+*/
 		// Cleanup..
 		#undef DEF
 		#undef FIELDDEF

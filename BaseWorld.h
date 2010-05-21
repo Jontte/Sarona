@@ -1,12 +1,10 @@
 #pragma once
 #include "StdAfx.h"
-#include "BaseObject.h"
-#include "NetworkCtx.h"
 
 namespace Sarona
 {
 
-class BaseWorld
+class BaseWorld : public ZCom_Control
 {
 protected:
 	// Level config
@@ -17,23 +15,21 @@ protected:
 	// V8
 	v8::Persistent<v8::Context>		m_jscontext;
 
-	// Irrlicht 
-	IrrlichtDevice*					m_device;
-
-	// General
-	ptr_vector<BaseObject>			m_objects;
+	// Irrlicht
+	intrusive_ptr<IrrlichtDevice>	m_device;
 
 	// Networking
-	scoped_ptr<NetworkCtx>			m_netctx;
+	ZCom_Control*					m_control;
+
+	void RegisterZComObjects();
 
 public:
 
-	void LoadLevel();
+	static int m_objectId;
 
-	virtual void Start() = 0;
-	virtual void Step(float dt) = 0;
+	void LoadLevel(std::string level);
 
-	BaseWorld(IrrlichtDevice* device, NetworkCtx * netctx);
+	BaseWorld(IrrlichtDevice* device);
 
 	virtual ~BaseWorld(void);
 };

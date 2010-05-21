@@ -1,25 +1,55 @@
 #pragma once
 #include "StdAfx.h"
-#include "BaseObject.h"
 #include "Util.h"
+#include "ObjectReplicator.h"
 
 namespace Sarona
 {
 	class PhysWorld;
-	class PhysObject : public BaseObject
+	class PhysObjectMotionState;
+	class PhysObject : public ZCom_NodeEventInterceptor
 	{
 	private:
+		
+		// ZCom stuff
+		scoped_ptr<ZCom_Node>							m_zcomNode;
 
 		// Global obj refs
 		btDynamicsWorld*					m_world;
 
 		// Bullet fields
 		scoped_ptr<btCollisionShape>		m_shape;
-		scoped_ptr<btMotionState>			m_motionstate;
+		scoped_ptr<PhysObjectMotionState>	m_motionstate;
 		scoped_ptr<btRigidBody>				m_rigidbody;
 
+		bool recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
+						eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
+						zU32 _estimated_time_sent);
+		                          
+		bool recInit(ZCom_Node *_node, ZCom_ConnID _from,
+				   eZCom_NodeRole _remoterole);
+		bool recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from, 
+						  eZCom_NodeRole _remoterole);
+		                              
+		bool recRemoved(ZCom_Node *_node, ZCom_ConnID _from,
+					  eZCom_NodeRole _remoterole);
+		                        
+		bool recFileIncoming(ZCom_Node *_node, ZCom_ConnID _from,
+						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid, 
+						   ZCom_BitStream &_request);
+		                             
+		bool recFileData(ZCom_Node *_node, ZCom_ConnID _from,
+					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) ;
+		                     
+		bool recFileAborted(ZCom_Node *_node, ZCom_ConnID _from,
+						  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) ;
+		                           
+		bool recFileComplete(ZCom_Node *_node, ZCom_ConnID _from,
+						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid);
+
+
 	friend class PhysWorld;
-		PhysObject(IrrlichtDevice* dev, scene::ISceneNode* node, btDynamicsWorld* world, btCollisionShape* shape, const btTransform& initialpos);
+		PhysObject(ZCom_Control* control, btDynamicsWorld* world, btCollisionShape* shape, const btTransform& initialpos);
 
 	public:
 		void setMass(btScalar kilos = -1);
@@ -29,16 +59,17 @@ namespace Sarona
 	class PhysObjectMotionState : public btMotionState
 	{
 	public:
-		PhysObjectMotionState(const btTransform &initialpos, scene::ISceneNode *node) {
-			m_node = node;
+		PhysObjectMotionState(const btTransform &initialpos, ObjectReplicator *obj) {
+			m_obj = obj;
 			mPos1 = initialpos;
 		}
 
-		virtual ~PhysObjectMotionState() {
+		void reset()
+		{
+			m_obj = NULL;
 		}
 
-		void setNode(scene::ISceneNode *node) {
-			m_node = node;
+		virtual ~PhysObjectMotionState() {
 		}
 
 		virtual void getWorldTransform(btTransform &worldTrans) const {
@@ -46,13 +77,22 @@ namespace Sarona
 		}
 
 		virtual void setWorldTransform(const btTransform &worldTrans) {
-			if(!m_node) return; // silently return before we set a node
+			if(!m_obj) return; // silently return before we set a node
 
-			irr::core::matrix4 matr;
-			btTransformToIrrlichtMatrix(worldTrans, matr);
+			btVector3 btPos = worldTrans.getOrigin();//matr.getTranslation();
+			float pos[3];
 
-			m_node->setRotation(matr.getRotationDegrees());
-			m_node->setPosition(matr.getTranslation());
+			pos[0] = btPos[0];
+			pos[1] = btPos[1];
+			pos[2] = btPos[2];
+
+			m_obj->Input(pos);
+
+//			irr::core::matrix4 matr;
+//			btTransformToIrrlichtMatrix(worldTrans, matr);
+
+//			m_obj->setRotation(matr.getRotationDegrees());
+//			m_obj->setPosition(matr.getTranslation());
 
 			mPos1 = worldTrans;
 			
@@ -60,7 +100,7 @@ namespace Sarona
 		}
 
 	protected:
-		scene::ISceneNode *m_node;
+		ObjectReplicator *m_obj;
 		btTransform mPos1;
 	};
 

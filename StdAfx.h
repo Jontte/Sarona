@@ -5,7 +5,7 @@ using std::string;
 using std::vector;
 
 #include <json/json.h>
-#include <enet/enet.h>
+#include <zoidcom.h>
 #include <v8.h>
 #include <irrlicht.h>
 using namespace irr;
@@ -25,6 +25,7 @@ using boost::ptr_vector;
 
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
+#include <boost/thread.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
 #include <boost/preprocessor/tuple/elem.hpp>
 

@@ -33,7 +33,7 @@ function level_start()
 	var taso = scene.create(oTaso, [0,0,0]);
 	
 	
-	var maxkerroksia = 10;
+	var maxkerroksia = 20;
 	for(var kerros = 0 ; kerros < maxkerroksia; kerros++)
 	{
 		for(var x = 0 ; x < 10; x++)
@@ -86,7 +86,7 @@ function level_start()
 			length: 50,
 			mass: 500
 		}]
-	}, [25,25,500]);
+	}, [25,25,200]);
 }
 
 function level_end()

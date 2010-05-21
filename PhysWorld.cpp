@@ -5,7 +5,8 @@
 
 namespace Sarona
 {
-	PhysWorld::PhysWorld(IrrlichtDevice* device, NetworkCtx* netctx) : BaseWorld(device, netctx)
+	PhysWorld::PhysWorld(IrrlichtDevice * dev)
+		: BaseWorld(dev)
 	{
 		// Load script, initialize components
 		CreateV8Context();
@@ -16,8 +17,30 @@ namespace Sarona
 		m_objects.clear(); // Objects must die before the phys engine dies...
 	}
 
+	void PhysWorld::Bind(int port, bool local)
+	{
+		// Bind
+		bool result = this->ZCom_initSockets(true, port, local);
+		if (!result)
+		{
+			throw std::runtime_error("Unable to create ZCom socket!");
+		}
+	}
+
+	void PhysWorld::Start()
+	{
+		m_thread = boost::thread(&PhysWorld::Loop, this);
+	}
+
+	void PhysWorld::Wait()
+	{
+		m_thread.join();
+	}
+
 	void PhysWorld::CreateV8Context()
 	{
+		v8::Locker locker;
+
 		v8::HandleScope handle_scope;
 
 		v8::Handle<v8::ObjectTemplate> global = v8::ObjectTemplate::New();
@@ -67,12 +90,13 @@ namespace Sarona
 		m_dynamicsWorld->setGravity(btVector3(0,0,-9.80665f));
 	}
 
-	void PhysWorld::Start()
+	void PhysWorld::Loop()
 	{
 		// Start physics
 		CreateBulletContext();
 
 		// Call 'level_start' defined in script
+		v8::Locker locker;
 
 		v8::HandleScope handle_scope;
 		v8::Context::Scope scope(m_jscontext);
@@ -92,15 +116,54 @@ namespace Sarona
 		//CreateCube(btVector3(0,0,10), 5)->setMass(1);
 		//CreateCube(btVector3(-4.5,-4.5,16), 5)->setMass(100);
 		CreatePlane(btVector3(0,0,0), btVector3(0,0,1));
+
+
+		//video::IVideoDriver* driver = m_device->getVideoDriver();
+		//scene::ISceneManager* scenemgr = m_device->getSceneManager();
+
+		// Set our delta time and time stamp
+		u32 TimeStamp = m_device->getTimer()->getTime();
+		u32 DeltaTime = 0;
+
+		int mouseprevx = -1;
+		int mouseprevy = -1;
+
+		unsigned long long frame = 0;
+
+		//while(m_device->run())
+		while(true)
+		{
+			// do stuff on the server...
+
+			int ms = 20;
+
+			// 1. Send/Receive messages from network
+			// 2. Simulate physics
+			m_dynamicsWorld->stepSimulation((btScalar)ms/1000 ,1);
+
+			// Step network code
+			this->ZCom_processInput();
+			this->ZCom_processOutput();
+
+			Sleep(ms);
+
+			if(frame % (1000/ms) == 0)
+			{	
+				std::cout << "The simulation has " << m_objects.size() << " objects..." << std::endl;
+			}
+
+
+			frame++;
+		}
 	}
 
 
 	PhysObject* PhysWorld::CreateCube(const btVector3& position, const btScalar& length)
 	{
-		scene::IMeshSceneNode* node;
+	//	scene::IMeshSceneNode* node;
 
 		btCollisionShape* shape;
-
+/*
 		node = m_device->getSceneManager()->addCubeSceneNode(length);
 		node->setMaterialFlag(video::EMF_LIGHTING, true);
 //		node->setMaterialFlag(video::EMF_, true);
@@ -112,10 +175,10 @@ namespace Sarona
 			// set texture..
 			node->setMaterialTexture( 0,m_device->getVideoDriver()->getTexture("testgraphics.png"));
 		}
-		
+		*/
 		shape = new btBoxShape(btVector3(length/2, length/2, length/2));
 
-		PhysObject* obj = new PhysObject(get_pointer(m_device), node, get_pointer(m_dynamicsWorld), shape, btTransform(btQuaternion(0,0,0,1),position));
+		PhysObject* obj = new PhysObject(this, get_pointer(m_dynamicsWorld), shape, btTransform(btQuaternion(0,0,0,1),position));
 		obj->setMass(1);
 		m_objects.push_back(obj);
 		return obj;
@@ -128,9 +191,9 @@ namespace Sarona
 	
 	PhysObject* PhysWorld::CreatePlane(const btVector3& position, const btVector3& normal)
 	{
-		scene::ISceneNode* node;
+//		scene::ISceneNode* node;
 		btCollisionShape* shape;
-
+/*
 		// Create mesh
 		scene::IMesh* mesh = m_device->getSceneManager()->addHillPlaneMesh("hillplane", core::dimension2d<f32>(10.0f, 10.0f), core::dimension2d<u32>(100,100))
 				->getMesh(0);
@@ -144,18 +207,13 @@ namespace Sarona
 
 		// Create node
 		node = m_device->getSceneManager()->addMeshSceneNode(mesh);
+		*/
 		shape = new btStaticPlaneShape(normal, 0);
 
-		PhysObject* obj = new PhysObject(get_pointer(m_device), node, get_pointer(m_dynamicsWorld), shape, btTransform(btQuaternion(0,0,0,1),position));
+		PhysObject* obj = new PhysObject(this, get_pointer(m_dynamicsWorld), shape, btTransform(btQuaternion(0,0,0,1),position));
 		m_objects.push_back(obj);
 		return obj;
 	}
-
-	void PhysWorld::Step(float dt)
-	{
-		m_dynamicsWorld->stepSimulation(dt,1);
-	}
-
 
 	v8::Handle<v8::Value> PhysWorld::SceneCreate(const v8::Arguments& args)
 	{
@@ -235,5 +293,61 @@ namespace Sarona
 	void PhysWorld::SceneSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
 	{
 		return;
+	}
+
+
+
+
+
+
+	bool PhysWorld::ZCom_cbConnectionRequest(ZCom_ConnID _id, ZCom_BitStream &_request, ZCom_BitStream &_reply)
+	{
+		return true; // Allow incoming connection
+	}
+	void PhysWorld::ZCom_cbConnectionSpawned( ZCom_ConnID _id )
+	{
+	
+	}
+	void PhysWorld::ZCom_cbConnectionClosed( ZCom_ConnID _id, eZCom_CloseReason _reason, ZCom_BitStream &_reasondata )
+	{
+	
+	}
+	void PhysWorld::ZCom_cbConnectResult( ZCom_ConnID _id, eZCom_ConnectResult _result, ZCom_BitStream &_reply )
+	{
+	
+	}
+	void PhysWorld::ZCom_cbDataReceived( ZCom_ConnID _id, ZCom_BitStream &_data )
+	{
+	
+	}
+	bool PhysWorld::ZCom_cbZoidRequest( ZCom_ConnID _id, zU8 _requested_level, ZCom_BitStream &_reason )
+	{
+		if (_requested_level == 1)
+		  return true;
+		else
+		  return false;
+	}
+	void PhysWorld::ZCom_cbZoidResult( ZCom_ConnID _id, eZCom_ZoidResult _result, zU8 _new_level, ZCom_BitStream &_reason )
+	{
+	
+	}
+	void PhysWorld::ZCom_cbNodeRequest_Dynamic( ZCom_ConnID _id, ZCom_ClassID _requested_class, ZCom_BitStream *_announcedata,
+		eZCom_NodeRole _role, ZCom_NodeID _net_id )
+	{
+	
+	}
+	void PhysWorld::ZCom_cbNodeRequest_Tag( ZCom_ConnID _id, ZCom_ClassID _requested_class, ZCom_BitStream *_announcedata,
+		eZCom_NodeRole _role, zU32 _tag )
+	{
+	
+	}
+	bool PhysWorld::ZCom_cbDiscoverRequest( const ZCom_Address &_addr, ZCom_BitStream &_request, 
+		ZCom_BitStream &_reply )
+	{
+		return false;
+	}
+	void PhysWorld::ZCom_cbDiscovered( const ZCom_Address & _addr, ZCom_BitStream &_reply )
+	{
+	
 	}
 }

@@ -37,9 +37,22 @@ void btTransformFromIrrlichtMatrix(const irr::core::matrix4& irrmat, btTransform
     transform.setFromOpenGLMatrix(irrmat.pointer()); 
 }
 
+
+void intrusive_ptr_add_ref(IReferenceCounted* t)
+{
+	if(t)
+		t->grab();
+}
+void intrusive_ptr_release(IReferenceCounted* t)
+{
+	if(t)
+		t->drop();
+}
+
+
 namespace Sarona
 {
-	int serialize(const s16& in, char* bin)
+	/*int serialize(const s16& in, char* bin)
 	{
 		if(bin)
 		{
@@ -56,6 +69,6 @@ namespace Sarona
 	void OutputArchive::SaveTo(vector<s8>& to)
 	{
 		swap(m_data, to);
-	}
+	}*/
 }
 

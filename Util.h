@@ -10,7 +10,13 @@ void btTransformToIrrlichtMatrix(const btTransform& worldTrans, irr::core::matri
 
 void btTransformFromIrrlichtMatrix(const irr::core::matrix4& irrmat, btTransform &transform) ;
 
-
+// Handle initialization and proper finalization of ENet
+class ENetHelper
+{
+public:
+	ENetHelper();
+	~ENetHelper();
+};
 
 namespace Sarona
 {

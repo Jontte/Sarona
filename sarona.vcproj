@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(InputDir)/jsoncpp/include&quot;;&quot;$(InputDir)/enet/include&quot;;&quot;$(InputDir)/bullet3d&quot;"
+				AdditionalIncludeDirectories="&quot;$(InputDir)/jsoncpp/include&quot;;&quot;$(InputDir)/bullet3d&quot;"
 				PreprocessorDefinitions="WIN32"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -61,7 +61,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
-				AdditionalDependencies="v8_g.lib Irrlicht.lib wsock32.lib ws2_32.lib winmm.lib"
+				AdditionalDependencies="v8_g.lib Irrlicht.lib zoidcom_vc.lib wsock32.lib ws2_32.lib winmm.lib"
 				GenerateDebugInformation="true"
 				LinkTimeCodeGeneration="0"
 				TargetMachine="1"
@@ -115,7 +115,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(InputDir)/jsoncpp/include&quot;;&quot;$(InputDir)/bullet3d&quot;;&quot;$(InputDir)/enet/include&quot;"
+				AdditionalIncludeDirectories="&quot;$(InputDir)/jsoncpp/include&quot;;&quot;$(InputDir)/bullet3d&quot;"
 				PreprocessorDefinitions="WIN32"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -134,7 +134,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="v8.lib Irrlicht.lib wsock32.lib ws2_32.lib winmm.lib"
+				AdditionalDependencies="v8.lib Irrlicht.lib zoidcom_vc.lib wsock32.lib ws2_32.lib winmm.lib"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -172,19 +172,11 @@
 			UniqueIdentifier="{4FC737F1-C7A5-4376-A066-2A32D752A2FF}"
 			>
 			<File
-				RelativePath=".\BaseObject.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\BaseWorld.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Camera.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\Engine.cpp"
 				>
 			</File>
 			<File
@@ -200,11 +192,15 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\NetworkCtx.cpp"
+				RelativePath=".\NetObject.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\NetWorld.cpp"
+				>
+			</File>
+			<File
+				RelativePath=".\ObjectReplicator.cpp"
 				>
 			</File>
 			<File
@@ -230,10 +226,6 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}"
 			>
 			<File
-				RelativePath=".\BaseObject.h"
-				>
-			</File>
-			<File
 				RelativePath=".\BaseWorld.h"
 				>
 			</File>
@@ -242,15 +234,15 @@
 				>
 			</File>
 			<File
-				RelativePath=".\Engine.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NetworkCtx.h"
+				RelativePath=".\NetObject.h"
 				>
 			</File>
 			<File
 				RelativePath=".\NetWorld.h"
+				>
+			</File>
+			<File
+				RelativePath=".\ObjectReplicator.h"
 				>
 			</File>
 			<File
