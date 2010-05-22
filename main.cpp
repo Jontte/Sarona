@@ -20,6 +20,8 @@ int main(int argc, char *argv[])
 		throw std::runtime_error("Unable to initialize ZoidCom!");
 	}
 
+	zcom->setLogLevel(2);
+
 	intrusive_ptr<IrrlichtDevice> device;
 	
 	bool server = (args.size() > 1 && args[1] == "server");

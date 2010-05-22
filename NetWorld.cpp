@@ -7,6 +7,7 @@ namespace Sarona
 
 	NetWorld::NetWorld(IrrlichtDevice* device) : BaseWorld(device)
 	{
+		ZCom_setUpstreamLimit(100000, 100000);
 		// Load script, initialize components
 		CreateV8Context();
 
@@ -22,6 +23,13 @@ namespace Sarona
 		m_device->getSceneManager()->setAmbientLight(video::SColor(0,60,60,60));
 
 		m_device->getSceneManager()->addLightSceneNode(	NULL, core::vector3df(50, 30, 310), video::SColorf(1.0f, 1.0f, 1.0f), 300.0f);
+
+		gui::IGUIEnvironment* env = m_device->getGUIEnvironment();
+		gui::IGUISkin* skin = env->getSkin();
+		skin->setFont(env->getBuiltInFont(), gui::EGDF_TOOLTIP);
+
+		// Create textbox..
+		m_device->getGUIEnvironment()->addStaticText(L"Sarona", core::rect<s32>(64,64,64+64*4,64+32), true, true);
 	}
 
 	NetWorld::~NetWorld(void)
@@ -30,7 +38,7 @@ namespace Sarona
 
 	void NetWorld::Connect(string host, bool local)
 	{
-		bool result = this->ZCom_initSockets(true, 0, local);
+		bool result = this->ZCom_initSockets(!local, 0, 1);
 		if (!result)
 		{
 			throw std::runtime_error("Unable to create ZCom socket!");
@@ -38,7 +46,14 @@ namespace Sarona
 
 		// Initiate connection
 		ZCom_Address server_addr;
-		server_addr.setAddress( eZCom_AddressUDP, 0, host.c_str());
+		if(local)
+		{
+			server_addr.setAddress( eZCom_AddressLocal, 0, host.c_str());
+		}
+		else
+		{
+			server_addr.setAddress( eZCom_AddressUDP, 0, host.c_str());
+		}
 		ZCom_ConnID connection_id = this->ZCom_Connect(server_addr, NULL);
 
 		// unable to connect
@@ -110,15 +125,16 @@ namespace Sarona
 			// Step network code
 			this->ZCom_processInput();
 			this->ZCom_processOutput();
+			//this->ZCom_processReplicators(DeltaTime);
 
 			if(++calc > 1000.0/DeltaTime )
 			{
 				calc = 0;
 			
 				
-//				ZCom_ConnStats stats = this->ZCom_getConnectionStats(1);
+				ZCom_ConnStats stats = this->ZCom_getConnectionStats(1);
 
-//				std::cout << "B/W: " << stats.last_sec_in << "/" << stats.last_sec_out << std::endl;
+				std::cout << "In/Out pps: " << stats.current_inp << "/" << stats.current_outp << std::endl;
 			}
 
 			// Move camera
@@ -141,7 +157,6 @@ namespace Sarona
 	}
 	void NetWorld::ZCom_cbConnectionSpawned( ZCom_ConnID _id )
 	{
-	
 	}
 	void NetWorld::ZCom_cbConnectionClosed( ZCom_ConnID _id, eZCom_CloseReason _reason, ZCom_BitStream &_reasondata )
 	{
@@ -152,6 +167,7 @@ namespace Sarona
 		if (_result == eZCom_ConnAccepted)
 		{
 			ZCom_requestZoidMode(_id, 1);
+			ZCom_requestDownstreamLimit(_id, 1000, 100000 );
 		}
 		else
 		{

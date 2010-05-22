@@ -12,7 +12,7 @@ namespace Sarona
 	private:
 		
 		// ZCom stuff
-		scoped_ptr<ZCom_Node>							m_zcomNode;
+		scoped_ptr<ZCom_Node>				m_zcomNode;
 
 		// Global obj refs
 		btDynamicsWorld*					m_world;
@@ -79,14 +79,9 @@ namespace Sarona
 		virtual void setWorldTransform(const btTransform &worldTrans) {
 			if(!m_obj) return; // silently return before we set a node
 
-			btVector3 btPos = worldTrans.getOrigin();//matr.getTranslation();
-			float pos[3];
-
-			pos[0] = btPos[0];
-			pos[1] = btPos[1];
-			pos[2] = btPos[2];
-
-			m_obj->Input(pos);
+			btVector3 pos = worldTrans.getOrigin();//matr.getTranslation();
+			btQuaternion rot = worldTrans.getRotation();
+			m_obj->Input(pos,rot, btVector3(0,0,0), btVector4(0,0,0,0));
 
 //			irr::core::matrix4 matr;
 //			btTransformToIrrlichtMatrix(worldTrans, matr);

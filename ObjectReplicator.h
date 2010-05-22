@@ -7,16 +7,21 @@ namespace Sarona
 	class NetObject;
 
 	class ObjectReplicator :
-		public ZCom_ReplicatorBasic
-//		public ZCom_ReplicatorAdvanced
+		public ZCom_ReplicatorAdvanced
 	{
 		// one of these will be active..
 		PhysObject* m_phys;
 		NetObject* m_net;
 
-		float m_position[3];
-		bool m_dirty;
+		btVector3 m_position;
+		btQuaternion m_rotation;
+		btVector3 m_velocity;
+		btVector4 m_omega;
+
 	private:
+		void send(const btVector3& position, const btQuaternion& rotation, const btVector3& velocity, const btVector4& omega);
+
+		std::set<ZCom_ConnID> m_connections;
 	public:
 		ObjectReplicator(ZCom_ReplicatorSetup * setup, PhysObject * phys);
 		ObjectReplicator(ZCom_ReplicatorSetup * setup, NetObject * net);
@@ -28,12 +33,13 @@ namespace Sarona
 		void* peekData();
 		void Process (eZCom_NodeRole _localrole, zU32 _simulation_time_passed);
 
+		/*
 		bool checkState();
 		void packData(ZCom_BitStream *_stream);
 		void unpackData(ZCom_BitStream *_stream, bool _store, zU32 _estimated_time_sent);
-
-		void Input(float position[3]);
-		/*
+*/
+		void Input(const btVector3& position, const btQuaternion& rotation, const btVector3& velocity, const btVector4& omega);
+		
 		
 		void onConnectionAdded (ZCom_ConnID _cid, eZCom_NodeRole _remoterole);
 		void onConnectionRemoved (ZCom_ConnID _cid, eZCom_NodeRole _remoterole);
@@ -46,6 +52,6 @@ namespace Sarona
 		
 		void onDataAcked(ZCom_ConnID _cid, zU32 _reference_id, ZCom_BitStream *_data);
 		void onDataLost(ZCom_ConnID _cid, zU32 _reference_id, ZCom_BitStream *_data);
-		*/
+		
 	};
 }

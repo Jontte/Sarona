@@ -4,6 +4,8 @@ using std::string;
 #include <vector>
 using std::vector;
 
+#include <set>
+
 #include <json/json.h>
 #include <zoidcom.h>
 #include <v8.h>
@@ -28,6 +30,7 @@ using boost::ptr_vector;
 #include <boost/thread.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
 #include <boost/preprocessor/tuple/elem.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 void intrusive_ptr_add_ref(IReferenceCounted* t);
 void intrusive_ptr_release(IReferenceCounted* t);

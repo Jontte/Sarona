@@ -11,6 +11,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bullet3d", "bullet3d\bullet
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jsoncpp", "jsoncpp\jsoncpp.vcproj", "{5505763A-2052-4589-AE7B-B9A6E0856D28}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cproxyv8", "cproxyv8\cproxyv8.vcproj", "{28BF9A7C-D583-4519-B104-10BD4158ED25}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Win32 = Debug|Win32
@@ -29,6 +31,10 @@ Global
 		{5505763A-2052-4589-AE7B-B9A6E0856D28}.Debug|Win32.Build.0 = Debug|Win32
 		{5505763A-2052-4589-AE7B-B9A6E0856D28}.Release|Win32.ActiveCfg = Release|Win32
 		{5505763A-2052-4589-AE7B-B9A6E0856D28}.Release|Win32.Build.0 = Release|Win32
+		{28BF9A7C-D583-4519-B104-10BD4158ED25}.Debug|Win32.ActiveCfg = Debug|Win32
+		{28BF9A7C-D583-4519-B104-10BD4158ED25}.Debug|Win32.Build.0 = Debug|Win32
+		{28BF9A7C-D583-4519-B104-10BD4158ED25}.Release|Win32.ActiveCfg = Release|Win32
+		{28BF9A7C-D583-4519-B104-10BD4158ED25}.Release|Win32.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

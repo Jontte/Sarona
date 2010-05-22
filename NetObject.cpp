@@ -14,7 +14,7 @@ namespace Sarona
 
 		// BEGIN REPLICATION SETUP
 		m_zcomNode->beginReplicationSetup(1);
-			ZCom_ReplicatorSetup setup(/*flags*/ ZCOM_REPFLAG_UNRELIABLE   , /*rules*/ ZCOM_REPRULE_AUTH_2_ALL, /*intercept_id*/ 0, /*min_delay*/ 0, /*max_delay*/ 100);
+			ZCom_ReplicatorSetup setup(/*flags*/ ZCOM_REPFLAG_UNRELIABLE|ZCOM_REPFLAG_MOSTRECENT, /*rules*/ ZCOM_REPRULE_AUTH_2_ALL, /*intercept_id*/ 0, /*min_delay*/ 10, /*max_delay*/ 100);
 			m_zcomNode -> addReplicator(new ObjectReplicator(setup.Duplicate(), this), true);
 		m_zcomNode->endReplicationSetup();
 		// END REPLICATION SETUP
@@ -44,9 +44,12 @@ namespace Sarona
 	{
 	}
 
-	void NetObject::SetPosition(const core::vector3df& position)
+	void NetObject::SetTransform(const core::vector3df& position, const core::quaternion& rotation)
 	{
 		m_sceneNode->setPosition(position);
+		core::vector3df rot;
+		rotation.toEuler(rot);
+		m_sceneNode->setRotation(rot*core::RADTODEG);
 	}
 
 	bool NetObject::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 

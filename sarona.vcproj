@@ -40,7 +40,7 @@
 			<Tool
 				Name="VCCLCompilerTool"
 				Optimization="0"
-				AdditionalIncludeDirectories="&quot;$(InputDir)/jsoncpp/include&quot;;&quot;$(InputDir)/bullet3d&quot;"
+				AdditionalIncludeDirectories="&quot;$(InputDir)/jsoncpp/include&quot;;&quot;$(InputDir)/bullet3d&quot;;&quot;$(InputDir)/cproxyv8&quot;"
 				PreprocessorDefinitions="WIN32"
 				MinimalRebuild="true"
 				BasicRuntimeChecks="3"
@@ -61,7 +61,7 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
-				AdditionalDependencies="v8_g.lib Irrlicht.lib zoidcom_vc.lib wsock32.lib ws2_32.lib winmm.lib"
+				AdditionalDependencies="v8_g.lib Irrlicht.lib zoidcom_vcd.lib wsock32.lib ws2_32.lib winmm.lib"
 				GenerateDebugInformation="true"
 				LinkTimeCodeGeneration="0"
 				TargetMachine="1"
@@ -115,7 +115,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="2"
 				EnableIntrinsicFunctions="true"
-				AdditionalIncludeDirectories="&quot;$(InputDir)/jsoncpp/include&quot;;&quot;$(InputDir)/bullet3d&quot;"
+				AdditionalIncludeDirectories="&quot;$(InputDir)/jsoncpp/include&quot;;&quot;$(InputDir)/bullet3d&quot;;&quot;$(InputDir)/cproxyv8&quot;"
 				PreprocessorDefinitions="WIN32"
 				RuntimeLibrary="2"
 				EnableFunctionLevelLinking="true"
@@ -192,33 +192,49 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath=".\NetObject.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\NetWorld.cpp"
-				>
-			</File>
-			<File
 				RelativePath=".\ObjectReplicator.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PhysObject.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PhysWorld.cpp"
-				>
-			</File>
-			<File
-				RelativePath=".\PhysWorld_static.cpp"
 				>
 			</File>
 			<File
 				RelativePath=".\Util.cpp"
 				>
 			</File>
+			<Filter
+				Name="Net"
+				>
+				<File
+					RelativePath=".\NetObject.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\NetWorld.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Phys"
+				>
+				<File
+					RelativePath=".\PhysObject.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\PhysWorld.cpp"
+					>
+				</File>
+				<File
+					RelativePath=".\PhysWorld_static.cpp"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="JS"
+				>
+				<File
+					RelativePath=".\JSObject.cpp"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Header Files"
@@ -234,27 +250,11 @@
 				>
 			</File>
 			<File
-				RelativePath=".\NetObject.h"
-				>
-			</File>
-			<File
-				RelativePath=".\NetWorld.h"
-				>
-			</File>
-			<File
 				RelativePath=".\ObjectReplicator.h"
 				>
 			</File>
 			<File
 				RelativePath=".\PacketDef.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PhysObject.h"
-				>
-			</File>
-			<File
-				RelativePath=".\PhysWorld.h"
 				>
 			</File>
 			<File
@@ -265,6 +265,30 @@
 				RelativePath=".\Util.h"
 				>
 			</File>
+			<Filter
+				Name="Net"
+				>
+				<File
+					RelativePath=".\NetObject.h"
+					>
+				</File>
+				<File
+					RelativePath=".\NetWorld.h"
+					>
+				</File>
+			</Filter>
+			<Filter
+				Name="Phys"
+				>
+				<File
+					RelativePath=".\PhysObject.h"
+					>
+				</File>
+				<File
+					RelativePath=".\PhysWorld.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -277,6 +301,14 @@
 			</File>
 			<File
 				RelativePath=".\testlevel\main.js"
+				>
+			</File>
+		</Filter>
+		<Filter
+			Name="JS"
+			>
+			<File
+				RelativePath=".\JSObject.h"
 				>
 			</File>
 		</Filter>

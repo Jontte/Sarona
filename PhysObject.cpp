@@ -12,7 +12,7 @@ namespace Sarona
 	{
 		m_zcomNode.reset(new ZCom_Node());
 
-		ZCom_ReplicatorSetup setup(/*flags*/ ZCOM_REPFLAG_UNRELIABLE   , /*rules*/ ZCOM_REPRULE_AUTH_2_ALL, /*intercept_id*/ 0, /*min_delay*/ 0, /*max_delay*/ 50);
+		ZCom_ReplicatorSetup setup(/*flags*/ ZCOM_REPFLAG_UNRELIABLE|ZCOM_REPFLAG_MOSTRECENT, /*rules*/ ZCOM_REPRULE_AUTH_2_ALL, /*intercept_id*/ 0, /*min_delay*/ 0, /*max_delay*/ 50);
 		ObjectReplicator* replicator = new ObjectReplicator(setup.Duplicate(), this);
 
 		// BEGIN REPLICATION SETUP

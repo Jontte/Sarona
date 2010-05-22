@@ -8,6 +8,7 @@ namespace Sarona
 	PhysWorld::PhysWorld(IrrlichtDevice * dev)
 		: BaseWorld(dev)
 	{
+		ZCom_setUpstreamLimit(100000, 100000);
 		// Load script, initialize components
 		CreateV8Context();
 	}
@@ -20,7 +21,7 @@ namespace Sarona
 	void PhysWorld::Bind(int port, bool local)
 	{
 		// Bind
-		bool result = this->ZCom_initSockets(true, port, local);
+		bool result = this->ZCom_initSockets(!local, port, port);
 		if (!result)
 		{
 			throw std::runtime_error("Unable to create ZCom socket!");
@@ -117,41 +118,45 @@ namespace Sarona
 		//CreateCube(btVector3(-4.5,-4.5,16), 5)->setMass(100);
 		CreatePlane(btVector3(0,0,0), btVector3(0,0,1));
 
-
-		//video::IVideoDriver* driver = m_device->getVideoDriver();
-		//scene::ISceneManager* scenemgr = m_device->getSceneManager();
+		unsigned long long frame = 0;
 
 		// Set our delta time and time stamp
-		u32 TimeStamp = m_device->getTimer()->getTime();
-		u32 DeltaTime = 0;
 
-		int mouseprevx = -1;
-		int mouseprevy = -1;
-
-		unsigned long long frame = 0;
+		int targetFPS = 50;
 
 		//while(m_device->run())
 		while(true)
 		{
 			// do stuff on the server...
 
-			int ms = 20;
+			boost::posix_time::ptime beginframe = boost::posix_time::microsec_clock::local_time();
 
 			// 1. Send/Receive messages from network
 			// 2. Simulate physics
-			m_dynamicsWorld->stepSimulation((btScalar)ms/1000 ,1);
+			m_dynamicsWorld->stepSimulation(btScalar(1.0/targetFPS) ,1);
 
 			// Step network code
 			this->ZCom_processInput();
 			this->ZCom_processOutput();
+			//this->ZCom_processReplicators(zU32(1000.0/targetFPS));
 
-			Sleep(ms);
+			
+			boost::posix_time::ptime endframe = boost::posix_time::microsec_clock::local_time();
 
-			if(frame % (1000/ms) == 0)
+			ZCom_ConnStats stats = ZCom_getConnectionStats(1);
+
+			if(frame % (targetFPS) == 0)
 			{	
 				std::cout << "The simulation has " << m_objects.size() << " objects..." << std::endl;
 			}
 
+			// Sleep the rest of the frame...
+
+			long long int micros = 1000000/targetFPS;
+			micros -= boost::posix_time::time_period(beginframe, endframe).length().total_microseconds();
+
+			if(micros > 0)
+				boost::this_thread::sleep(boost::posix_time::microseconds(micros));
 
 			frame++;
 		}
@@ -296,17 +301,14 @@ namespace Sarona
 	}
 
 
-
-
-
-
 	bool PhysWorld::ZCom_cbConnectionRequest(ZCom_ConnID _id, ZCom_BitStream &_request, ZCom_BitStream &_reply)
 	{
 		return true; // Allow incoming connection
 	}
 	void PhysWorld::ZCom_cbConnectionSpawned( ZCom_ConnID _id )
 	{
-	
+		ZCom_requestDownstreamLimit(_id, 1000, 100000 );
+		//ZCom_simulateLoss(_id, 0.5);
 	}
 	void PhysWorld::ZCom_cbConnectionClosed( ZCom_ConnID _id, eZCom_CloseReason _reason, ZCom_BitStream &_reasondata )
 	{

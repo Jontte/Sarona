@@ -39,7 +39,7 @@ namespace Sarona
 		scene::ISceneNode*	m_sceneNode;
 		IrrlichtDevice* m_device;
 	public:
-		void SetPosition(const core::vector3df& position);
+		void SetTransform(const core::vector3df& position, const core::quaternion& rotation);
 
 		NetObject(ZCom_Control* control, IrrlichtDevice* );
 		~NetObject(void);
