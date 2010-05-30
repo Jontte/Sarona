@@ -47,7 +47,7 @@
 				RuntimeLibrary="3"
 				UsePrecompiledHeader="1"
 				WarningLevel="3"
-				DebugInformationFormat="4"
+				DebugInformationFormat="3"
 			/>
 			<Tool
 				Name="VCManagedResourceCompilerTool"
@@ -61,7 +61,8 @@
 			<Tool
 				Name="VCLinkerTool"
 				LinkLibraryDependencies="true"
-				AdditionalDependencies="v8_g.lib Irrlicht.lib zoidcom_vcd.lib wsock32.lib ws2_32.lib winmm.lib"
+				AdditionalDependencies="v8_g.lib Irrlicht.lib zoidcom_vcd.lib cproxyv8.lib wsock32.lib ws2_32.lib winmm.lib"
+				AdditionalLibraryDirectories="$(SolutionDir)$(ConfigurationName)"
 				GenerateDebugInformation="true"
 				LinkTimeCodeGeneration="0"
 				TargetMachine="1"
@@ -134,7 +135,7 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="v8.lib Irrlicht.lib zoidcom_vc.lib wsock32.lib ws2_32.lib winmm.lib"
+				AdditionalDependencies="v8.lib Irrlicht.lib zoidcom_vc.lib cproxyv8.lib wsock32.lib ws2_32.lib winmm.lib"
 				GenerateDebugInformation="true"
 				OptimizeReferences="2"
 				EnableCOMDATFolding="2"
@@ -289,6 +290,18 @@
 					>
 				</File>
 			</Filter>
+			<Filter
+				Name="JS"
+				>
+				<File
+					RelativePath=".\JSConvert.h"
+					>
+				</File>
+				<File
+					RelativePath=".\JSObject.h"
+					>
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"
@@ -301,14 +314,6 @@
 			</File>
 			<File
 				RelativePath=".\testlevel\main.js"
-				>
-			</File>
-		</Filter>
-		<Filter
-			Name="JS"
-			>
-			<File
-				RelativePath=".\JSObject.h"
 				>
 			</File>
 		</Filter>

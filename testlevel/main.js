@@ -1,16 +1,7 @@
 
 function level_start()
 {
-	print('Welcome to testimappi!');
-	
-var oTaso = {
-	shapes : [{
-		shape: 'plane',
-		normal: [0,0,1]
-	}]
-}
-
-
+	//print('Welcome to testimappi!');
 
 /*
 
@@ -34,10 +25,24 @@ var oTaso = {
 		class: 'foobox'
 	});
 */	
-		
+
+for (var i = 0; i < 10; i++)
+{
+	var obj = new Object({
+		body: 'saronacube.obj',
+		mesh: 'saronacube.obj',
+		texture: 'saronacube.png',
+		mass: 1,
+		position: [0,0,i*8+5]
+	});
 	
-	var maxkerroksia = 10;
-	for(var kerros = 1 ; kerros < maxkerroksia; kerros++)
+	obj.push(0,0,0);
+}
+	
+	
+	
+	var maxkerroksia = 5;
+	for(var kerros = 0 ; kerros < maxkerroksia; kerros++)
 	{
 		for(var x = 0 ; x < 10; x++)
 		for(var y = 0 ; y < 10; y++)
@@ -60,25 +65,26 @@ var oTaso = {
 						xd = 0.5;
 				}
 				
-				
-				scene.create( {
+				/*
+				var obj = new Object( {
 					shapes : [{
 						shape: 'cube',
 						length: 5,
 						mass: 1
 					}]
 				}, [(0.5+x+xd)*5, (0.5+y+yd)*5, (kerros+0.5)*5]);
+				
+				obj.push(0,0,1); */
 			}
-			
 		}
 	}
-	
-/*	for (var i = 0 ; i < 100; i ++)
+	/*
+	for (var i = 0 ; i < 200; i ++)
 	{
 		scene.create({shapes:[{shape:'cube',length:5,mass:1}]},[0,0,(i+0.5)*5]);
 	} */
 	
-	
+	/*
 	scene.create( {
 		shapes : [{
 			shape: 'cube',
@@ -86,7 +92,7 @@ var oTaso = {
 			mass: 500
 		}]
 	}, [25,25,200]);
-	
+	*/
 }
 
 function level_end()

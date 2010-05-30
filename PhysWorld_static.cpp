@@ -32,7 +32,7 @@ namespace Sarona
 
 		return v8::Undefined();
 	}
-	
+	/*
 	v8::Handle<v8::Value> PhysWorld::JSSceneCreate(const v8::Arguments& args)
 	{
 		PhysWorld* world = static_cast<PhysWorld*>(v8::Handle<v8::External>::Cast(args.Holder()->GetInternalField(0))->Value());
@@ -48,7 +48,7 @@ namespace Sarona
 	{
 		PhysWorld* world = static_cast<PhysWorld*>(v8::Handle<v8::External>::Cast(info.Holder()->GetInternalField(0))->Value());
 		return world->SceneSetter(property,value,info);	
-	}
+	}*/
 
 
 }

@@ -30,6 +30,7 @@
 
 //---------------------------------------------------------------------
 
+#pragma once
 #include "cproxyv8.h"
 
 namespace CProxyV8

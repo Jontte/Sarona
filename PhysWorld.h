@@ -37,6 +37,8 @@ namespace Sarona
 		void CreateBulletContext();
 		ptr_vector<PhysObject>			m_objects;
 
+		// Ground plane
+		scoped_ptr<btRigidBody>	m_ground;
 
 		// v8
 		void CreateV8Context();
@@ -53,12 +55,20 @@ namespace Sarona
 		static void						JSSceneSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info);
 
 		void Loop();
+
+		// Used to cache&store shapes and trianglesoups for bullet
+		struct ShapeData
+		{
+			btCollisionShape		*	shape;
+			btTriangleMesh			*	mesh_interface; 
+			ShapeData() : shape(NULL), mesh_interface(NULL){}
+			~ShapeData(){delete shape; delete mesh_interface;}
+		};
+
+		ptr_map<string, ShapeData> m_shapecache;
 	public:
 
-
-		PhysObject* CreateCube(const btVector3& position, const btScalar& length);
-		PhysObject* CreateSphere(const btVector3& position, const btScalar& radius);
-		PhysObject* CreatePlane(const btVector3& position, const btVector3& normal);
+		PhysObject* CreateObject(const btVector3& position);
 		
 		PhysWorld(IrrlichtDevice * dev = NULL);
 		~PhysWorld();
@@ -67,6 +77,8 @@ namespace Sarona
 
 		void Start();
 		void Wait();
+
+		btCollisionShape* getShape(const string& byname);
 	};
 
 }

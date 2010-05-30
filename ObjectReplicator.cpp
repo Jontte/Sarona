@@ -6,6 +6,8 @@
 namespace Sarona
 {
 
+	static const int FLOAT_BITS = 12;
+
 	ObjectReplicator::ObjectReplicator(ZCom_ReplicatorSetup* setup, PhysObject* phys) 
 		: ZCom_ReplicatorAdvanced(setup)
 		, m_phys(phys)
@@ -50,23 +52,23 @@ namespace Sarona
 			ZCom_BitStream* stream = new ZCom_BitStream();
 
 			// position
-			stream->addFloat(position[0], 10);
-			stream->addFloat(position[1], 10);
-			stream->addFloat(position[2], 10);
+			stream->addFloat(position[0], FLOAT_BITS);
+			stream->addFloat(position[1], FLOAT_BITS);
+			stream->addFloat(position[2], FLOAT_BITS);
 			// rotation
-			stream->addFloat(rotation[0], 10);
-			stream->addFloat(rotation[1], 10);
-			stream->addFloat(rotation[2], 10);
-			stream->addFloat(rotation[3], 10);
+			stream->addFloat(rotation[0], FLOAT_BITS);
+			stream->addFloat(rotation[1], FLOAT_BITS);
+			stream->addFloat(rotation[2], FLOAT_BITS);
+			stream->addFloat(rotation[3], FLOAT_BITS);
 			// velocity
-			stream->addFloat(velocity[0], 10);
-			stream->addFloat(velocity[1], 10);
-			stream->addFloat(velocity[2], 10);
+			stream->addFloat(velocity[0], FLOAT_BITS);
+			stream->addFloat(velocity[1], FLOAT_BITS);
+			stream->addFloat(velocity[2], FLOAT_BITS);
 			// omega
-			stream->addFloat(omega[0], 10);
-			stream->addFloat(omega[1], 10);
-			stream->addFloat(omega[2], 10);
-			stream->addFloat(omega[3], 10);
+			stream->addFloat(omega[0], FLOAT_BITS);
+			stream->addFloat(omega[1], FLOAT_BITS);
+			stream->addFloat(omega[2], FLOAT_BITS);
+			stream->addFloat(omega[3], FLOAT_BITS);
 
 			this->sendDataDirect(eZCom_Unreliable, *iter, stream); 
 //			this->sendDataDirect(eZCom_ReliableUnordered, *iter, stream); 
@@ -79,9 +81,9 @@ namespace Sarona
 	{
 		// mark dirty if position change significant
 
-		btVector3 temp = position - m_position;
+		//btVector3 temp = position - m_position;
 
-		if(temp.length2() > (0.125*0.125))
+		//if(velocity.length2() > (0.125*0.125))
 		{
 			m_position = position;
 
@@ -128,23 +130,23 @@ namespace Sarona
 		btVector4 omega;
 
 		// position
-		position[0] = _stream.getFloat(10);
-		position[1] = _stream.getFloat(10);
-		position[2] = _stream.getFloat(10);
+		position[0] = _stream.getFloat(FLOAT_BITS);
+		position[1] = _stream.getFloat(FLOAT_BITS);
+		position[2] = _stream.getFloat(FLOAT_BITS);
 		// rotation
-		rotation[0] = _stream.getFloat(10);
-		rotation[1] = _stream.getFloat(10);
-		rotation[2] = _stream.getFloat(10);
-		rotation[3] = _stream.getFloat(10);
+		rotation[0] = _stream.getFloat(FLOAT_BITS);
+		rotation[1] = _stream.getFloat(FLOAT_BITS);
+		rotation[2] = _stream.getFloat(FLOAT_BITS);
+		rotation[3] = _stream.getFloat(FLOAT_BITS);
 		// velocity
-		velocity[0] = _stream.getFloat(10);
-		velocity[1] = _stream.getFloat(10);
-		velocity[2] = _stream.getFloat(10);
+		velocity[0] = _stream.getFloat(FLOAT_BITS);
+		velocity[1] = _stream.getFloat(FLOAT_BITS);
+		velocity[2] = _stream.getFloat(FLOAT_BITS);
 		// omega
-		omega[0] = _stream.getFloat(10);
-		omega[1] = _stream.getFloat(10);
-		omega[2] = _stream.getFloat(10);
-		omega[3] = _stream.getFloat(10);
+		omega[0] = _stream.getFloat(FLOAT_BITS);
+		omega[1] = _stream.getFloat(FLOAT_BITS);
+		omega[2] = _stream.getFloat(FLOAT_BITS);
+		omega[3] = _stream.getFloat(FLOAT_BITS);
 
 		if(m_net)
 		{
@@ -158,7 +160,19 @@ namespace Sarona
 
 			rot.normalize(); // get rid of rounding errors etc.
 
-			m_net->SetTransform(pos, rot);
+			core::vector3df vel(velocity[0], velocity[1], velocity[2]);
+
+			float omg[4];
+			omg[0]= omega[0];
+			omg[1]= omega[1];
+			omg[2]= omega[2];
+			omg[3]= omega[3];
+
+			boost::posix_time::ptime when = boost::posix_time::microsec_clock::local_time();
+			// subtract ping..
+			when -= boost::posix_time::milliseconds(ZoidCom::getTime() - _estimated_time_sent);
+
+			m_net->UpdateLastKnown(pos, rot, vel, omg, when);
 		}
 	}
 	

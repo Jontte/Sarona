@@ -27,12 +27,19 @@
  * compiler needs all the implementation visible to expand it.
  */
 
+#pragma once
 #include <string.h>
 
 //-----------------------------------------------------------------------------
 #include "cproxyv8-function.h"
 #include "cproxyv8-property.h"
 //-----------------------------------------------------------------------------
+
+
+
+/* this is used to convert a v8::Arguments to a vector of v8 handles to v8 values */
+void args2vector(const v8::Arguments& in, v8::Handle<v8::Object>& out);
+
 
 /** 
 * Handy macro to get the proxy class
@@ -115,14 +122,18 @@ namespace CProxyV8
  *
  * If a new primitive needs to be added here is where the cast need to be added.
  */
+
 namespace Type
 {
   /** Constructor C++ */
   template <class T>
-  inline T* New(T*t)
-  { 
+  inline T* New(T*t, const v8::Handle<v8::Object>& args = v8::Handle<v8::Object>())
+  {
     ASSERT(!t);
-    return new T();
+	if(args.IsEmpty())
+		return new T();
+
+    return new T(args);
   }
 
   /** Cast from V8 to C++ */
@@ -224,7 +235,7 @@ public:
   explicit InstaceHandle(T* t) 
     : t_(t), toBeDestroy_(false), toBeCreated_(false) {}
 
-  ~InstaceHandle() { if (t_ && toBeDestroy_) delete t_; }
+  ~InstaceHandle() { if (t_ && toBeDestroy_) delete t_; args_.Dispose(); }
 
   inline void set(T*t, bool toBeDestroy);
 
@@ -261,10 +272,16 @@ public:
     return static_cast<InstaceHandle<T>*>(that);
   }
 
+  /*
+	Constructor parameters are stashed here so that they 
+	can be forwarded to the object once its created */
+  void setArguments(const v8::Arguments& args);
+
 private:
   T* t_;
   bool toBeDestroy_;
   bool toBeCreated_;
+  v8::Persistent<v8::Object> args_;
 };
 
 template <class T>
@@ -272,7 +289,7 @@ T* InstaceHandle<T>::operator->()
 {
   if (!t_ && toBeCreated_)
   {
-    t_ = Type::New((T*)NULL);
+    t_ = Type::New((T*)NULL, args_);
     toBeCreated_ = false;
   }
 
@@ -314,11 +331,21 @@ T* InstaceHandle<T>::operator*()
 {
   if (!t_ && toBeCreated_)
   {
-    t_ = Type::New((T*)NULL);
+    t_ = Type::New((T*)NULL, args_);
     toBeCreated_ = false;
   }
 
   return t_;
+}
+
+template <class T>
+void InstaceHandle<T>::setArguments(const v8::Arguments& args)
+{
+	args_.Clear();
+	if(args.Length() > 0)
+	{
+		args2vector(args, args_);
+	}
 }
 
 //-----------------------------------------------------------------------------
@@ -531,7 +558,7 @@ ProxyClass<T>* ProxyClass<T>::init(char* name)
     //If the name is the same just return the instance
     if (strcmp(*currentName,name)) 
     {
-      Utils::ReportApiFailure("cProxyV8::ProxyClass", "Error initializing - Class already exist");  
+      //Utils::ReportApiFailure("cProxyV8::ProxyClass", "Error initializing - Class already exist");  
       return NULL;
     }
   }
@@ -539,7 +566,7 @@ ProxyClass<T>* ProxyClass<T>::init(char* name)
   {
     className_ = String::New(name);
 
-	  functionTemplate_ = FunctionTemplate::New(Create<T>);
+	functionTemplate_ = FunctionTemplate::New(Create<T>);
 	  functionTemplate_->SetClassName(className_);
 
 	  // Instance template from which Point objects are based on
@@ -664,11 +691,13 @@ Handle<Value> Create(const Arguments& args)
 		return ThrowException(String::New("Cannot call constructor as function"));
 
 	// throw if we didn't get 0 args
-	if (args.Length() != 0)
+	// Commented out by Jontte: Why shouldn't we allow constructor parameters?
+	/*if (args.Length() != 0)
 		return ThrowException(String::New("Expected no arguments"));
-
+	*/
 	// create the C++ Handle<T> to be wrapped
 	InstaceHandle<T>* t = new InstaceHandle<T>(true);
+	t->setArguments(args);
 
 	// make a persistent handle for the instance and make it
 	// weak so we get a callback when it is garbage collected
@@ -677,6 +706,9 @@ Handle<Value> Create(const Arguments& args)
 
 	// set internal field to the C++ point 
 	self->SetInternalField(0, External::New(t));
+
+	// My addition: For various reasons it will help to create the underlying object right-away..
+	**t;
 
 	return self;
 }

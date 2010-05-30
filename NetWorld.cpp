@@ -140,6 +140,12 @@ namespace Sarona
 			// Move camera
 			m_camera->Step(DeltaTime * 0.001f);
 
+			// Refresh object positions
+			for(unsigned i = 0; i < m_objects.size(); i++)
+			{
+				m_objects[i].RefreshPosRot();
+			}
+
 			// Draw everything
 			scenemgr->drawAll();
 
@@ -166,8 +172,8 @@ namespace Sarona
 	{
 		if (_result == eZCom_ConnAccepted)
 		{
-			ZCom_requestZoidMode(_id, 1);
-			ZCom_requestDownstreamLimit(_id, 1000, 100000 );
+			ZCom_requestZoidMode(_id, zU16(1));
+			ZCom_requestDownstreamLimit(_id, (zU16)1000, (zU16)100000 );
 		}
 		else
 		{

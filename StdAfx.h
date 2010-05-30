@@ -25,15 +25,28 @@ using boost::get_pointer;
 #include <boost/ptr_container/ptr_vector.hpp>
 using boost::ptr_vector;
 
+#include <boost/ptr_container/ptr_map.hpp>
+using boost::ptr_map;
+
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/thread.hpp>
 #include <boost/preprocessor/seq/for_each.hpp>
 #include <boost/preprocessor/tuple/elem.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/tuple/tuple.hpp>
+#include <boost/type_traits.hpp>
 
 void intrusive_ptr_add_ref(IReferenceCounted* t);
 void intrusive_ptr_release(IReferenceCounted* t);
+
+
+#ifndef ASSERT
+#define ASSERT(x) assert(x)
+#endif
+
+#include <cproxyv8.h>
+#include <cproxyv8-class.h>
 
 
 

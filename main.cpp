@@ -35,7 +35,7 @@ int main(int argc, char *argv[])
 	{
 		// Graphical interface
 		device = intrusive_ptr<IrrlichtDevice>(
-			createDevice(video::EDT_OPENGL, core::dimension2d<u32>(640,480), 16, false, true, true),
+			createDevice(video::EDT_OPENGL, core::dimension2d<u32>(800,600), 16, false, true, true),
 			false /* don't addref */
 		);
 

@@ -25,6 +25,34 @@
 
 #include "cproxyv8.h"
 
+#include <vector>
+
+/* this is used to convert a v8::Arguments to a vector of v8 handles to v8 values */
+void args2vector(const v8::Arguments& in, v8::Handle<v8::Object>& out)
+{
+	// Arguments.operator[] does not guarantee contiguous space 
+	// so lets just copy the stuff the old way
+
+//	v8::Local<v8::FunctionTemplate> templ = v8::FunctionTemplate::New();
+	
+//		v8::Local<v8::External> external = v8::Local<v8::External>::Cast(in.Data());//GetInternalField(0));
+
+//		PhysWorld* world = static_cast<PhysWorld*>(external->Value());
+
+/*
+	v8::Local<v8::ObjectTemplate> tpl = v8::ObjectTemplate::New();
+	tpl->SetInternalFieldCount(1);
+*/
+	out = v8::Persistent<v8::Object>::New(v8::Object::New()); //tpl->NewInstance();
+	
+//	out->SetInternalField(0, external);
+
+	for(int i = 0 ; i < in.Length(); i++)
+	{
+		out->Set(i, in[i]);
+	}
+}
+
 void Accessor_SetProperty(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info)
 {
   v8::Local<v8::External> external = v8::Local<v8::External>::Cast(info.Data());
