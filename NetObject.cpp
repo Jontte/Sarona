@@ -19,7 +19,7 @@ namespace Sarona
 		m_zcomNode.reset(new ZCom_Node());
 
 		// BEGIN REPLICATION SETUP
-		m_zcomNode->beginReplicationSetup(1);
+		m_zcomNode->beginReplicationSetup(2);
 			ZCom_ReplicatorSetup setup(/*flags*/ ZCOM_REPFLAG_UNRELIABLE|ZCOM_REPFLAG_MOSTRECENT, /*rules*/ ZCOM_REPRULE_AUTH_2_ALL, /*intercept_id*/ 0, /*min_delay*/ 10, /*max_delay*/ 100);
 			m_zcomNode -> addReplicator(new ObjectReplicator(setup.Duplicate(), this), true);
 			m_zcomNode -> addReplicator(this, false); // autodelete = false, pretty important when passing 'this' ;)

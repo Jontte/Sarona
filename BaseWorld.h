@@ -4,7 +4,10 @@
 namespace Sarona
 {
 
-class BaseWorld : public ZCom_Control
+class BaseWorld 
+	: public ZCom_Control
+	, public ZCom_Node
+	, public ZCom_NodeEventInterceptor
 {
 protected:
 	// Level config
@@ -26,6 +29,7 @@ protected:
 public:
 
 	static int m_objectId;
+	static int m_commId;
 
 	void LoadLevel(std::string level);
 

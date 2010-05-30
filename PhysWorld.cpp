@@ -12,6 +12,11 @@ namespace Sarona
 		ZCom_setUpstreamLimit(100000, 100000);
 		// Load script, initialize components
 		CreateV8Context();
+
+		this->beginReplicationSetup(0);
+		this->endReplicationSetup();
+		this->setEventInterceptor(this);
+		this->registerNodeUnique(m_commId, eZCom_RoleAuthority, this);
 	}
 
 	PhysWorld::~PhysWorld(void)
@@ -312,7 +317,6 @@ namespace Sarona
 	}
 	void PhysWorld::ZCom_cbZoidResult( ZCom_ConnID _id, eZCom_ZoidResult _result, zU8 _new_level, ZCom_BitStream &_reason )
 	{
-	
 	}
 	void PhysWorld::ZCom_cbNodeRequest_Dynamic( ZCom_ConnID _id, ZCom_ClassID _requested_class, ZCom_BitStream *_announcedata,
 		eZCom_NodeRole _role, ZCom_NodeID _net_id )
@@ -332,5 +336,60 @@ namespace Sarona
 	void PhysWorld::ZCom_cbDiscovered( const ZCom_Address & _addr, ZCom_BitStream &_reply )
 	{
 	
+	}
+
+	// Node events
+
+	bool PhysWorld::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
+					eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
+					zU32 _estimated_time_sent)
+	{
+		bool press = _data.getBool();
+		int key = _data.getInt(8);
+
+		std::cout << "EVENT " << press << " " << key << std::endl;
+
+		return false;
+	}
+	                          
+	bool PhysWorld::recInit(ZCom_Node *_node, ZCom_ConnID _from,
+			   eZCom_NodeRole _remoterole)
+	{
+		return false;
+	}
+	bool PhysWorld::recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from, 
+					  eZCom_NodeRole _remoterole)
+	{
+		return false;
+	}
+	bool PhysWorld::recRemoved(ZCom_Node *_node, ZCom_ConnID _from,
+				  eZCom_NodeRole _remoterole)
+	{
+		return false;
+	}
+	                        
+	bool PhysWorld::recFileIncoming(ZCom_Node *_node, ZCom_ConnID _from,
+					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid, 
+					   ZCom_BitStream &_request)
+	{
+		return false;
+	}
+	                             
+	bool PhysWorld::recFileData(ZCom_Node *_node, ZCom_ConnID _from,
+				   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
+	{
+		return false;
+	}
+	                     
+	bool PhysWorld::recFileAborted(ZCom_Node *_node, ZCom_ConnID _from,
+					  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) 
+	{
+		return false;
+	}
+	                           
+	bool PhysWorld::recFileComplete(ZCom_Node *_node, ZCom_ConnID _from,
+					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
+	{
+		return false;
 	}
 }

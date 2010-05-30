@@ -12,7 +12,6 @@ namespace Sarona
 		boost::thread		m_thread;
 
 		// Connection management
-
 		bool ZCom_cbConnectionRequest(ZCom_ConnID _id, ZCom_BitStream &_request, ZCom_BitStream &_reply);
 		void ZCom_cbConnectionSpawned( ZCom_ConnID _id );
 		void ZCom_cbConnectionClosed( ZCom_ConnID _id, eZCom_CloseReason _reason, ZCom_BitStream &_reasondata );
@@ -27,6 +26,32 @@ namespace Sarona
 		bool ZCom_cbDiscoverRequest( const ZCom_Address &_addr, ZCom_BitStream &_request, 
 			ZCom_BitStream &_reply );
 		void ZCom_cbDiscovered( const ZCom_Address & _addr, ZCom_BitStream &_reply );
+
+		// Node event interceptor interface
+		bool recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
+						eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
+						zU32 _estimated_time_sent);
+		                          
+		bool recInit(ZCom_Node *_node, ZCom_ConnID _from,
+				   eZCom_NodeRole _remoterole);
+		bool recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from, 
+						  eZCom_NodeRole _remoterole);
+		                              
+		bool recRemoved(ZCom_Node *_node, ZCom_ConnID _from,
+					  eZCom_NodeRole _remoterole);
+		                        
+		bool recFileIncoming(ZCom_Node *_node, ZCom_ConnID _from,
+						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid, 
+						   ZCom_BitStream &_request);
+		                             
+		bool recFileData(ZCom_Node *_node, ZCom_ConnID _from,
+					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) ;
+		                     
+		bool recFileAborted(ZCom_Node *_node, ZCom_ConnID _from,
+						  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) ;
+		                           
+		bool recFileComplete(ZCom_Node *_node, ZCom_ConnID _from,
+						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid);
 
 		// Bullet
 		scoped_ptr<btBroadphaseInterface>				m_broadphase;

@@ -7,6 +7,7 @@ namespace Sarona
 	BaseWorld::BaseWorld(IrrlichtDevice* dev) 
 		: m_device(dev)
 	{
+		RegisterZComObjects();
 	}
 
 	BaseWorld::~BaseWorld(void)
@@ -19,6 +20,7 @@ namespace Sarona
 	{
 		// has to be called after initialization, before any connections are made
 		m_objectId = this->ZCom_registerClass("Object");
+		m_commId = this->ZCom_registerClass("GlobalCommunicator");
 	}
 
 	void BaseWorld::LoadLevel(std::string level)
@@ -96,4 +98,5 @@ namespace Sarona
 	}
 
 	int BaseWorld::m_objectId;
+	int BaseWorld::m_commId;
 }

@@ -26,7 +26,7 @@ namespace Sarona
 		ObjectReplicator* replicator = new ObjectReplicator(setup.Duplicate(), this);
 
 		// BEGIN REPLICATION SETUP
-		m_zcomNode->beginReplicationSetup(1);
+		m_zcomNode->beginReplicationSetup(2);
 			m_zcomNode -> addReplicator(replicator, true);
 			m_zcomNode -> addReplicator(this, false); // autodelete = false, pretty important when passing 'this' ;)
 		m_zcomNode->endReplicationSetup();
