@@ -1,46 +1,34 @@
 
 function level_start()
 {
-	//print('Welcome to testimappi!');
+	print('Welcome to testimappi!');
 
-/*
-
-	var cubeBody = new CubeBody({
-		length : 5
-	});
-	var cubeMesh = new CubeMesh({
-		length : 5,
-		texture: 'testgraphics.png'
-	});
-	var obj = new Object({
-		body: [cubeBody],
-		mesh: [cubeMesh],
-		mass: 1,
+	for (var i = 0; i < 10; i++)
+	{
+		var obj = new Object({
+			body: 'saronacube.obj',
+			mesh: 'saronacube.obj',
+			texture: 'saronacube.png',
+			mass: 1,
+			position: [0,0,i*8+5]
+		});	
+		obj.push(0,0,0);
+	}
+	
+	for(var i = 0; i < scene.players.length; i++)
+	{
+		var p = scene.players[i];
+		// Bind a key for each player in the scene.
 		
-		position	: [0,0,0],
-		rotation	: [0,0,0],
-		velocity	: [0,0,10],
-		omega		: [0,0,0],
+		print(p.foo);
 		
-		class: 'foobox'
-	});
-*/	
-
-for (var i = 0; i < 10; i++)
-{
-	var obj = new Object({
-		body: 'saronacube.obj',
-		mesh: 'saronacube.obj',
-		texture: 'saronacube.png',
-		mass: 1,
-		position: [0,0,i*8+5]
-	});
-	
-	obj.push(0,0,0);
-}
+		p.bind("keydown", "space", function(){
+			print('Space down');
+		})
+	}
 	
 	
-	
+	/*
 	var maxkerroksia = 5;
 	for(var kerros = 0 ; kerros < maxkerroksia; kerros++)
 	{
@@ -65,7 +53,7 @@ for (var i = 0; i < 10; i++)
 						xd = 0.5;
 				}
 				
-				/*
+				
 				var obj = new Object( {
 					shapes : [{
 						shape: 'cube',
@@ -74,10 +62,10 @@ for (var i = 0; i < 10; i++)
 					}]
 				}, [(0.5+x+xd)*5, (0.5+y+yd)*5, (kerros+0.5)*5]);
 				
-				obj.push(0,0,1); */
+				obj.push(0,0,1); 
 			}
 		}
-	}
+	}*/
 	/*
 	for (var i = 0 ; i < 200; i ++)
 	{

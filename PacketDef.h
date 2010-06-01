@@ -11,66 +11,73 @@ namespace Sarona
 {
 	namespace Protocol
 	{
-		template<unsigned Id> struct PID {
-			static const int ID = Id;
+		// Protocol type type traits 
+		// Currently field widths are hard coded...
+		template <class T> struct TypeDefinition;
+
+#define TYPE_DEFINITION_CUSTOM(TYPE, READ, WRITE) \
+		template <> struct TypeDefinition< TYPE > {\
+			static inline TYPE read(ZCom_BitStream & _stream) { \
+				READ;\
+			} \
+			static inline void write(ZCom_BitStream & _stream, const TYPE& data) { \
+				WRITE;\
+			} \
 		};
+#define TYPE_DEFINITION(TYPE, READ, WRITE) \
+		TYPE_DEFINITION_CUSTOM(TYPE, \
+		return _stream.READ; ,\
+		_stream.WRITE ;);\
 
 		// Macro hackery
 		#define FIELDDEF(AUX, DATA, ELEM) BOOST_PP_TUPLE_ELEM(2, 0, ELEM) BOOST_PP_TUPLE_ELEM(2, 1, ELEM) ;
-		#define SERIALIZEDEF(AUX, DATA, ELEM) DATA & BOOST_PP_TUPLE_ELEM(2, 1, ELEM) ;
+		#define READDEF(AUX, DATA, ELEM) BOOST_PP_TUPLE_ELEM(2, 1, ELEM) = TypeDefinition<BOOST_PP_TUPLE_ELEM(2, 0, ELEM)>::read(DATA);
+		#define WRITEDEF(AUX, DATA, ELEM) TypeDefinition<BOOST_PP_TUPLE_ELEM(2, 0, ELEM)>::write(DATA, BOOST_PP_TUPLE_ELEM(2, 1, ELEM));
 
 		#define DEF(ID, NAME, FIELDS) \
-		struct NAME : public PID<ID> \
+		struct NAME\
 		{\
+			static const int Id = ID;\
 			BOOST_PP_SEQ_FOR_EACH(FIELDDEF, _, FIELDS)\
-			template<class Archive> \
-			void serialize(Archive & ar) \
+			void read(ZCom_BitStream & _stream) \
 			{ \
-				BOOST_PP_SEQ_FOR_EACH(SERIALIZEDEF, ar, FIELDS)\
+				BOOST_PP_SEQ_FOR_EACH(READDEF, _stream, FIELDS)\
+			} \
+			void write(ZCom_BitStream & _stream) \
+			{ \
+				_stream.addInt(Id, 16); /*add packet id*/ \
+				BOOST_PP_SEQ_FOR_EACH(WRITEDEF, _stream, FIELDS)\
 			} \
 		};
+
+		// - - - - - - - - - - T Y P E   D E F I N I T I O N S - - - - - - - - - -
+		TYPE_DEFINITION(u16, getInt(16), addInt(data, 16));
+		TYPE_DEFINITION(s16, getSignedInt(16), addSignedInt(data, 16));
+		TYPE_DEFINITION(u8,  getInt(8), addInt(data, 8));
+		TYPE_DEFINITION(bool,  getBool(), addBool(data));
+		TYPE_DEFINITION(string, getStringStatic(), addString(data.c_str()))
 
 		// - - - - - - - - - - P A C K E T   D E F I N I T I O N S - - - - - - - - - -
 		// Namespaces :
 		// 0x0000 - Connection management packages
-		// 0x0100 - World updates
-		// 0x0200 - Events
+		// 0x0100 - Object-level events, Client -> Server 
+		// 0x0200 - Object-level events, Server -> Client
+		// 0x0300 - Global events, Client -> Server
+		// 0x0400 - Global events, Server -> Client
 
 		DEF(0x0000, VersionCheck,		((s16, major)) ((s16, minor)));
 		DEF(0x0001, LevelHashCheck,		((string, sha1)));
 
-		DEF(0x0100, PositionUpdate,	
-			((	u32	, object_id						))	
-			((	s32, x  ))(( s32, y  ))(( s32, z	))	// Position
-			((	s32, vx ))(( s32, vy ))(( s32, vz	))  // Velocity
-				// TODO: Orientation, Omega...
-			);
+		DEF(0x0300, KeyPressEvent, ((u8, keycode))((bool, press)));
+		DEF(0x0301, LevelRequest, ((string, name)))  // Client must send either of these two as a reply to LevelSelect
+		DEF(0x0302, LevelConfirm, ((bool, unused))) 
 
-		DEF(0x0200, GlobalEvent,		((s32, message_id))((string, message)));
-		DEF(0x0201, QuickEvent,			((s32, object_id))((string, message)));
-
+		DEF(0x0400, LevelSelect, ((string, name)))
+		DEF(0x0401, GameStartNotify, ((bool, unused)))
 
 		// Utility functions
+
 /*
-		// Check if raw data contains a packet
-		template <class PacketClass>
-		bool PacketIs(byte*& data, int& count)
-		{
-			if(count <= 2)return false;
-
-			u16& id = PacketClass::ID;
-			union{char in[2], u16 out};
-			in[0]=data[0];
-			in[1]=data[1];
-			if(out == id)
-			{
-				// ATN: shifts pointer
-				data+=2;
-				return true;
-			}
-			return false;
-		}
-
 		template <class PacketClass>
 		u16 PacketID(const PacketClass& p)
 		{
@@ -80,7 +87,9 @@ namespace Sarona
 		// Cleanup..
 		#undef DEF
 		#undef FIELDDEF
-		#undef SERIALIZEDEF
+		#undef READDEF
+		#undef WRITEDEF
+		#undef TYPE_DEFINITION
 	}
 }
 

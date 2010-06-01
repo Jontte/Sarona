@@ -32,13 +32,19 @@ namespace Sarona
 
 		return v8::Undefined();
 	}
-	/*
-	v8::Handle<v8::Value> PhysWorld::JSSceneCreate(const v8::Arguments& args)
+	
+	v8::Handle<v8::Value> PhysWorld::JSPlayerBind(const v8::Arguments& args)
 	{
-		PhysWorld* world = static_cast<PhysWorld*>(v8::Handle<v8::External>::Cast(args.Holder()->GetInternalField(0))->Value());
-		return world->SceneCreate(args);
-	}
+		// Grab world.
+		v8::Local<v8::External> external = v8::Local<v8::External>::Cast(
+			v8::Handle<v8::Object>::Cast(v8::Context::GetCurrent()->Global()->GetPrototype())
+				->GetInternalField(0));
 
+		PhysWorld* world = static_cast<PhysWorld*>(external->Value());
+
+		return world->PlayerBind(args);
+	}
+	/*
 	v8::Handle<v8::Value> PhysWorld::JSSceneGetter(v8::Local<v8::String> property, const v8::AccessorInfo& info)
 	{
 		PhysWorld* world = static_cast<PhysWorld*>(v8::Handle<v8::External>::Cast(info.Holder()->GetInternalField(0))->Value());

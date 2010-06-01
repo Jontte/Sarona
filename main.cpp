@@ -24,28 +24,47 @@ int main(int argc, char *argv[])
 
 	intrusive_ptr<IrrlichtDevice> device;
 	
-	bool server = (args.size() > 1 && args[1] == "server");
-	bool client = (args.size() > 1 && args[1] == "client");
 
-	// if neither specified explicitly, have both for local run
-	if(!server && !client)
-		server = client = true;
+	enum {
+		DEDICATED_SERVER,
+		JOIN_GAME,
+		HOST_AND_PLAY,
+		LOCAL_GAME
+	} gametype;
 
-	if(client)
+	gametype = LOCAL_GAME; // Default
+
+	if(args.size() > 1 && args[1] == "server")
+		gametype = DEDICATED_SERVER;
+	if(args.size() > 1 && args[1] == "client")
+		gametype = JOIN_GAME;
+	if(args.size() > 1 && args[1] == "hostandplay")
+		gametype = HOST_AND_PLAY;
+
+	// whether to run server here
+	bool server = 
+		(gametype == DEDICATED_SERVER) ||
+		(gametype == HOST_AND_PLAY) || 
+		(gametype == LOCAL_GAME);
+
+	// whether to run client here
+	bool client = 
+		(gametype == JOIN_GAME) || 
+		(gametype == HOST_AND_PLAY) || 
+		(gametype == LOCAL_GAME);
+
+	if(gametype != DEDICATED_SERVER)
 	{
-		// Graphical interface
+		// Graphical interface needed
 		device = intrusive_ptr<IrrlichtDevice>(
 			createDevice(video::EDT_OPENGL, core::dimension2d<u32>(800,600), 16, false, true, true),
 			false /* don't addref */
 		);
-
-		
 		device->setWindowCaption(L"Sarona");
-
 	}
 	else
 	{
-		// Command line version uses null graphics..
+		// Dedicated server uses null graphics..
 		device = intrusive_ptr<IrrlichtDevice>(
 			createDevice(video::EDT_NULL, core::dimension2d<u32>(640,480), 16, false, true, true),
 			false /* don't addref */
@@ -61,15 +80,15 @@ int main(int argc, char *argv[])
 	{
 		serverworld.reset(new Sarona::PhysWorld(get_pointer(device)));
 
-		serverworld->LoadLevel("testlevel/");
-		serverworld->Bind(9192, (client && server));
+		serverworld->SetLevel("testlevel/");
+		serverworld->Bind(9192, (gametype == LOCAL_GAME));
 	}
 	if(client)
 	{
 		clientworld.reset(new Sarona::NetWorld(get_pointer(device)));
 
-		clientworld->LoadLevel("testlevel/");
-		clientworld->Connect("localhost:9192", (client && server));
+		clientworld->SetLevel("testlevel/");
+		clientworld->Connect("localhost:9192", (gametype == LOCAL_GAME));
 	}
 
 	if(serverworld)

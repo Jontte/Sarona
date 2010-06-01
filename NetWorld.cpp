@@ -1,6 +1,7 @@
 #include "StdAfx.h"
 #include "NetObject.h"
 #include "NetWorld.h"
+#include "PacketDef.h"
 
 namespace Sarona
 {
@@ -14,8 +15,6 @@ namespace Sarona
 		this->setEventInterceptor(this);
 		this->registerNodeUnique(m_commId, eZCom_RoleOwner, this);
 
-		// Load script, initialize components
-		CreateV8Context();
 
 		// Create camera
 		m_camera.reset(new Camera(get_pointer(m_device)));
@@ -57,13 +56,7 @@ namespace Sarona
 				break;
 			}*/
 
-			// Send ALL keypresses to server..
-
-			ZCom_BitStream * data = new ZCom_BitStream;
-
-			data->addBool(event.KeyInput.PressedDown); // Up/Down
-			data->addInt(event.KeyInput.Key, 8); // Which key
-			this->sendEventDirect(eZCom_ReliableOrdered, data, m_serverConnectionId);
+			UpdateKeyState(event.KeyInput.Key, event.KeyInput.PressedDown);
 
 			return true;
 		}
@@ -73,6 +66,25 @@ namespace Sarona
 
 
 		return false;
+	}
+
+	void NetWorld::UpdateKeyState(u8 keycode, bool pressed)
+	{
+		// Update key press statuses using a large array for the bits..
+		
+		if(m_keystate[keycode] != pressed)
+		{
+			m_keystate[keycode] = pressed;
+
+			// Send ALL keypresses to server..
+			ZCom_BitStream * data = new ZCom_BitStream;
+				Protocol::KeyPressEvent keypress;
+				keypress.keycode = keycode;
+				keypress.press = pressed;
+				keypress.write(*data);
+			this->sendEventDirect(eZCom_ReliableOrdered, data, m_serverConnectionId);
+
+		}
 	}
 
 	void NetWorld::Connect(string host, bool local)
@@ -121,6 +133,34 @@ namespace Sarona
 	{
 		video::IVideoDriver* driver = m_device->getVideoDriver();
 		scene::ISceneManager* scenemgr = m_device->getSceneManager();
+
+		// Wait for game start event
+		while(m_device->run())
+		{
+			driver->beginScene(true, true, video::SColor(255, 128, 160, 255));
+
+			// Step network code
+			this->ZCom_processInput();
+			this->ZCom_processOutput();
+
+			// Draw everything
+			scenemgr->drawAll();
+
+			driver->endScene();
+
+			if(m_gamerunning)
+				break;
+		}
+		if(!m_gamerunning)
+		{
+			// Lobby was quit prematurely.
+			return;
+		}
+
+		// Create v8 context
+		CreateV8Context();
+		// Load script, initialize components
+		LoadLevel(false); // false = don't run scripts (we're not the host)
 
 		// Set our delta time and time stamp
 		u32 TimeStamp = m_device->getTimer()->getTime();
@@ -274,6 +314,28 @@ namespace Sarona
 					eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
 					zU32 _estimated_time_sent)
 	{
+		unsigned int Id = _data.getInt(16);
+
+		if(Id == Protocol::GameStartNotify::Id)
+		{
+			Protocol::GameStartNotify notify;
+			notify.read(_data); // has to be called
+			m_gamerunning = true;	
+		}
+		else if(Id == Protocol::LevelSelect::Id)
+		{
+			Protocol::LevelSelect select;
+			select.read(_data);
+
+			SetLevel(select.name);
+
+			// TODO: always accept the level
+
+			Protocol::LevelConfirm confirm;
+			ZCom_BitStream * stream = new ZCom_BitStream;
+			confirm.write(*stream);
+			this->sendEventDirect(eZCom_ReliableOrdered, stream, _from);
+		}
 		return false;
 	}
 	                          

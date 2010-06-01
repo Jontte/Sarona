@@ -13,6 +13,7 @@ namespace Sarona
 		scoped_ptr<Camera> m_camera;
 		boost::thread		m_thread;
 		ptr_vector<NetObject>			m_objects;
+		std::bitset<256> m_keystate;
 
 		void CreateV8Context();
 
@@ -60,6 +61,9 @@ namespace Sarona
 						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid);
 	
 		ZCom_ConnID	m_serverConnectionId;
+
+		void UpdateKeyState(u8 keycode, bool pressed);
+
 	public:
 		NetWorld(IrrlichtDevice * dev);
 		~NetWorld();

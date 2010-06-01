@@ -62,22 +62,53 @@ namespace Sarona
 		void CreateBulletContext();
 		ptr_vector<PhysObject>			m_objects;
 
+		// Clients
+		struct Client
+		{
+		private:
+			struct Event
+			{
+				string eventtype;
+				string eventname;
+				v8::Persistent<v8::Function> function;
+				v8::Persistent<v8::Object> context;
+
+				~Event() {function.Dispose(); context.Dispose();}
+			};
+
+			ptr_vector<Event> m_events;
+
+		public:
+			string name; // TODO: Implement
+			ZCom_ConnID connection_id;
+			bool level_confirmed; 
+			bool disconnected;
+
+			Client() : level_confirmed(false), connection_id(0), name("Unnamed"), disconnected(true){}
+
+			void bind_event(const string& eventtype, const string& eventname, v8::Handle<v8::Function> func, v8::Handle<v8::Object> context);
+			void call_event(const string& eventtype, const string& eventname, std::vector<v8::Handle< v8::Value > >& args = std::vector<v8::Handle< v8::Value > >());
+		};
+
+		ptr_vector<Client> m_clients;
+
+		Client* GetClientById(const ZCom_ConnID&);
+		
+		void AnnounceGameStart();
+
 		// Ground plane
 		scoped_ptr<btRigidBody>	m_ground;
 
 		// v8
 		void CreateV8Context();
+		void RunSceneJS();
 
-		v8::Handle<v8::Value>			SceneCreate(const v8::Arguments& args);
-		v8::Handle<v8::Value>			SceneGetter(v8::Local<v8::String> property, const v8::AccessorInfo& info);
-		void							SceneSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info);
+		v8::Handle<v8::Value>			PlayerBind(const v8::Arguments& args);
 		
 
 		// static JS Functions:
 		static v8::Handle<v8::Value>	JSPrint(const v8::Arguments& args);
-		static v8::Handle<v8::Value>	JSSceneCreate(const v8::Arguments& args);
-		static v8::Handle<v8::Value>	JSSceneGetter(v8::Local<v8::String> property, const v8::AccessorInfo& info);
-		static void						JSSceneSetter(v8::Local<v8::String> property, v8::Local<v8::Value> value, const v8::AccessorInfo& info);
+		static v8::Handle<v8::Value>	JSPlayerBind(const v8::Arguments& args);
 
 		void Loop();
 
@@ -91,6 +122,7 @@ namespace Sarona
 		};
 
 		ptr_map<string, ShapeData> m_shapecache;
+
 	public:
 
 		PhysObject* CreateObject(const btVector3& position);

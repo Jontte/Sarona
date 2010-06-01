@@ -1,0 +1,15 @@
+
+*.suo
+
+Release/*
+Debug/*
+
+bullet3d/Debug/*
+bullet3d/Release/*
+
+cproxyv8/Debug/*
+cproxyv8/Release/*
+
+jsoncpp/Debug/*
+jsoncpp/Release/*
+

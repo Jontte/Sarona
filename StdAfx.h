@@ -4,6 +4,8 @@ using std::string;
 #include <vector>
 using std::vector;
 
+#include <bitset>
+
 #include <set>
 
 #include <json/json.h>
@@ -12,8 +14,10 @@ using std::vector;
 #include <irrlicht.h>
 using namespace irr;
 
-#include <btBulletDynamicsCommon.h>
+void intrusive_ptr_add_ref(IReferenceCounted* t);
+void intrusive_ptr_release(IReferenceCounted* t);
 
+#include <btBulletDynamicsCommon.h>
 
 #include <boost/scoped_ptr.hpp>
 using boost::scoped_ptr;
@@ -37,16 +41,10 @@ using boost::ptr_map;
 #include <boost/tuple/tuple.hpp>
 #include <boost/type_traits.hpp>
 
-void intrusive_ptr_add_ref(IReferenceCounted* t);
-void intrusive_ptr_release(IReferenceCounted* t);
-
-
 #ifndef ASSERT
 #define ASSERT(x) assert(x)
 #endif
 
 #include <cproxyv8.h>
 #include <cproxyv8-class.h>
-
-
 

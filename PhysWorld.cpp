@@ -1,6 +1,8 @@
 #include "StdAfx.h"
 #include "PhysWorld.h"
 #include "JSObject.h"
+#include "Util.h"
+#include "PacketDef.h"
 
 #include <stdexcept>
 
@@ -10,8 +12,6 @@ namespace Sarona
 		: BaseWorld(dev)
 	{
 		ZCom_setUpstreamLimit(100000, 100000);
-		// Load script, initialize components
-		CreateV8Context();
 
 		this->beginReplicationSetup(0);
 		this->endReplicationSetup();
@@ -52,6 +52,9 @@ namespace Sarona
 
 	void PhysWorld::CreateV8Context()
 	{
+		// Get rid of any existing contexts..
+		m_jscontext.Dispose();
+
 		v8::Locker locker;
 
 		v8::HandleScope handle_scope;
@@ -60,30 +63,21 @@ namespace Sarona
 		global->SetInternalFieldCount(2);
 
 		// Scene
-//		v8::Handle<v8::ObjectTemplate> scene = v8::ObjectTemplate::New();
-//		scene->SetInternalFieldCount(1);
+		v8::Handle<v8::ObjectTemplate> scene = v8::ObjectTemplate::New();
+		scene->SetInternalFieldCount(1);
 
 		// Static functions
-//		global->Set(v8::String::New("print"), v8::FunctionTemplate::New(PhysWorld::JSPrint));
+		global->Set(v8::String::New("print"), v8::FunctionTemplate::New(PhysWorld::JSPrint));
 
 		// Objects
-//		global->Set(v8::String::New("scene"), scene);
+		global->Set(v8::String::New("scene"), scene);
 
 		CProxyV8::ProxyClass<JSObject>* pJSObject = CProxyV8::ProxyClass<JSObject>::instance()->init("Object");
-
 		pJSObject->Expose(&JSObject::push, "push");
 		global->Set(v8::String::New("Object"), pJSObject->GetFunctionTemplate());
 
-
-
-		// Constants
-//		global->Set(v8::String::New("SHAPE_PLANE"), v8::Int32::New(0));
-//		global->Set(v8::String::New("SHAPE_SPHERE"), v8::Int32::New(1));
-
 		m_jscontext = v8::Context::New(NULL, global);
-
 		v8::Context::Scope scope(m_jscontext);
-		
 		v8::Handle<v8::External> myself = v8::External::New(this);
 		v8::Handle<v8::Object>::Cast(v8::Context::GetCurrent()->Global()->GetPrototype())->SetInternalField(0, myself);
 	}
@@ -105,17 +99,72 @@ namespace Sarona
 
 		m_dynamicsWorld->setGravity(btVector3(0,0,-9.80665f));
 	}
-
-	void PhysWorld::Loop()
+	PhysWorld::Client* PhysWorld::GetClientById(const ZCom_ConnID& id)
 	{
-		// Start physics
-		CreateBulletContext();
+		ptr_vector<Client>::iterator iter = m_clients.begin();
+		while(iter != m_clients.end())
+		{
+			if(iter->connection_id == id)
+				return &*iter;
+			iter++;
+		}
+		return NULL;
+	}
 
-		// Call 'level_start' defined in script
+	void PhysWorld::AnnounceGameStart()
+	{
+		m_gamerunning = true;
+
+		// Send gamerunning event to all players
+
+		ZCom_BitStream stream;
+
+		Protocol::GameStartNotify notify;
+
+		notify.write(stream);
+
+		ptr_vector<Client>::iterator iter = m_clients.begin();
+		while(iter != m_clients.end())
+		{
+			this->sendEventDirect(eZCom_ReliableOrdered, stream.Duplicate(), iter->connection_id);
+			iter++;
+		}
+	}
+
+	void PhysWorld::RunSceneJS()
+	{
 		v8::Locker locker;
 
 		v8::HandleScope handle_scope;
 		v8::Context::Scope scope(m_jscontext);
+
+		// Create scene.players object now that we know how many players there are
+
+		v8::Handle<v8::Value> scenevariant = v8::Context::GetCurrent()->Global()->Get(v8::String::New("scene"));
+
+		if(!scenevariant->IsObject())
+			return; // shouldn't happen unless someone did something nasty in the code
+		
+		v8::Handle<v8::Object> obj = scenevariant->ToObject();
+		v8::Handle<v8::Array> players = v8::Array::New();
+
+		for( unsigned i = 0 ; i < m_clients.size(); i++)
+		{
+			v8::Local<v8::ObjectTemplate> tpl = v8::ObjectTemplate::New();
+			tpl->Set(v8::String::New("bind"), v8::FunctionTemplate::New(PhysWorld::JSPlayerBind,v8::Object::New()));
+			tpl->SetInternalFieldCount(1);
+
+			v8::Local<v8::Object> playerobj = tpl->NewInstance();
+			playerobj->Set(v8::String::New("foo"), v8::String::New("bar"));
+		
+			v8::Handle<v8::External> external_obj = v8::External::New(&m_clients[i]);
+			playerobj->SetInternalField(0, external_obj);
+
+			players->Set(i, playerobj);
+		}
+		obj->Set(v8::String::New("players"), players);
+
+		// Call 'level_start' defined in script
 
 		v8::TryCatch trycatch;
 		v8::Handle<v8::Function> level_start = v8::Handle<v8::Function>::Cast(m_jscontext->Global()->Get(v8::String::New("level_start")));
@@ -131,6 +180,67 @@ namespace Sarona
 			std::cout << "Exception: " << *exception_str << std::endl;
 			std::cout << "	: " << *v8::String::AsciiValue(message->GetSourceLine()) << std::endl;
 		}
+	}
+
+	void PhysWorld::Loop()
+	{
+		// Wait until enough players have joined...
+		while(true)
+		{
+			// Step network code
+			this->ZCom_processInput();
+			this->ZCom_processOutput();
+
+			boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+
+			if(!m_gamerunning && m_clients.size() > 0)
+			{
+				// Wait for enough confirmations to start the game
+				int confirmations = 0;
+				ptr_vector<Client>::iterator iter = m_clients.begin();
+				while(iter != m_clients.end())
+				{
+					if(iter->level_confirmed)
+						confirmations++;
+					iter++;
+				}
+
+				if(confirmations == m_clients.size())
+				{
+					// We're ready to go! Game begin!
+					AnnounceGameStart(); 
+
+					// Process events for 1 second and start self.
+					boost::posix_time::ptime begin = boost::posix_time::microsec_clock::local_time();
+					while(true)
+					{
+						this->ZCom_processInput();
+						this->ZCom_processOutput();
+						boost::this_thread::sleep(boost::posix_time::milliseconds(50));
+
+						boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
+						boost::posix_time::time_duration timewaited = boost::posix_time::time_period(begin, now).length();
+
+						if(timewaited > boost::posix_time::seconds(2))
+							break;
+					}	
+
+					break;
+				}
+			}
+		}
+
+
+		std::cout << "Game starting!" << std::endl;
+		
+		// Start physics
+		CreateBulletContext();
+		// Load level, initialize components
+		CreateV8Context();
+		// Execute scripts
+		LoadLevel(true); // also load scripts
+		// Create Player objects in Javascript and run level_start()
+		RunSceneJS();
 
 		//CreateCube(btVector3(0,0,10), 5)->setMass(1);
 		//CreateCube(btVector3(-4.5,-4.5,16), 5)->setMass(100);
@@ -203,6 +313,35 @@ namespace Sarona
 		return obj;
 	}
 
+	v8::Handle<v8::Value> PhysWorld::PlayerBind(const v8::Arguments& args)
+	{
+		// Bind event handling function.
+
+		if(args.Length() != 3)
+			return v8::ThrowException(v8::String::New("Invalid number of arguments passed to player.bind"));
+		if(!args[0]->IsString())
+			return v8::ThrowException(v8::String::New("Invalid type"));
+		if(!args[1]->IsString())
+			return v8::ThrowException(v8::String::New("Invalid type"));
+		if(!args[2]->IsFunction())
+			return v8::ThrowException(v8::String::New("Invalid type"));
+
+
+		// Convert to Native types
+	
+		string eventtype(*v8::String::Utf8Value(args[0]->ToString()));
+		string eventname(*v8::String::Utf8Value(args[1]->ToString()));
+		v8::Handle<v8::Function> function = v8::Handle<v8::Function>::Cast(args[2]);
+	
+		// Find Client object.
+
+		Client* c = static_cast<Client*>(v8::Handle<v8::External>::Cast(args.Holder()->GetInternalField(0))->Value());
+		c->bind_event(eventtype, eventname, function, args.Holder());
+
+		c->call_event(eventtype, eventname);
+
+		return v8::Undefined();
+	}
 
 	btCollisionShape* PhysWorld::getShape(const string& shape)
 	{
@@ -289,7 +428,8 @@ namespace Sarona
 
 	bool PhysWorld::ZCom_cbConnectionRequest(ZCom_ConnID _id, ZCom_BitStream &_request, ZCom_BitStream &_reply)
 	{
-		return true; // Allow incoming connection
+		// Allow incoming connection when game is not running (we're in lobby)
+		return !m_gamerunning; 
 	}
 	void PhysWorld::ZCom_cbConnectionSpawned( ZCom_ConnID _id )
 	{
@@ -298,7 +438,12 @@ namespace Sarona
 	}
 	void PhysWorld::ZCom_cbConnectionClosed( ZCom_ConnID _id, eZCom_CloseReason _reason, ZCom_BitStream &_reasondata )
 	{
-	
+		// Mark client disconnected
+		Client *c = GetClientById(_id);
+		if(c)
+		{
+			c->disconnected = true;
+		}
 	}
 	void PhysWorld::ZCom_cbConnectResult( ZCom_ConnID _id, eZCom_ConnectResult _result, ZCom_BitStream &_reply )
 	{
@@ -311,12 +456,26 @@ namespace Sarona
 	bool PhysWorld::ZCom_cbZoidRequest( ZCom_ConnID _id, zU8 _requested_level, ZCom_BitStream &_reason )
 	{
 		if (_requested_level == 1)
-		  return true;
+		{
+			// Add new client
+			Client * c = new Client;
+			c->connection_id = _id;
+			c->disconnected = false ; // They're active
+			m_clients.push_back(c);
+			return true;
+		}
 		else
 		  return false;
 	}
 	void PhysWorld::ZCom_cbZoidResult( ZCom_ConnID _id, eZCom_ZoidResult _result, zU8 _new_level, ZCom_BitStream &_reason )
 	{
+		// Send LevelSelect to new clients
+		ZCom_BitStream* stream = new ZCom_BitStream;
+			Protocol::LevelSelect select;
+			select.name = m_levelname;
+			select.write(*stream);
+		this->sendEventDirect(eZCom_ReliableOrdered, stream, _id);
+
 	}
 	void PhysWorld::ZCom_cbNodeRequest_Dynamic( ZCom_ConnID _id, ZCom_ClassID _requested_class, ZCom_BitStream *_announcedata,
 		eZCom_NodeRole _role, ZCom_NodeID _net_id )
@@ -344,11 +503,42 @@ namespace Sarona
 					eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
 					zU32 _estimated_time_sent)
 	{
-		bool press = _data.getBool();
-		int key = _data.getInt(8);
+		// Check event type:
 
-		std::cout << "EVENT " << press << " " << key << std::endl;
+		unsigned int Id = _data.getInt(16);
 
+		if(Id == Protocol::KeyPressEvent::Id)
+		{
+			Protocol::KeyPressEvent event;
+			event.read(_data);
+
+			Client * c = GetClientById(_from);
+			if(c)
+			{
+				// Calling an event requires a scope :p
+				
+				v8::Locker locker;
+				v8::HandleScope handle_scope;
+				v8::Context::Scope scope(m_jscontext);
+
+				c->call_event(event.press?"keydown":"keyup", keycode2string(event.keycode));
+			}
+//			std::cout << "KeyPress: " << event.press << " " << event.keycode << std::endl;
+		}
+		else if(Id == Protocol::LevelConfirm::Id)
+		{
+			Protocol::LevelConfirm confirm;
+			confirm.read(_data);
+
+			// Level was confirmed available by client!
+			// Mark them ready.
+
+			Client* c = GetClientById(_from);
+			if(c)
+			{
+				c->level_confirmed = true;
+			}
+		}
 		return false;
 	}
 	                          
@@ -391,5 +581,53 @@ namespace Sarona
 					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{
 		return false;
+	}
+
+
+	// Client object member functions:
+
+	
+	void PhysWorld::Client::bind_event(const string& eventtype, const string& eventname, 
+		v8::Handle<v8::Function> func, v8::Handle<v8::Object> context)
+	{
+		if(eventtype == "" || eventname == "") return;
+
+		// Register event
+		//TODO: doesn't handle duplicates
+		Event * e = new Event;
+		e->eventtype = eventtype;
+		e->eventname = eventname;
+		e->function = v8::Persistent<v8::Function>::New(func);
+		e->context = v8::Persistent<v8::Object>::New(context);
+		m_events.push_back(e);
+	}
+	void PhysWorld::Client::call_event(const string& eventtype, const string& eventname, std::vector<v8::Handle< v8::Value > >& args)
+	{
+		// Call event
+		if(eventtype == "" || eventname == "") return;
+
+		ptr_vector<Event>::iterator iter = m_events.begin();
+		while(iter != m_events.end())
+		{
+			if(iter->eventtype == eventtype && 
+				iter->eventname == eventname)
+			{
+				v8::TryCatch trycatch;
+		
+//				v8::Handle<v8::Value> result = iter->function->Call(iter->context, 0, NULL);
+				v8::Handle<v8::Value> result = iter->function->Call(v8::Context::GetCurrent()->Global(), args.size(), args.empty()?NULL:&args[0]);
+				if(result.IsEmpty())
+				{
+					v8::Handle<v8::Value> exception = trycatch.Exception();
+					v8::Handle<v8::Message> message = trycatch.Message();
+
+					v8::String::AsciiValue exception_str(exception);
+
+					std::cout << "Exception: " << *exception_str << std::endl;
+					std::cout << "	: " << *v8::String::AsciiValue(message->GetSourceLine()) << std::endl;
+				}
+			}
+			iter++;
+		}
 	}
 }
