@@ -5,7 +5,8 @@
 
 namespace Sarona
 {
-	class PhysWorld : public BaseWorld
+
+	class PhysWorld : public BaseWorld<PhysWorld, PhysObject>
 	{
 	private:
 
@@ -60,6 +61,7 @@ namespace Sarona
 		scoped_ptr<btSequentialImpulseConstraintSolver> m_solver;
 		scoped_ptr<btDiscreteDynamicsWorld>				m_dynamicsWorld;
 		void CreateBulletContext();
+
 		ptr_vector<PhysObject>			m_objects;
 
 		// Clients
@@ -104,11 +106,14 @@ namespace Sarona
 		void RunSceneJS();
 
 		v8::Handle<v8::Value>			PlayerBind(const v8::Arguments& args);
+		v8::Handle<v8::Value>			PlayerCameraFollow(const v8::Arguments& args);
+		v8::Handle<v8::Value>			PlayerCameraSet(const v8::Arguments& args);
 		
-
 		// static JS Functions:
 		static v8::Handle<v8::Value>	JSPrint(const v8::Arguments& args);
 		static v8::Handle<v8::Value>	JSPlayerBind(const v8::Arguments& args);
+		static v8::Handle<v8::Value>	JSPlayerCameraFollow(const v8::Arguments& args);
+		static v8::Handle<v8::Value>	JSPlayerCameraSet(const v8::Arguments& args);
 
 		void Loop();
 
@@ -125,6 +130,7 @@ namespace Sarona
 
 	public:
 
+		// Create an object in the world
 		PhysObject* CreateObject(const btVector3& position);
 		
 		PhysWorld(IrrlichtDevice * dev = NULL);
@@ -135,7 +141,7 @@ namespace Sarona
 		void Start();
 		void Wait();
 
-		btCollisionShape* getShape(const string& byname);
+		btCollisionShape* getShape(const string& byname, bool isStatic);
 	};
 
 }

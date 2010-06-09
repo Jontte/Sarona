@@ -32,6 +32,8 @@ using boost::ptr_vector;
 #include <boost/ptr_container/ptr_map.hpp>
 using boost::ptr_map;
 
+#include <boost/bimap.hpp>
+
 #include <boost/bind.hpp>
 #include <boost/function.hpp>
 #include <boost/thread.hpp>

@@ -64,10 +64,12 @@ namespace Sarona
 		// Data to be shared with peers through replicator interface:
 		char m_mesh[65];
 		char m_texture[65];
+		float m_meshScale;
 
 		// Local data
 		btScalar m_mass;
 		string m_body;
+		float m_bodyScale;
 
 		bool m_dirty; // whether an update is required.
 
@@ -76,11 +78,24 @@ namespace Sarona
 		btCollisionShape* getShape(const string& shapetext);
 
 	public:
+		typedef ZCom_NodeID Id; // Used to implement weak refs to these object
+
 		void setMass(btScalar kilos = -1);
 		//void setPosition(const btVector3& pos);
 		void setTexture(const std::string&);
 		void setBody(const std::string&);
 		void setMesh(const std::string&);
+		void setMeshScale(float in);
+		void setBodyScale(float in);
+
+		void push(const btVector3&);
+
+		// Used to reference this object in the network
+		ZCom_NodeID	getNetworkId();
+
+		// Used to force a position&rotation update packet to peers
+		void resync();
+
 		~PhysObject(void);
 	};
 
@@ -134,8 +149,8 @@ namespace Sarona
 //			m_obj->setPosition(matr.getTranslation());
 
 			m_pos = worldTrans;
-			
-			//std::cout << "Pos : " << m_node->getPosition().X << ", " << m_node->getPosition().Y << ", " << m_node->getPosition().Z << std::endl;
+
+			//std::cout << "SERVER:	" << pos.x() << ",	" << pos.y() << ",	" << pos.z() << std::endl;
 		}
 
 	protected:

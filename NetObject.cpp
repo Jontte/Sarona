@@ -17,6 +17,7 @@ namespace Sarona
 		m_flags |= ZCOM_REPLICATOR_INITIALIZED;
 
 		m_zcomNode.reset(new ZCom_Node());
+		m_zcomNode->setUserData(this);
 
 		// BEGIN REPLICATION SETUP
 		m_zcomNode->beginReplicationSetup(2);
@@ -26,24 +27,10 @@ namespace Sarona
 		m_zcomNode->endReplicationSetup();
 		// END REPLICATION SETUP
 
-		m_zcomNode -> registerNodeDynamic(BaseWorld::m_objectId, control);
+		m_zcomNode -> registerNodeDynamic(Sarona::TypeRegistry::m_objectId, control);
 		m_zcomNode -> setEventInterceptor(this);
 
-		// Create an irrlicht node..
-		scene::IMeshSceneNode* node;
-
-		node = m_device->getSceneManager()->addCubeSceneNode(5);
-		node->setMaterialFlag(video::EMF_LIGHTING, true);
-
-		m_device->getSceneManager()->getMeshManipulator()->recalculateNormals(node->getMesh(), true, true);
-
-		if(node->getMaterialCount() > 0)
-		{
-			// set texture..
-			node->setMaterialTexture( 0,m_device->getVideoDriver()->getTexture("testgraphics.png"));
-		}
-
-		m_sceneNode = node;
+		reloadNode();
 	}
 
 	NetObject::~NetObject(void)
@@ -82,23 +69,49 @@ namespace Sarona
 			currentpos * 0.5 + 
 			(m_position + m_velocity * dt / 1000) * 0.5 );
 
+		core::quaternion toeuler(m_rotation);
+		toeuler *= core::quaternion(core::vector3df(
+			0,0,90 // Rotation offset
+			)*core::DEGTORAD);
 		core::vector3df rota;
-		m_rotation.toEuler(rota);
+		toeuler.toEuler(rota);
 		m_sceneNode->setRotation(rota * core::RADTODEG);
 
-		//std::cout << currentpos.X << ", " << currentpos.Y << ", " << currentpos.Z << std::endl;
+		//std::cout << "CLIENT:	" << currentpos.X << ",	" << currentpos.Y << ",		" << currentpos.Z << std::endl;
 	}
 
-	void NetObject::reloadMesh(string filename)
+	void NetObject::reloadNode()
 	{
-		m_sceneNode->setMesh(
-			m_device->getSceneManager()->getMeshCache()->getMeshByName(filename.c_str())
+		if(m_sceneNode)
+			m_sceneNode->remove();
+
+		// Create an irrlicht node..
+
+		scene::IMesh * mesh = m_mesh[0] ? m_device->getSceneManager()->getMesh(m_mesh) : NULL;
+		m_sceneNode = m_device->getSceneManager()->addMeshSceneNode(
+			mesh,
+			0, // parent
+			-1, // id
+			core::vector3df(0,0,0), // position
+			core::vector3df(0,0,0), // rotation
+			core::vector3df(m_meshScale, m_meshScale, m_meshScale), // scale
+			true					// alsoAddIfMeshPointerZero, pretty important here.
 			);
-		m_device->getSceneManager()->getMeshManipulator()->recalculateNormals(m_sceneNode->getMesh(), true, true);
+		m_sceneNode->setMaterialFlag(video::EMF_LIGHTING, false);
+
+//		m_device->getSceneManager()->getMeshManipulator()->recalculateNormals(m_sceneNode->getMesh(), true, true);
+
+		if(m_sceneNode->getMaterialCount() > 0)
+		{
+			// set texture..
+			video::ITexture * texture = m_device->getVideoDriver()->getTexture(m_texture);
+			m_sceneNode->setMaterialTexture(0, texture);
+		}
 	}
-	void NetObject::reloadTexture(string filename)
+
+	core::vector3df NetObject::getPosition()
 	{
-		m_sceneNode->setMaterialTexture(0, m_device->getVideoDriver()->getTexture(filename.c_str()));
+		return m_sceneNode->getPosition();
 	}
 
 	bool NetObject::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
@@ -163,22 +176,31 @@ namespace Sarona
 	}
 	void NetObject::unpackData (ZCom_BitStream *_stream, bool _store, zU32 _estimated_time_sent)
 	{
-		char temp[65]; 
+		char ctemp[65]; 
+		float ftemp;
+		bool dirty = false;
 
-		_stream->getString(temp, 64);
-
-		if(strcmp(m_mesh, temp) != 0)
+		_stream->getString(ctemp, 64);
+		if(strcmp(m_mesh, ctemp) != 0)
 		{
-			reloadMesh(temp);
+			dirty = true;
+			strncpy_s(m_mesh, ctemp, 64);
 		}
-		strncpy_s(m_mesh, temp, 64);
-
-		_stream->getString(temp, 64);
-		if(strcmp(m_texture, temp) != 0)
+		_stream->getString(ctemp, 64);
+		if(strcmp(m_texture, ctemp) != 0)
 		{
-			reloadTexture(temp);
+			dirty = true;
+			strncpy_s(m_texture, ctemp, 64);
 		}
-		strncpy_s(m_texture, temp, 64);
+		ftemp = _stream->getFloat(23);
+		if(ftemp != m_meshScale) // TODO: compare with epsilon
+		{
+			m_meshScale = ftemp;
+			dirty = true;
+		}
+
+		if(dirty)
+			reloadNode();
 	}
 	void* NetObject::peekData(){return NULL;};
 	void NetObject::clearPeekData(){};

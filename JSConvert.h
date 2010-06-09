@@ -10,70 +10,100 @@ struct TypeException : public std::exception {};
 
 // Single variable conversion
 
-template <class T>
-T convert(const JSVal_t& val);
+// Passthru
+void convert(const JSVal_t& val, JSVal_t& out)
+{
+	out = val;
+}
 
 // Numeric types
 template <class T>
-T convert<typename boost::enable_if<boost::is_arithmetic<T>, T>::type>(const JSVal_t& val)
+void convert(const JSVal_t& val, T& out, typename boost::enable_if<boost::is_arithmetic<T> >::type* dummy = 0)
 { 
 	if(!val->IsNumber())throw TypeException();
 	v8::Handle<v8::Number> flt(val->ToNumber());
-	return (T)flt->NumberValue();
+	out = (T)flt->NumberValue();
 }
 
 // string
-template <>
-string convert<string>(const JSVal_t& val)
+void convert(const JSVal_t& val, string& out)
 {
 	if(!val->IsString())throw TypeException();
 	v8::Handle<v8::String> str(val->ToString());
-
-	string ret;
-	ret.resize(str->Utf8Length());
-	str->WriteUtf8(&ret[0], ret.size());
-	return ret;
+	out.resize(str->Utf8Length());
+	str->WriteUtf8(&out[0], out.size());
 }
 // vector
-template <>
-btVector3 convert<btVector3>(const JSVal_t& val)
+void convert(const JSVal_t& val, btVector3& out)
 {
 	if(!val->IsObject())throw TypeException();
-	btVector3 ret;
-	ret[0] = convert<btScalar>(val->ToObject()->Get(0));
-	ret[1] = convert<btScalar>(val->ToObject()->Get(1));
-	ret[2] = convert<btScalar>(val->ToObject()->Get(2));
-	return ret;
+	convert<btScalar>(val->ToObject()->Get(0), out[0]); //TODO check member existence
+	convert<btScalar>(val->ToObject()->Get(1), out[1]);
+	convert<btScalar>(val->ToObject()->Get(2), out[2]);
+}
+// generic array
+template <class T>
+void convert(const JSVal_t& val, vector<T>& out)
+{
+	out.clear();
+	v8::Handle<v8::Object> obj = val->ToObject();
+	for(unsigned i = 0; i < 0xFFFFFFFF; i++)
+	{
+		if(!obj->Has(i))break;
+		T temporary;
+		convert(obj->Get(i), temporary);
+		out.push_back(temporary);	
+	}
+}
+// generic map
+template <class Key, class Value>
+void convert(const JSVal_t& val, std::map<Key, Value>& out)
+{
+	out.clear();
+	v8::Handle<v8::Object> obj = val->ToObject();
+	
+	v8::Local<v8::Array> names = obj->GetPropertyNames();
+
+	for(unsigned i = 0 ; i < names->Length(); i++)
+	{
+		Value temp1;
+		Key temp2;
+
+		convert(obj->Get(names->Get(i))	,	temp1);
+		convert(names->Get(i)			,	temp2);
+
+		out[temp2] = temp1;
+	}
 }
 
 template <class T1> void extract(const v8::Arguments& arg, T1& t1) {
 	if(arg.Length() < 1)throw std::out_of_range("Out of range");
-	t1 = convert<T1>(arg[0]);
+	convert(arg[0], t1);
 }
 template <class T1, class T2> void extract(const v8::Arguments& arg, T1& t1, T2& t2) {
 	if(arg.Length() < 2)throw std::out_of_range("Out of range");
-	t1 = convert<T1>(arg[0]);
-	t2 = convert<T2>(arg[1]);
+	convert(arg[0], t1);
+	convert(arg[1], t2);
 }
 template <class T1, class T2, class T3> void extract(const v8::Arguments& arg, T1& t1, T2& t2, T3& t3) {
 	if(arg.Length() < 3)throw std::out_of_range("Out of range");
-	t1 = convert<T1>(arg[0]);
-	t2 = convert<T2>(arg[1]);
-	t3 = convert<T3>(arg[2]);
+	convert(arg[0], t1);
+	convert(arg[1], t2);
+	convert(arg[2], t3);
 }
 template <class T1, class T2, class T3, class T4> void extract(const v8::Arguments& arg, T1& t1, T2& t2, T3& t3, T4& t4) {
 	if(arg.Length() < 4)throw std::out_of_range("Out of range");
-	t1 = convert<T1>(arg[0]);
-	t2 = convert<T2>(arg[1]);
-	t3 = convert<T3>(arg[2]);
-	t4 = convert<T4>(arg[2]);
+	convert(arg[0], t1);
+	convert(arg[1], t2);
+	convert(arg[2], t3);
+	convert(arg[2], t4);
 }
 // Similar to extract..
 template <class T>
 void dig(v8::Handle<v8::Value> val, std::string name, T& t)
 {
 	if(!val->IsObject())throw TypeException();
-	t = convert<T>(val->ToObject()->Get(v8::String::New(name.c_str())));
+	convert(val->ToObject()->Get(v8::String::New(name.c_str())), t);
 }
 
 
@@ -94,7 +124,5 @@ void dig(v8::Handle<v8::Value> val, std::string name, T& t)
 	{\
 		return ThrowException(v8::String::New("Unknown exception in "CLASSNAME"::"METHODNAME));\
 	}
-
-
 
 

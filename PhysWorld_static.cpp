@@ -33,6 +33,7 @@ namespace Sarona
 		return v8::Undefined();
 	}
 	
+	/*
 	v8::Handle<v8::Value> PhysWorld::JSPlayerBind(const v8::Arguments& args)
 	{
 		// Grab world.
@@ -43,7 +44,22 @@ namespace Sarona
 		PhysWorld* world = static_cast<PhysWorld*>(external->Value());
 
 		return world->PlayerBind(args);
+	}*/
+
+#define IMPL_FUNC(OBJECT,WRAPFUNC,REALFUNC)\
+	v8::Handle<v8::Value> OBJECT::WRAPFUNC(const v8::Arguments& args)\
+	{\
+		v8::Local<v8::External> external = v8::Local<v8::External>::Cast(\
+			v8::Handle<v8::Object>::Cast(v8::Context::GetCurrent()->Global()->GetPrototype())\
+				->GetInternalField(0));\
+		OBJECT * handle = static_cast<OBJECT*>(external->Value());\
+		return handle->REALFUNC(args);\
 	}
+
+IMPL_FUNC(PhysWorld, JSPlayerBind,				PlayerBind)
+IMPL_FUNC(PhysWorld, JSPlayerCameraFollow,		PlayerCameraFollow)
+IMPL_FUNC(PhysWorld, JSPlayerCameraSet,			PlayerCameraSet)
+
 	/*
 	v8::Handle<v8::Value> PhysWorld::JSSceneGetter(v8::Local<v8::String> property, const v8::AccessorInfo& info)
 	{

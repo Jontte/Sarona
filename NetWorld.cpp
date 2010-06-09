@@ -13,11 +13,11 @@ namespace Sarona
 		this->beginReplicationSetup(0);
 		this->endReplicationSetup();
 		this->setEventInterceptor(this);
-		this->registerNodeUnique(m_commId, eZCom_RoleOwner, this);
+		this->registerNodeUnique(TypeRegistry::m_commId, eZCom_RoleOwner, this);
 
 
 		// Create camera
-		m_camera.reset(new Camera(get_pointer(m_device)));
+		m_camera.reset(new Camera(get_pointer(m_device), this));
 
 		scene::ICameraSceneNode * camera = m_device->getSceneManager()->getActiveCamera();
 		
@@ -37,6 +37,15 @@ namespace Sarona
 		m_device->getGUIEnvironment()->addStaticText(L"Sarona", core::rect<s32>(64,64,64+64*4,64+32), true, true);
 
 		m_device->setEventReceiver(this);
+
+		// Create ground
+
+		scene::IMeshSceneNode * node = 
+		m_device->getSceneManager()->addMeshSceneNode(
+			m_device->getSceneManager()->addHillPlaneMesh("groundmesh", core::dimension2d<f32>(10,10), core::dimension2d<u32>(100,100)), NULL, -1, core::vector3df(0,0,0), core::vector3df(90,0,0)
+			);
+
+		node -> setMaterialTexture(0, m_device->getVideoDriver()->getTexture("saronacube.png"));
 	}
 
 	NetWorld::~NetWorld(void)
@@ -49,22 +58,11 @@ namespace Sarona
 
 		if(event.EventType == EET_KEY_INPUT_EVENT)
 		{
-			/*
-			switch(event.KeyInput.Key) {
-				case KEY_ESCAPE:
-					int a = 5*5;
-				break;
-			}*/
-
 			UpdateKeyState(event.KeyInput.Key, event.KeyInput.PressedDown);
 
-			return true;
+			// Let the event propagate, though.
+			return false;
 		}
-
-		return false;
-
-
-
 		return false;
 	}
 
@@ -85,6 +83,10 @@ namespace Sarona
 			this->sendEventDirect(eZCom_ReliableOrdered, data, m_serverConnectionId);
 
 		}
+	}
+	bool NetWorld::CheckKey(u8 keycode)
+	{
+		return m_keystate[keycode];
 	}
 
 	void NetWorld::Connect(string host, bool local)
@@ -286,7 +288,7 @@ namespace Sarona
 		eZCom_NodeRole _role, ZCom_NodeID _net_id )
 	{
 		// We are to create a new dynamic node
-		if(BaseWorld::m_objectId == _requested_class)
+		if(TypeRegistry::m_objectId == _requested_class)
 		{
 			// which is an object
 			NetObject * obj = new NetObject(this, get_pointer(m_device));
@@ -335,6 +337,27 @@ namespace Sarona
 			ZCom_BitStream * stream = new ZCom_BitStream;
 			confirm.write(*stream);
 			this->sendEventDirect(eZCom_ReliableOrdered, stream, _from);
+		}
+		else if(Id == Protocol::CameraFollow::Id)
+		{
+			Protocol::CameraFollow follow;
+ 			follow.read(_data);
+
+			if(m_camera)
+			{
+				//TODO: Refactoring:
+
+				// BaseObject
+				// Object IDs for netobjcts
+				// V8-wrapper? 
+
+				ZCom_Node* znode = this->ZCom_getNode(follow.nodeid);
+				if(znode)
+				{
+					NetObject * obj = reinterpret_cast<NetObject*>(znode->getUserData());
+					m_camera->Follow(assignId(obj), follow.distance);
+				}
+			}
 		}
 		return false;
 	}

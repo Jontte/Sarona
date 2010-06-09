@@ -13,6 +13,7 @@ namespace Sarona
 		std::string mesh;
 		std::string body;
 		std::string texture;
+		btScalar mass(0);
 		btVector3 position(0,0,0);
 
 		if(!args->Has(0))
@@ -22,9 +23,14 @@ namespace Sarona
 
 		v8::Handle<v8::Object> config = args->Get(0)->ToObject();
 
+//		std::map<std::string, v8::Handle<v8::Value>> params;
+
+//		convert(args->Get(0), params);
+
 		// Required parameters:
 		//try
 		//{
+//			convert(params["body"], body);
 
 			dig(config, "body", body);
 			dig(config, "mesh", mesh);
@@ -47,15 +53,38 @@ namespace Sarona
 
 		PhysWorld* world = static_cast<PhysWorld*>(external->Value());
 
-		m_obj = world->CreateObject(position);
-		m_obj -> setBody(body);
-		m_obj -> setMesh(mesh);
+		PhysObject * object = world->CreateObject(position);
+		m_obj = world->assignId(object);
+
+		object -> setBody(body);
+		object -> setMesh(mesh);
 
 		// Optional:
+		// Position:
 		try
 		{
 			dig(config, "texture", texture);
-			m_obj->setTexture(texture);
+			object->setTexture(texture);
+		} catch(...){}
+		// Mass:
+		try
+		{
+			dig(config, "mass", mass);
+			object->setMass(mass);
+		} catch(...){}
+		// MeshScaling:
+		try
+		{
+			float meshScale;
+			dig(config, "meshScale", meshScale);
+			object->setMeshScale(meshScale);
+		} catch(...){}
+		// BodyScaling:
+		try
+		{
+			float bodyScale;
+			dig(config, "bodyScale", bodyScale);
+			object->setBodyScale(bodyScale);
 		} catch(...){}
 	}
 
@@ -65,16 +94,37 @@ namespace Sarona
 
 	void JSObject::invalidate()
 	{
-		m_obj = NULL;
+		m_obj = 0;
 	}
+
+	PhysWorld* JSObject::getWorld()
+	{
+		v8::Local<v8::External> external = v8::Local<v8::External>::Cast(
+			v8::Handle<v8::Object>::Cast(v8::Context::GetCurrent()->Global()->GetPrototype())
+				->GetInternalField(0));
+
+		return static_cast<PhysWorld*>(external->Value());
+	}
+	
+	PhysObject*  JSObject::getObject() // Return null when we're invalid
+	{
+		PhysWorld* world = getWorld();
+		return world->getById(m_obj);
+	}
+
 	
 	v8::Handle<v8::Value> JSObject::push(const v8::Arguments& arg)
 	{
 		try
 		{
-			double x,y,z;
+			float x,y,z;
 			extract(arg, x, y, z);
 
+			PhysObject * c = getObject();
+			if(c)
+			{
+				c -> push(btVector3(x,y,z));
+			}
 
 			return v8::Handle<v8::Value>();
 		}

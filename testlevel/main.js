@@ -1,29 +1,73 @@
 
-function level_start()
-{
-	print('Welcome to testimappi!');
 
-	for (var i = 0; i < 10; i++)
-	{
-		var obj = new Object({
-			body: 'saronacube.obj',
+function createblock(pos)
+{
+	return new Object({
+//			body: 'saronacube.obj',
+			body: 'cube',
 			mesh: 'saronacube.obj',
 			texture: 'saronacube.png',
 			mass: 1,
-			position: [0,0,i*8+5]
-		});	
+			position: pos
+	});	
+}
+
+object = null;
+
+function level_start()
+{
+	// Create ground
+	
+	var ground = new Object({
+		body: 'level_mask.obj',
+		mesh: 'pohja.obj',
+		texture: 'tekstuuri.png',
+		position: [0,0,5],
+		meshScale: 4,
+		bodyScale: 4, 
+		rotation: [90,0,0]
+	});
+
+	print('Welcome to testimappi!');
+
+/*	for (var i = 0; i < 10; i++)
+	{
+		var obj = createblock(
+			new Vector(0,0,i*8+5)
+		);
+		
 		obj.push(0,0,0);
-	}
+	}*/
 	
 	for(var i = 0; i < scene.players.length; i++)
 	{
 		var p = scene.players[i];
 		// Bind a key for each player in the scene.
 		
-		print(p.foo);
+		object = createblock(
+			new Vector(0,0,100)
+		);
 		
-		p.bind("keydown", "space", function(){
-			print('Space down');
+		
+		p.bind("keydown", "space", function(){			
+			//p.cameraFollow(object, 50);
+			object.push(0,0,10);
+		})
+		p.bind("keydown", "left", function(){			
+			//p.cameraFollow(object, 50);
+			object.push(10,0,0);
+		})
+		p.bind("keydown", "right", function(){			
+			//p.cameraFollow(object, 50);
+			object.push(-10,0,0);
+		})
+		p.bind("keydown", "up", function(){			
+			//p.cameraFollow(object, 50);
+			object.push(0, 10,0);
+		})
+		p.bind("keydown", "down", function(){			
+			//p.cameraFollow(object, 50);
+			object.push(0, -10,0);
 		})
 	}
 	

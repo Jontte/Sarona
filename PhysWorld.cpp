@@ -2,8 +2,8 @@
 #include "PhysWorld.h"
 #include "JSObject.h"
 #include "Util.h"
+#include "JSVector.h"
 #include "PacketDef.h"
-
 #include <stdexcept>
 
 namespace Sarona
@@ -16,7 +16,7 @@ namespace Sarona
 		this->beginReplicationSetup(0);
 		this->endReplicationSetup();
 		this->setEventInterceptor(this);
-		this->registerNodeUnique(m_commId, eZCom_RoleAuthority, this);
+		this->registerNodeUnique(TypeRegistry::m_commId, eZCom_RoleAuthority, this);
 	}
 
 	PhysWorld::~PhysWorld(void)
@@ -69,12 +69,20 @@ namespace Sarona
 		// Static functions
 		global->Set(v8::String::New("print"), v8::FunctionTemplate::New(PhysWorld::JSPrint));
 
-		// Objects
+		// Object
 		global->Set(v8::String::New("scene"), scene);
 
 		CProxyV8::ProxyClass<JSObject>* pJSObject = CProxyV8::ProxyClass<JSObject>::instance()->init("Object");
 		pJSObject->Expose(&JSObject::push, "push");
 		global->Set(v8::String::New("Object"), pJSObject->GetFunctionTemplate());
+
+		// Vector
+		CProxyV8::ProxyClass<JSVector>* pJSVector = CProxyV8::ProxyClass<JSVector>::instance()->init("Vector");
+		pJSVector->Expose(&JSVector::x, "x", true, true);
+		pJSVector->Expose(&JSVector::y, "y", true, true);
+		pJSVector->Expose(&JSVector::z, "z", true, true);
+		global->Set(v8::String::New("Vector"), pJSVector->GetFunctionTemplate());
+
 
 		m_jscontext = v8::Context::New(NULL, global);
 		v8::Context::Scope scope(m_jscontext);
@@ -151,11 +159,12 @@ namespace Sarona
 		for( unsigned i = 0 ; i < m_clients.size(); i++)
 		{
 			v8::Local<v8::ObjectTemplate> tpl = v8::ObjectTemplate::New();
-			tpl->Set(v8::String::New("bind"), v8::FunctionTemplate::New(PhysWorld::JSPlayerBind,v8::Object::New()));
+			tpl->Set(v8::String::New("bind"),			v8::FunctionTemplate::New(PhysWorld::JSPlayerBind			));
+			tpl->Set(v8::String::New("cameraFollow"),	v8::FunctionTemplate::New(PhysWorld::JSPlayerCameraFollow	));
+			tpl->Set(v8::String::New("cameraSet"),		v8::FunctionTemplate::New(PhysWorld::JSPlayerCameraSet		));
 			tpl->SetInternalFieldCount(1);
 
 			v8::Local<v8::Object> playerobj = tpl->NewInstance();
-			playerobj->Set(v8::String::New("foo"), v8::String::New("bar"));
 		
 			v8::Handle<v8::External> external_obj = v8::External::New(&m_clients[i]);
 			playerobj->SetInternalField(0, external_obj);
@@ -221,7 +230,7 @@ namespace Sarona
 						boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
 						boost::posix_time::time_duration timewaited = boost::posix_time::time_period(begin, now).length();
 
-						if(timewaited > boost::posix_time::seconds(2))
+						if(timewaited > boost::posix_time::seconds(1))
 							break;
 					}	
 
@@ -308,7 +317,9 @@ namespace Sarona
 
 	PhysObject* PhysWorld::CreateObject(const btVector3& position)
 	{
-		PhysObject* obj = new PhysObject(this, get_pointer(m_dynamicsWorld), btTransform(btQuaternion(0,0,0,1), position));
+		btQuaternion initialrot(btVector3(0,1,0), 0.0);
+
+		PhysObject* obj = new PhysObject(this, get_pointer(m_dynamicsWorld), btTransform(initialrot, position));
 		m_objects.push_back(obj);
 		return obj;
 	}
@@ -338,21 +349,66 @@ namespace Sarona
 		Client* c = static_cast<Client*>(v8::Handle<v8::External>::Cast(args.Holder()->GetInternalField(0))->Value());
 		c->bind_event(eventtype, eventname, function, args.Holder());
 
-		c->call_event(eventtype, eventname);
-
 		return v8::Undefined();
 	}
 
-	btCollisionShape* PhysWorld::getShape(const string& shape)
+	v8::Handle<v8::Value> PhysWorld::PlayerCameraFollow(const v8::Arguments& args)
+	{
+		// Make player camera follow some object
+ 		if(args.Length() != 2)
+			return v8::ThrowException(v8::String::New("Invalid number of arguments passed to player.cameraFollow"));
+		if(!args[0]->IsObject())
+			return v8::ThrowException(v8::String::New("Invalid type"));
+		if(!args[1]->IsNumber())
+			return v8::ThrowException(v8::String::New("Invalid type"));
+
+		// Convert to Native types
+
+		CProxyV8::InstaceHandle<JSObject>* jsobj_handle = 
+			static_cast<CProxyV8::InstaceHandle<JSObject>*>(v8::Handle<v8::External>::Cast(args[0]->ToObject()->GetInternalField(0))->Value());
+
+		Client* client = static_cast<Client*>(v8::Handle<v8::External>::Cast(args.Holder()->GetInternalField(0))->Value());
+
+		JSObject * jsobj = **jsobj_handle;
+
+		PhysObject* physobj = jsobj->getObject();
+		if(physobj)
+		{
+			ZCom_NodeID	id = physobj->getNetworkId();
+
+			// Find radius
+			double radius = args[1]->ToNumber()->Value();
+
+			// Send cameraFollow packet...
+
+			ZCom_BitStream * stream = new ZCom_BitStream;
+
+			Protocol::CameraFollow follow;
+			follow.nodeid = id;
+			follow.distance = (float)radius;
+			follow.write(*stream);
+			
+			this->sendEventDirect(eZCom_ReliableOrdered, stream, client->connection_id);
+		}
+		return v8::Undefined();
+	}
+	v8::Handle<v8::Value> PhysWorld::PlayerCameraSet(const v8::Arguments& args)
+	{
+		return v8::Undefined();
+	}
+
+	btCollisionShape* PhysWorld::getShape(const string& shape, bool isStatic)
 	{
 		// is the shape cached?
-		if(m_shapecache.find(shape) != m_shapecache.end())
+		string cachename = shape;
+		cachename += isStatic ? "-static" : "-dynamic";
+		if(m_shapecache.find(cachename) != m_shapecache.end())
 		{
-			ShapeData & data = m_shapecache[shape];
+			ShapeData & data = m_shapecache[cachename];
 			return data.shape;
 		}
 		// Create index
-		ShapeData & data = m_shapecache[shape];
+		ShapeData & data = m_shapecache[cachename];
 
 		// Predefined shape
 		if(shape == "cube")
@@ -367,10 +423,19 @@ namespace Sarona
 		// load body from file using irrlicht
 
 		scene::IAnimatedMesh * irrmesh = m_device->getSceneManager()->getMesh(shape.c_str());
-		
+
+		// Deal some rotation to the mesh since our coordinate system has Z axis up
+		core::matrix4 rotmatrix;
+		rotmatrix.setRotationDegrees(core::vector3df(90,0,0));
+		for(unsigned i = 0; i < irrmesh->getMeshBufferCount(); i++)
+		{
+			irr::scene::IMeshBuffer * meshbuffer = irrmesh->getMeshBuffer(i);
+			m_device->getSceneManager()->getMeshManipulator()->transform(meshbuffer, rotmatrix);
+		}
+
 		data.mesh_interface = new btTriangleMesh();
 
-		const btScalar scale = 2.5;
+		const btScalar scale = 1.0;
 
 		for(unsigned i = 0; i < irrmesh->getMeshBufferCount(); i++)
 		{
@@ -422,7 +487,18 @@ namespace Sarona
 				}
 			}
 		}
-		data.shape = new btConvexTriangleMeshShape(data.mesh_interface);
+		if(isStatic)
+		{
+			// Static shapes can be concave
+			data.shape = new btBvhTriangleMeshShape(data.mesh_interface, true, true);
+		}
+		else
+		{
+			// At the moment dynamic shapes must be convex
+			// that is until we implement convex decomposition here
+			// TODO: convex decomposition..
+			data.shape = new btConvexTriangleMeshShape(data.mesh_interface);
+		}
 		return data.shape;
 	}
 
@@ -517,6 +593,9 @@ namespace Sarona
 			{
 				// Calling an event requires a scope :p
 				
+				if(m_jscontext.IsEmpty())
+					return false;
+
 				v8::Locker locker;
 				v8::HandleScope handle_scope;
 				v8::Context::Scope scope(m_jscontext);

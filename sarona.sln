@@ -1,17 +1,13 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C++ Express 2008
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sarona", "sarona.vcproj", "{8D1921A9-5154-421F-8059-2D0D9E15D350}"
-	ProjectSection(ProjectDependencies) = postProject
-		{5505763A-2052-4589-AE7B-B9A6E0856D28} = {5505763A-2052-4589-AE7B-B9A6E0856D28}
-		{36870952-E474-4460-923E-99E614472CFF} = {36870952-E474-4460-923E-99E614472CFF}
-	EndProjectSection
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C++ Express 2010
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "sarona", "sarona.vcxproj", "{8D1921A9-5154-421F-8059-2D0D9E15D350}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bullet3d", "bullet3d\bullet3d.vcproj", "{36870952-E474-4460-923E-99E614472CFF}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "bullet3d", "bullet3d\bullet3d.vcxproj", "{36870952-E474-4460-923E-99E614472CFF}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jsoncpp", "jsoncpp\jsoncpp.vcproj", "{5505763A-2052-4589-AE7B-B9A6E0856D28}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "jsoncpp", "jsoncpp\jsoncpp.vcxproj", "{5505763A-2052-4589-AE7B-B9A6E0856D28}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cproxyv8", "cproxyv8\cproxyv8.vcproj", "{28BF9A7C-D583-4519-B104-10BD4158ED25}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "cproxyv8", "cproxyv8\cproxyv8.vcxproj", "{28BF9A7C-D583-4519-B104-10BD4158ED25}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

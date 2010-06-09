@@ -9,9 +9,13 @@ namespace Sarona
 	private:
 		
 		// Weak ref to the physical object
-		PhysObject* m_obj; 
+		PhysObject::Id m_obj; 
+
+		PhysWorld* getWorld();
 
 	public:
+
+		PhysObject* getObject(); // Return null when we're invalid
 
 		void invalidate();
 

@@ -11,7 +11,9 @@ namespace Sarona
 		,	m_world(world)
 		,	m_body("cube")
 		,	m_shape(NULL)
-		,	m_mass(1)
+		,	m_mass(0)
+		,	m_meshScale(1)
+		,	m_bodyScale(1)
 		,	m_dirty(true)
 		,	ZCom_ReplicatorBasic(new ZCom_ReplicatorSetup( // Replicator setup goes here
 			ZCOM_REPFLAG_RARELYCHANGED|ZCOM_REPFLAG_MOSTRECENT|ZCOM_REPFLAG_SETUPAUTODELETE, ZCOM_REPRULE_AUTH_2_ALL
@@ -32,13 +34,15 @@ namespace Sarona
 		m_zcomNode->endReplicationSetup();
 		// END REPLICATION SETUP
 
-		m_zcomNode -> setEventInterceptor(this);
-		m_zcomNode -> registerNodeDynamic(BaseWorld::m_objectId, m_world);
-
 		m_motionstate.reset(new PhysObjectMotionState(initialpos, replicator));
-
-
+		
 		recreateBody();
+
+		// This line is needed so that the position isto the clients
+		//m_motionstate->setWorldTransform(initialpos);
+
+		m_zcomNode -> setEventInterceptor(this);
+		m_zcomNode -> registerNodeDynamic(TypeRegistry::m_objectId, m_world);
 	}
 
 	PhysObject::~PhysObject(void)
@@ -76,7 +80,22 @@ namespace Sarona
 		strncpy_s(m_mesh, mesh.c_str(), 64);
 		m_dirty = true;
 	}
-
+	void PhysObject::setMeshScale(float in)
+	{
+		m_meshScale = in;
+		m_dirty = true;
+	}
+	void PhysObject::setBodyScale(float in)
+	{
+		m_bodyScale = in;
+		recreateBody();
+	}
+	ZCom_NodeID PhysObject::getNetworkId()
+	{
+		if(m_zcomNode)
+			return m_zcomNode->getNetworkID();
+		return 0;
+	}
 	void PhysObject::recreateBody()
 	{
 		if(m_motionstate)
@@ -86,7 +105,11 @@ namespace Sarona
 
         btVector3 inertia(0,0,0);
         
-		m_shape = m_world->getShape(m_body);
+		// Get static body if zero mass
+		m_shape = m_world->getShape(m_body, m_mass <= 0);
+		m_shape->setLocalScaling(btVector3(
+			m_bodyScale, m_bodyScale, m_bodyScale
+			));
 
 		if(m_mass > 0)
 		{
@@ -98,6 +121,19 @@ namespace Sarona
 		
 		m_motionstate->setBody(get_pointer(m_rigidbody));
 		m_dynamicsWorld->addRigidBody(get_pointer(m_rigidbody));
+	}
+	void PhysObject::push(const btVector3& force)
+	{
+		m_rigidbody->applyImpulse(force, btVector3(0,0,0));
+	}
+	void PhysObject::resync()
+	{
+		if(!m_motionstate)
+			return;
+
+		btTransform current;
+		m_motionstate->getWorldTransform(current);
+		m_motionstate->setWorldTransform(current);
 	}
 
 	bool PhysObject::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
@@ -162,6 +198,7 @@ namespace Sarona
 	{
 		_stream->addString(m_mesh);
 		_stream->addString(m_texture);
+		_stream->addFloat(m_meshScale, 23);
 	}
 	void PhysObject::unpackData (ZCom_BitStream *_stream, bool _store, zU32 _estimated_time_sent)
 	{

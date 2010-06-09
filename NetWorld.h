@@ -7,7 +7,7 @@ namespace Sarona
 {
 
 	class NetWorld
-		: public BaseWorld
+		: public BaseWorld<NetWorld, NetObject>
 		, public IEventReceiver
 	{
 		scoped_ptr<Camera> m_camera;
@@ -72,6 +72,7 @@ namespace Sarona
 		void Loop();
 
 		bool OnEvent(const SEvent & event );
+		bool CheckKey(u8 keycode);
 	};
 
 }

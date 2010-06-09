@@ -61,17 +61,23 @@ namespace Sarona
 		// Synchronized data
 		char m_mesh[65];
 		char m_texture[65];
+		float m_meshScale;
 
-		void reloadMesh(string filename);
-		void reloadTexture(string filename);
+		void reloadNode();
 
 	public:
+		typedef ZCom_NodeID Id; // Used to implement weak refs to these object
+
 		void RefreshPosRot(); 
 
 		void UpdateLastKnown(
 			const core::vector3df& position, const core::quaternion& rotation,
 			const core::vector3df& velocity, const float m_omega[4],
 			const boost::posix_time::ptime& when);
+
+		// Getters
+
+		core::vector3df getPosition();
 
 		NetObject(ZCom_Control* control, IrrlichtDevice* );
 		~NetObject(void);

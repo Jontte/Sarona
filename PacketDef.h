@@ -48,14 +48,23 @@ namespace Sarona
 				_stream.addInt(Id, 16); /*add packet id*/ \
 				BOOST_PP_SEQ_FOR_EACH(WRITEDEF, _stream, FIELDS)\
 			} \
-		};
+		};\
+		typedef NAME ensure_unique_ ## ID;
 
 		// - - - - - - - - - - T Y P E   D E F I N I T I O N S - - - - - - - - - -
+		TYPE_DEFINITION(u8,  getInt(8), addInt(data, 8));
 		TYPE_DEFINITION(u16, getInt(16), addInt(data, 16));
 		TYPE_DEFINITION(s16, getSignedInt(16), addSignedInt(data, 16));
-		TYPE_DEFINITION(u8,  getInt(8), addInt(data, 8));
+		TYPE_DEFINITION(u32, getInt(32), addInt(data, 32));
+		TYPE_DEFINITION(s32, getSignedInt(32), addSignedInt(data, 32));
 		TYPE_DEFINITION(bool,  getBool(), addBool(data));
-		TYPE_DEFINITION(string, getStringStatic(), addString(data.c_str()))
+		TYPE_DEFINITION(float, getFloat(23), addFloat(data, 23));
+		TYPE_DEFINITION(string, getStringStatic(), addString(data.c_str()));
+
+		TYPE_DEFINITION_CUSTOM(btVector3,
+			return btVector3(_stream.getFloat(23),_stream.getFloat(23),_stream.getFloat(23)),
+			_stream.addFloat(data[0], 23); _stream.addFloat(data[1], 23); _stream.addFloat(data[2], 23);
+		);
 
 		// - - - - - - - - - - P A C K E T   D E F I N I T I O N S - - - - - - - - - -
 		// Namespaces :
@@ -74,6 +83,8 @@ namespace Sarona
 
 		DEF(0x0400, LevelSelect, ((string, name)))
 		DEF(0x0401, GameStartNotify, ((bool, unused)))
+		DEF(0x0402, CameraFollow, ((u32, nodeid))((float, distance)))
+		DEF(0x0403, CameraSet, ((u32, nodeid))((btVector3, position))((btVector3, lookat))((float, seconds)))
 
 		// Utility functions
 

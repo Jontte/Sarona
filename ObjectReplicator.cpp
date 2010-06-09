@@ -49,29 +49,29 @@ namespace Sarona
 			*lastupdate = ZoidCom::getTime();
 			
 
-			ZCom_BitStream* stream = new ZCom_BitStream();
+			ZCom_BitStream stream;
 
 			// position
-			stream->addFloat(position[0], FLOAT_BITS);
-			stream->addFloat(position[1], FLOAT_BITS);
-			stream->addFloat(position[2], FLOAT_BITS);
+			stream.addFloat(position[0], FLOAT_BITS);
+			stream.addFloat(position[1], FLOAT_BITS);
+			stream.addFloat(position[2], FLOAT_BITS);
 			// rotation
-			stream->addFloat(rotation[0], FLOAT_BITS);
-			stream->addFloat(rotation[1], FLOAT_BITS);
-			stream->addFloat(rotation[2], FLOAT_BITS);
-			stream->addFloat(rotation[3], FLOAT_BITS);
+			stream.addFloat(rotation[0], FLOAT_BITS);
+			stream.addFloat(rotation[1], FLOAT_BITS);
+			stream.addFloat(rotation[2], FLOAT_BITS);
+			stream.addFloat(rotation[3], FLOAT_BITS);
 			// velocity
-			stream->addFloat(velocity[0], FLOAT_BITS);
-			stream->addFloat(velocity[1], FLOAT_BITS);
-			stream->addFloat(velocity[2], FLOAT_BITS);
+			stream.addFloat(velocity[0], FLOAT_BITS);
+			stream.addFloat(velocity[1], FLOAT_BITS);
+			stream.addFloat(velocity[2], FLOAT_BITS);
 			// omega
-			stream->addFloat(omega[0], FLOAT_BITS);
-			stream->addFloat(omega[1], FLOAT_BITS);
-			stream->addFloat(omega[2], FLOAT_BITS);
-			stream->addFloat(omega[3], FLOAT_BITS);
+			stream.addFloat(omega[0], FLOAT_BITS);
+			stream.addFloat(omega[1], FLOAT_BITS);
+			stream.addFloat(omega[2], FLOAT_BITS);
+			stream.addFloat(omega[3], FLOAT_BITS);
 
-			this->sendDataDirect(eZCom_Unreliable, *iter, stream); 
-//			this->sendDataDirect(eZCom_ReliableUnordered, *iter, stream); 
+			this->sendDataDirect(eZCom_Unreliable, *iter, stream.Duplicate()); 
+//			this->sendDataDirect(eZCom_ReliableUnordered, *iter, stream.Duplicate()); 
 
 			iter++;
 		}
@@ -113,8 +113,8 @@ namespace Sarona
 	void ObjectReplicator::onConnectionAdded (ZCom_ConnID _cid, eZCom_NodeRole _remoterole)
 	{
 		m_connections.insert(_cid);
-
-//		send();
+		if(m_phys)
+			m_phys->resync();
 	}
 	
 	void ObjectReplicator::onConnectionRemoved (ZCom_ConnID _cid, eZCom_NodeRole _remoterole)
