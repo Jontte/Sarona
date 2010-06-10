@@ -351,12 +351,7 @@ namespace Sarona
 				// Object IDs for netobjcts
 				// V8-wrapper? 
 
-				ZCom_Node* znode = this->ZCom_getNode(follow.nodeid);
-				if(znode)
-				{
-					NetObject * obj = reinterpret_cast<NetObject*>(znode->getUserData());
-					m_camera->Follow(assignId(obj), follow.distance);
-				}
+				m_camera->Follow(follow.nodeid, follow.distance);
 			}
 		}
 		return false;

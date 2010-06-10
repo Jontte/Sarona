@@ -19,12 +19,12 @@ function level_start()
 	// Create ground
 	
 	var ground = new Object({
-		body: 'level_mask.obj',
-		mesh: 'pohja.obj',
-		texture: 'tekstuuri.png',
-		position: [0,0,5],
-		meshScale: 4,
-		bodyScale: 4, 
+		body: 'maailma.obj',
+		mesh: 'maailma.obj',
+		texture: 'maailma.png',
+		position: [0,0,0],
+		meshScale: 8,
+		bodyScale: 8, 
 		rotation: [90,0,0]
 	});
 
@@ -45,9 +45,8 @@ function level_start()
 		// Bind a key for each player in the scene.
 		
 		object = createblock(
-			new Vector(0,0,100)
+			new Vector(0,0,500)
 		);
-		
 		
 		p.bind("keydown", "space", function(){			
 			//p.cameraFollow(object, 50);

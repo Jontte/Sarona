@@ -29,10 +29,6 @@ namespace Sarona
 		// Networking
 		ZCom_Control*					m_control;
 
-		// ID to object mapping
-		boost::bimap<ObjectId, ObjectType*> m_objectIds;
-		u32	m_objectCounter; // used to assign ids
-
 		void RegisterZComObjects()
 		{
 			// has to be called after initialization, before any connections are made
@@ -140,7 +136,6 @@ namespace Sarona
 		BaseWorld(IrrlichtDevice* dev) 
 			: m_device(dev)
 			, m_gamerunning(false)
-			, m_objectCounter(0)
 		{
 			RegisterZComObjects();
 		}
@@ -151,49 +146,15 @@ namespace Sarona
 			m_jscontext.Dispose(); 
 		}
 
-		
-		// Assign an ID for the object
-		ObjectId assignId(ObjectType * obj)
+		ObjectType* getObject(ObjectId id)
 		{
-			// Same objs should return same ids
-			boost::bimap<ObjectId, ObjectType*>::right_map& right = m_objectIds.right;
-			boost::bimap<ObjectId, ObjectType*>::right_map::const_iterator iter = right.find(obj);
-			if(iter != right.end())
+			ZCom_Node * node = ZCom_getNode(id);
+			if(node)
 			{
-				return iter->second;
-			}
-
-			// No existing matches.. create new mapping
-			ObjectId ret = m_objectCounter++;
-
-			boost::bimap<ObjectId, ObjectType*>::left_map& left = m_objectIds.left;
-
-			// Find next free ID..
-			while(left.find(ret) != left.end())
-			{
-				ret++;
-			}
-
-			boost::bimap<ObjectId, ObjectType*>::value_type insertable(ret, obj);
-
-			m_objectIds.insert(insertable);
-
-			return ret; 
-		}
-
-		// Retrieve the earlier object by Id or NULL if it has been destroyed
-		ObjectType* getById(ObjectId id)
-		{
-			boost::bimap<ObjectId, ObjectType*>::left_map& left = m_objectIds.left;
-			boost::bimap<ObjectId, ObjectType*>::left_map::const_iterator iter = left.find(id);
-			if(iter != left.end())
-			{
-				return iter->second;
+				return reinterpret_cast<ObjectType*>(node->getUserData());
 			}
 			return NULL;
 		}
-
-
 	};
 
 	// ZCom Node registry ids

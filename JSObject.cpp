@@ -54,7 +54,7 @@ namespace Sarona
 		PhysWorld* world = static_cast<PhysWorld*>(external->Value());
 
 		PhysObject * object = world->CreateObject(position);
-		m_obj = world->assignId(object);
+		m_obj = object->getNetworkId();
 
 		object -> setBody(body);
 		object -> setMesh(mesh);
@@ -109,9 +109,8 @@ namespace Sarona
 	PhysObject*  JSObject::getObject() // Return null when we're invalid
 	{
 		PhysWorld* world = getWorld();
-		return world->getById(m_obj);
+		return world->getObject(m_obj);
 	}
-
 	
 	v8::Handle<v8::Value> JSObject::push(const v8::Arguments& arg)
 	{

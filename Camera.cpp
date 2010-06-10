@@ -91,7 +91,7 @@ namespace Sarona
 		{
 			// See if object is still valid..
 
-			NetObject * obj = m_world->getById(m_followTarget);
+			NetObject * obj = m_world->getObject(m_followTarget);
 
 			if(obj)
 			{
@@ -109,12 +109,7 @@ namespace Sarona
 
 				d *= (float)m_followDistance;
 
-				m_camera->setPosition(pos + d);
-			}
-			else
-			{
-				// Enter freefly when we have no ref..
-				m_state = CAMERA_FREEFLY;
+				m_camera->setPosition(mypos * 0.75 + (pos + d) * 0.25);
 			}
 		}
 	}
