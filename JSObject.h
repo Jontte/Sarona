@@ -14,7 +14,6 @@ namespace Sarona
 		PhysWorld* getWorld();
 
 	public:
-
 		PhysObject* getObject(); // Return null when we're invalid
 
 		void invalidate();

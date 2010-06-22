@@ -29,6 +29,7 @@
 
 #pragma once
 #include <string.h>
+#include <typeinfo>
 
 //-----------------------------------------------------------------------------
 #include "cproxyv8-function.h"
@@ -225,8 +226,35 @@ namespace Type
 //-------------------------------------------------------------------- Property
 //-----------------------------------------------------------------------------
 
+// A smallish abstract interface class that will make me feel comfortable 
+// when downcasting to InstaceHandle<T>. This interface has a method for asking
+// the type info
+// 
+class InstaceHandleBase
+{
+public:
+	virtual const char * GetType() = 0;
+
+	template <class T>
+	bool Is()
+	{
+		std::string _1 = typeid(reinterpret_cast<T*>(4096)).name();
+		std::string _2 = GetType();
+		return _1 == _2;
+	}
+
+	// Call if 100% positively absolutely sure that this object contains the type T
+	// (By checking with Is or GetType)
+	template <class T>
+	T* GetObject()
+	{
+		if(!Is<T>())return NULL;
+		return ** static_cast<CProxyV8::InstaceHandle<T>*>(this);
+	}
+};
+
 template <class T>
-class InstaceHandle
+class InstaceHandle : public InstaceHandleBase
 {
 public:
   InstaceHandle(bool toBeCreated)
@@ -238,6 +266,15 @@ public:
   ~InstaceHandle() { if (t_ && toBeDestroy_) delete t_; args_.Dispose(); }
 
   inline void set(T*t, bool toBeDestroy);
+
+  // implementation of GetType
+
+  const char* GetType()
+  {
+	// only the type matters, not the instance itself.
+	// excuse this hackery. (remember, t_ could be null)
+	return typeid(reinterpret_cast<T*>(4096)).name();
+  }
 
   /**
    * Returns true if the handle is empty.

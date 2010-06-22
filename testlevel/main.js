@@ -6,7 +6,7 @@ function createblock(pos)
 //			body: 'saronacube.obj',
 			body: 'cube',
 			mesh: 'saronacube.obj',
-			texture: 'saronacube.png',
+			texture: 'testgraphics.png',
 			mass: 1,
 			position: pos
 	});	
@@ -21,7 +21,7 @@ function level_start()
 	var ground = new Object({
 		body: 'maailma.obj',
 		mesh: 'maailma.obj',
-		texture: 'maailma.png',
+		texture: 'testgraphics.png',
 		position: [0,0,0],
 		meshScale: 8,
 		bodyScale: 8, 

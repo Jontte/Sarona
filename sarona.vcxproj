@@ -90,6 +90,7 @@
   <ItemGroup>
     <ClCompile Include="BaseWorld.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="GameMenu.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
@@ -107,6 +108,7 @@
   <ItemGroup>
     <ClInclude Include="BaseWorld.h" />
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="GameMenu.h" />
     <ClInclude Include="ObjectReplicator.h" />
     <ClInclude Include="PacketDef.h" />
     <ClInclude Include="StdAfx.h" />

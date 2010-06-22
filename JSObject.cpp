@@ -6,7 +6,6 @@
 
 namespace Sarona
 {
-
 	JSObject::JSObject(const v8::Handle<v8::Object>& args)
 		: m_obj(NULL)
 	{

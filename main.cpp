@@ -4,6 +4,8 @@
 #include "PhysWorld.h"
 #include "NetWorld.h"
 
+#include "GameMenu.h"
+
 #include <iostream>
 #include <windows.h>
 
@@ -23,72 +25,66 @@ int main(int argc, char *argv[])
 	zcom->setLogLevel(2);
 
 	intrusive_ptr<IrrlichtDevice> device;
-	
-
-	enum {
-		DEDICATED_SERVER,
-		JOIN_GAME,
-		HOST_AND_PLAY,
-		LOCAL_GAME
-	} gametype;
-
-	gametype = LOCAL_GAME; // Default
 
 	if(args.size() > 1 && args[1] == "server")
-		gametype = DEDICATED_SERVER;
-	if(args.size() > 1 && args[1] == "client")
-		gametype = JOIN_GAME;
-	if(args.size() > 1 && args[1] == "hostandplay")
-		gametype = HOST_AND_PLAY;
-
-	// whether to run server here
-	bool server = 
-		(gametype == DEDICATED_SERVER) ||
-		(gametype == HOST_AND_PLAY) || 
-		(gametype == LOCAL_GAME);
-
-	// whether to run client here
-	bool client = 
-		(gametype == JOIN_GAME) || 
-		(gametype == HOST_AND_PLAY) || 
-		(gametype == LOCAL_GAME);
-
-	if(gametype != DEDICATED_SERVER)
 	{
-		// Graphical interface needed
-		device = intrusive_ptr<IrrlichtDevice>(
-			createDevice(video::EDT_OPENGL, core::dimension2d<u32>(800,600), 16, false, true, true),
-			false /* don't addref */
-		);
-		device->setWindowCaption(L"Sarona");
-	}
-	else
-	{
-		// Dedicated server uses null graphics..
+		// Skip graphical interface
+		// Dedicated server uses 'null' graphics device..
 		device = intrusive_ptr<IrrlichtDevice>(
 			createDevice(video::EDT_NULL, core::dimension2d<u32>(640,480), 16, false, true, true),
 			false /* don't addref */
 		);
+		device->getLogger()->setLogLevel(ELL_INFORMATION);
+
+		// Start server, run game instances in loop
+		
+		while(true)
+		{
+			std::cout << "Loading server instance...";
+			
+			scoped_ptr<Sarona::PhysWorld> serverworld(
+				new Sarona::PhysWorld(get_pointer(device)));
+
+			serverworld->SetLevel("testlevel/");
+			serverworld->Bind(9192, false);
+
+			serverworld->Start();
+			serverworld->Wait();
+		}
 	}
+	else
+	{
+		// Display main menu, graphical interface needed
+		device = intrusive_ptr<IrrlichtDevice>(
+			createDevice(video::EDT_OPENGL, core::dimension2d<u32>(800,600), 16, false, true, true),
+			false /* don't addref */
+		);
 
-	device->getLogger()->setLogLevel(ELL_INFORMATION);
+	//	Sarona::GameMenu menu(get_pointer(device));
+		//menu.Run();
+	
 
-	scoped_ptr<Sarona::PhysWorld> serverworld;
+	
 	scoped_ptr<Sarona::NetWorld> clientworld;
+	scoped_ptr<Sarona::PhysWorld> serverworld;
+
+	bool local_game = true;
+	bool server = true;
+	bool client = true;
 
 	if(server)
 	{
 		serverworld.reset(new Sarona::PhysWorld(get_pointer(device)));
 
 		serverworld->SetLevel("testlevel/");
-		serverworld->Bind(9192, (gametype == LOCAL_GAME));
+		serverworld->Bind(9192, local_game);
 	}
 	if(client)
 	{
 		clientworld.reset(new Sarona::NetWorld(get_pointer(device)));
 
 		clientworld->SetLevel("testlevel/");
-		clientworld->Connect("localhost:9192", (gametype == LOCAL_GAME));
+		clientworld->Connect("localhost:9192", local_game);
 	}
 
 	if(serverworld)
@@ -100,5 +96,7 @@ int main(int argc, char *argv[])
 
 	if(serverworld)
 		serverworld->Wait();
+	}
+	return 0;
 }
 

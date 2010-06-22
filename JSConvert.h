@@ -1,12 +1,19 @@
 #pragma once
 #include "StdAfx.h"
+#include "JSVector.h"
 
 /*
 	A couple of utilies to help with conversion from v8::Arguments to proper c++ types
 */
 
 typedef v8::Handle<v8::Value> JSVal_t;
-struct TypeException : public std::exception {};
+struct TypeException : public std::exception {
+	TypeException()
+	{
+		// just cause we might want to place a breakpoint here :p
+		std::cout << "Kissa" << std::endl;
+	}
+};
 
 // Single variable conversion
 
@@ -36,10 +43,37 @@ void convert(const JSVal_t& val, string& out)
 // vector
 void convert(const JSVal_t& val, btVector3& out)
 {
-	if(!val->IsObject())throw TypeException();
-	convert<btScalar>(val->ToObject()->Get(0), out[0]); //TODO check member existence
-	convert<btScalar>(val->ToObject()->Get(1), out[1]);
-	convert<btScalar>(val->ToObject()->Get(2), out[2]);
+	if(!val->IsObject())	throw TypeException();
+
+	v8::Handle<v8::Object> object = val->ToObject();
+
+	// Check if the object is a native JS Array of the form [x,y,z]
+	if(object->Has(0))
+	{
+		// Array type
+		convert<btScalar>(val->ToObject()->Get(0), out[0]); //TODO check member existence
+		convert<btScalar>(val->ToObject()->Get(1), out[1]);
+		convert<btScalar>(val->ToObject()->Get(2), out[2]);
+	}
+	else
+	{
+		// Native type
+		CProxyV8::InstaceHandleBase* base = static_cast<CProxyV8::InstaceHandleBase*>(v8::Handle<v8::External>::Cast(object->GetInternalField(0))->Value());
+
+		if(!base)
+		{
+			// invalid object
+			throw TypeException();
+		}
+		
+		if(base->Is<Sarona::JSVector>())
+		{
+			Sarona::JSVector * vec = base->GetObject<Sarona::JSVector>();
+			out[0] = (btScalar)vec->x;
+			out[1] = (btScalar)vec->y;
+			out[2] = (btScalar)vec->z;
+		}
+	}
 }
 // generic array
 template <class T>
