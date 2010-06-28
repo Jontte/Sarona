@@ -62,7 +62,11 @@ namespace Sarona
 	
 		ZCom_ConnID	m_serverConnectionId;
 
+		// Set key press status, send update to network
 		void UpdateKeyState(u8 keycode, bool pressed);
+
+		// Remove objects scheduled for deletion
+		void RemoveZombies();
 
 	public:
 		NetWorld(IrrlichtDevice * dev);

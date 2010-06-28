@@ -76,8 +76,10 @@ namespace Sarona
 			const boost::posix_time::ptime& when);
 
 		// Getters
-
 		core::vector3df getPosition();
+
+		// Returns whether this object is waiting to be deleted
+		bool IsZombie();
 
 		NetObject(ZCom_Control* control, IrrlichtDevice* );
 		~NetObject(void);

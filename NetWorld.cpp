@@ -224,6 +224,9 @@ namespace Sarona
 			// Move camera
 			m_camera->Step(DeltaTime * 0.001f);
 
+			// Remove objects scheduled for deletion
+			RemoveZombies();
+
 			// Refresh object positions
 			for(unsigned i = 0; i < m_objects.size(); i++)
 			{
@@ -240,6 +243,22 @@ namespace Sarona
 	}
 	
 
+	void NetWorld::RemoveZombies()
+	{
+		// Remove objects with the 'deleteme' bit set
+		ptr_vector<NetObject>::iterator iter = m_objects.begin();
+		while(iter != m_objects.end())
+		{
+			if(iter->IsZombie())
+			{
+				iter = m_objects.erase(iter);
+			}
+			else
+			{
+				iter++;
+			}
+		}
+	}
 
 	bool NetWorld::ZCom_cbConnectionRequest(ZCom_ConnID _id, ZCom_BitStream &_request, ZCom_BitStream &_reply)
 	{

@@ -114,6 +114,11 @@ namespace Sarona
 		return m_sceneNode->getPosition();
 	}
 
+	bool NetObject::IsZombie()
+	{
+		return m_deleteme;
+	}
+
 	bool NetObject::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
 					eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
 					zU32 _estimated_time_sent)

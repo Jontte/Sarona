@@ -17,6 +17,9 @@ namespace Sarona
 
 	GameMenu::GameMenu(IrrlichtDevice * dev)
 		:	m_device(dev)
+		,	m_runlocal(true)
+		,	m_runserver(true)
+		,	m_finished(false)
 	{
 		dev->setEventReceiver(this);
 	}
@@ -43,10 +46,19 @@ namespace Sarona
             switch(id)
             {
             case GUI_ID_BUTTON_LOCAL:
+				m_runserver = true;
+				m_runlocal = true;
+				m_finished = true;
                 return true;
             case GUI_ID_BUTTON_HOST:
+				m_runserver = true;
+				m_runlocal = false;
+				m_finished = true;
                 return true;
             case GUI_ID_BUTTON_JOIN:
+				m_runserver = false;
+				m_runlocal = false;
+				m_finished = true;
                 return true;
             case GUI_ID_BUTTON_SETTINGS:
 				return true;
@@ -65,7 +77,7 @@ namespace Sarona
 		return false;
 	}
 
-	void GameMenu::Run()
+	void GameMenu::Run(bool &runlocal, bool &runserver)
 	{
 		video::IVideoDriver* driver = m_device->getVideoDriver();
 		gui::IGUIEnvironment* env = m_device->getGUIEnvironment();
@@ -118,6 +130,15 @@ namespace Sarona
 			boost::this_thread::sleep(
 				boost::posix_time::milliseconds(100)
 			);
+
+			// Are we finished?
+			if(m_finished)
+			{
+				runlocal = m_runlocal;
+				runserver = m_runserver;
+				break;
+			}
 		}
+
 	}
 }

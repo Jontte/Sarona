@@ -7,13 +7,7 @@
 */
 
 typedef v8::Handle<v8::Value> JSVal_t;
-struct TypeException : public std::exception {
-	TypeException()
-	{
-		// just cause we might want to place a breakpoint here :p
-		std::cout << "Kissa" << std::endl;
-	}
-};
+struct TypeException : public std::exception {};
 
 // Single variable conversion
 
@@ -27,7 +21,7 @@ void convert(const JSVal_t& val, JSVal_t& out)
 template <class T>
 void convert(const JSVal_t& val, T& out, typename boost::enable_if<boost::is_arithmetic<T> >::type* dummy = 0)
 { 
-	if(!val->IsNumber())throw TypeException();
+//	if(!val->IsNumber())throw TypeException();
 	v8::Handle<v8::Number> flt(val->ToNumber());
 	out = (T)flt->NumberValue();
 }

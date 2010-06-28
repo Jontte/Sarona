@@ -60,17 +60,16 @@ int main(int argc, char *argv[])
 			false /* don't addref */
 		);
 
-	//	Sarona::GameMenu menu(get_pointer(device));
-		//menu.Run();
+	Sarona::GameMenu menu(get_pointer(device));
 	
+	bool local_game = true;
+	bool server = true;
 
+	// Run the main menu, let user decide what to do
+	//menu.Run(local_game, server);
 	
 	scoped_ptr<Sarona::NetWorld> clientworld;
 	scoped_ptr<Sarona::PhysWorld> serverworld;
-
-	bool local_game = true;
-	bool server = true;
-	bool client = true;
 
 	if(server)
 	{
@@ -79,20 +78,16 @@ int main(int argc, char *argv[])
 		serverworld->SetLevel("testlevel/");
 		serverworld->Bind(9192, local_game);
 	}
-	if(client)
-	{
-		clientworld.reset(new Sarona::NetWorld(get_pointer(device)));
 
-		clientworld->SetLevel("testlevel/");
-		clientworld->Connect("localhost:9192", local_game);
-	}
-
+	clientworld.reset(new Sarona::NetWorld(get_pointer(device)));
+	clientworld->SetLevel("testlevel/");
+	clientworld->Connect("localhost:9192", local_game);
+	
 	if(serverworld)
 		serverworld->Start();
 
 	// The main thread has to run the irrlicht loop, apparently..
-	if(clientworld)
-		clientworld->Loop();
+	clientworld->Loop();
 
 	if(serverworld)
 		serverworld->Wait();

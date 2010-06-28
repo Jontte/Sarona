@@ -392,6 +392,13 @@ namespace Sarona
 		}
 		return v8::Undefined();
 	}
+
+
+	v8::Handle<v8::Value> PhysWorld::CallFunction(v8::Handle<v8::Value> func, int argc, v8::Handle<v8::Value>* argv)
+	{
+		return v8::Handle<v8::Value>();
+	}
+
 	v8::Handle<v8::Value> PhysWorld::PlayerCameraSet(const v8::Arguments& args)
 	{
 		return v8::Undefined();

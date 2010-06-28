@@ -54,6 +54,7 @@
       <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <MultiProcessorCompilation>false</MultiProcessorCompilation>
     </ClCompile>
     <ProjectReference>
       <LinkLibraryDependencies>true</LinkLibraryDependencies>
@@ -93,9 +94,13 @@
     <ClCompile Include="GameMenu.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
-      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="ObjectReplicator.cpp" />
+    <ClCompile Include="StdAfx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
+    <ClCompile Include="TimedEventReceiver.cpp" />
     <ClCompile Include="Util.cpp" />
     <ClCompile Include="NetObject.cpp" />
     <ClCompile Include="NetWorld.cpp" />
@@ -112,6 +117,7 @@
     <ClInclude Include="ObjectReplicator.h" />
     <ClInclude Include="PacketDef.h" />
     <ClInclude Include="StdAfx.h" />
+    <ClInclude Include="TimedEventReceiver.h" />
     <ClInclude Include="Util.h" />
     <ClInclude Include="NetObject.h" />
     <ClInclude Include="NetWorld.h" />

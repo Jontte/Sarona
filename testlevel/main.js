@@ -2,7 +2,7 @@
 
 function createblock(pos)
 {
-	return new Object({
+	var obj = new Object({
 //			body: 'saronacube.obj',
 			body: 'cube',
 			mesh: 'saronacube.obj',
@@ -10,6 +10,12 @@ function createblock(pos)
 			mass: 1,
 			position: pos
 	});	
+
+	setTimeout(1000, function(o){
+		return function(){
+			o.kill();
+		}
+	}(obj));
 }
 
 object = null;

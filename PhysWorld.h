@@ -2,12 +2,36 @@
 #include "StdAfx.h"
 #include "BaseWorld.h"
 #include "PhysObject.h"
+#include "TimedEventReceiver.h"
 
 namespace Sarona
 {
+	// Forward decl.
+	class PhysWorld;
 
-	class PhysWorld : public BaseWorld<PhysWorld, PhysObject>
+	// Event used to call JavaScript code (used by setTimeout)
+	class JSEvent : public Event
 	{
+	private:
+		PhysWorld * m_owner;
+		v8::Persistent<v8::Value> m_function;
+	public:
+		JSEvent(PhysWorld* owner, v8::Handle<v8::Value> val) 
+			: m_owner(owner)
+			, m_function(val)
+		{}
+		~JSEvent()
+		{
+			m_function.Dispose();
+		}
+		void operator()();
+	};
+	
+	class PhysWorld 
+		: public BaseWorld<PhysWorld, PhysObject>
+		, public TimedEventReceiver
+	{
+		friend class JSEvent;
 	private:
 
 		boost::thread		m_thread;
@@ -128,6 +152,9 @@ namespace Sarona
 
 		ptr_map<string, ShapeData> m_shapecache;
 
+		// Call a JS function in the context of this world, return result
+		v8::Handle<v8::Value> CallFunction(v8::Handle<v8::Value> func, int argc = 0, v8::Handle<v8::Value>* argv = NULL);
+	
 	public:
 
 		// Create an object in the world

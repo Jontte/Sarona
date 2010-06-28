@@ -19,6 +19,9 @@ void intrusive_ptr_release(IReferenceCounted* t);
 
 #include <btBulletDynamicsCommon.h>
 
+#include <boost/shared_ptr.hpp>
+using boost::shared_ptr;
+
 #include <boost/scoped_ptr.hpp>
 using boost::scoped_ptr;
 
@@ -44,7 +47,3 @@ using boost::ptr_map;
 #ifndef ASSERT
 #define ASSERT(x) assert(x)
 #endif
-
-#include <cproxyv8.h>
-#include <cproxyv8-class.h>
-
