@@ -40,8 +40,8 @@
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(Configuration)\</IntDir>
     <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(SolutionDir)$(Configuration)\</OutDir>
     <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">$(Configuration)\</IntDir>
-    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Users\Joonas\Documents\Downloads\irrlicht-1.7.1\irrlicht-1.7.1\include;C:\zoidcom\include;C:\Users\Joonas\Documents\Downloads\v8\include;C:\boost_1_43_0\boost_1_43_0;$(IncludePath)</IncludePath>
-    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">C:\Users\Joonas\Documents\Downloads\v8;C:\Users\Joonas\Documents\Downloads\irrlicht-1.7.1\irrlicht-1.7.1\lib\Win32-visualstudio;C:\zoidcom\lib\msvc8;C:\boost_1_43_0\boost_1_43_0\stage\lib;$(LibraryPath)</LibraryPath>
+    <LibraryPath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(LibraryPath)</LibraryPath>
+    <IncludePath Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">$(ProjectDir)cproxyv8\;$(IncludePath)</IncludePath>
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
@@ -92,6 +92,8 @@
     <ClCompile Include="BaseWorld.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="GameMenu.cpp" />
+    <ClCompile Include="JSConvert.cpp" />
+    <ClCompile Include="JSRotation.cpp" />
     <ClCompile Include="main.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Use</PrecompiledHeader>
@@ -114,6 +116,7 @@
     <ClInclude Include="BaseWorld.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="GameMenu.h" />
+    <ClInclude Include="JSRotation.h" />
     <ClInclude Include="ObjectReplicator.h" />
     <ClInclude Include="PacketDef.h" />
     <ClInclude Include="StdAfx.h" />

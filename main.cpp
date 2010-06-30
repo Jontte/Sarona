@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 	vector<string> args(argv,argv+argc);
 
 	// initialize Zoidcom
-	scoped_ptr<ZoidCom> zcom(new ZoidCom());
+	scoped_ptr<ZoidCom> zcom(new ZoidCom("zoidlog.txt"));
 
 	if (!zcom || !zcom->Init())
 	{
@@ -59,39 +59,40 @@ int main(int argc, char *argv[])
 			createDevice(video::EDT_OPENGL, core::dimension2d<u32>(800,600), 16, false, true, true),
 			false /* don't addref */
 		);
+		device->getLogger()->setLogLevel(ELL_INFORMATION);
 
-	Sarona::GameMenu menu(get_pointer(device));
+		Sarona::GameMenu menu(get_pointer(device));
 	
-	bool local_game = true;
-	bool server = true;
+		bool local_game = true;
+		bool server = true;
 
-	// Run the main menu, let user decide what to do
-	//menu.Run(local_game, server);
+		// Run the main menu, let user decide what to do
+		//menu.Run(local_game, server);
 	
-	scoped_ptr<Sarona::NetWorld> clientworld;
-	scoped_ptr<Sarona::PhysWorld> serverworld;
+		scoped_ptr<Sarona::NetWorld> clientworld;
+		scoped_ptr<Sarona::PhysWorld> serverworld;
 
-	if(server)
-	{
-		serverworld.reset(new Sarona::PhysWorld(get_pointer(device)));
+		if(server)
+		{
+			serverworld.reset(new Sarona::PhysWorld(get_pointer(device)));
 
-		serverworld->SetLevel("testlevel/");
-		serverworld->Bind(9192, local_game);
-	}
+			serverworld->SetLevel("testlevel/");
+			serverworld->Bind(9192, local_game);
+		}
 
-	clientworld.reset(new Sarona::NetWorld(get_pointer(device)));
-	clientworld->SetLevel("testlevel/");
-	clientworld->Connect("localhost:9192", local_game);
+		clientworld.reset(new Sarona::NetWorld(get_pointer(device)));
+		clientworld->SetLevel("testlevel/");
+		clientworld->Connect("localhost:9192", local_game);
 	
-	if(serverworld)
-		serverworld->Start();
+		if(serverworld)
+			serverworld->Start();
 
-	// The main thread has to run the irrlicht loop, apparently..
-	clientworld->Loop();
+		// The main thread has to run the irrlicht loop, apparently..
+		clientworld->Loop();
 
-	if(serverworld)
-		serverworld->Wait();
-	}
-	return 0;
+		if(serverworld)
+			serverworld->Wait();
+		}
+		return 0;
 }
 

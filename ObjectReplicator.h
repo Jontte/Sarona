@@ -22,24 +22,18 @@ namespace Sarona
 		void send(const btVector3& position, const btQuaternion& rotation, const btVector3& velocity, const btVector4& omega);
 
 		std::set<ZCom_ConnID> m_connections;
+		void init_replicator();
+
 	public:
 		ObjectReplicator(ZCom_ReplicatorSetup * setup, PhysObject * phys);
 		ObjectReplicator(ZCom_ReplicatorSetup * setup, NetObject * net);
 		~ObjectReplicator(void); 
 
-		void init_replicator();
-
 		void clearPeekData ();
 		void* peekData();
 		void Process (eZCom_NodeRole _localrole, zU32 _simulation_time_passed);
 
-		/*
-		bool checkState();
-		void packData(ZCom_BitStream *_stream);
-		void unpackData(ZCom_BitStream *_stream, bool _store, zU32 _estimated_time_sent);
-*/
 		void Input(const btVector3& position, const btQuaternion& rotation, const btVector3& velocity, const btVector4& omega);
-		
 		
 		void onConnectionAdded (ZCom_ConnID _cid, eZCom_NodeRole _remoterole);
 		void onConnectionRemoved (ZCom_ConnID _cid, eZCom_NodeRole _remoterole);

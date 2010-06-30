@@ -1,6 +1,8 @@
 #pragma once
 #include "StdAfx.h"
 #include "JSVector.h"
+#include "JSRotation.h"
+#include <cproxyv8-class.h>
 
 /*
 	A couple of utilies to help with conversion from v8::Arguments to proper c++ types
@@ -11,68 +13,26 @@ struct TypeException : public std::exception {};
 
 // Single variable conversion
 
-// Passthru
-void convert(const JSVal_t& val, JSVal_t& out)
-{
-	out = val;
-}
+void convert(const JSVal_t& val, JSVal_t& out);
+void convert(const JSVal_t& val, string& out);
+void convert(const JSVal_t& val, btVector3& out);
+void convert(const JSVal_t& val, btQuaternion& out);
 
 // Numeric types
 template <class T>
 void convert(const JSVal_t& val, T& out, typename boost::enable_if<boost::is_arithmetic<T> >::type* dummy = 0)
 { 
 //	if(!val->IsNumber())throw TypeException();
+	if(val.IsEmpty())throw TypeException();
 	v8::Handle<v8::Number> flt(val->ToNumber());
 	out = (T)flt->NumberValue();
 }
 
-// string
-void convert(const JSVal_t& val, string& out)
-{
-	if(!val->IsString())throw TypeException();
-	v8::Handle<v8::String> str(val->ToString());
-	out.resize(str->Utf8Length());
-	str->WriteUtf8(&out[0], out.size());
-}
-// vector
-void convert(const JSVal_t& val, btVector3& out)
-{
-	if(!val->IsObject())	throw TypeException();
-
-	v8::Handle<v8::Object> object = val->ToObject();
-
-	// Check if the object is a native JS Array of the form [x,y,z]
-	if(object->Has(0))
-	{
-		// Array type
-		convert<btScalar>(val->ToObject()->Get(0), out[0]); //TODO check member existence
-		convert<btScalar>(val->ToObject()->Get(1), out[1]);
-		convert<btScalar>(val->ToObject()->Get(2), out[2]);
-	}
-	else
-	{
-		// Native type
-		CProxyV8::InstaceHandleBase* base = static_cast<CProxyV8::InstaceHandleBase*>(v8::Handle<v8::External>::Cast(object->GetInternalField(0))->Value());
-
-		if(!base)
-		{
-			// invalid object
-			throw TypeException();
-		}
-		
-		if(base->Is<Sarona::JSVector>())
-		{
-			Sarona::JSVector * vec = base->GetObject<Sarona::JSVector>();
-			out[0] = (btScalar)vec->x;
-			out[1] = (btScalar)vec->y;
-			out[2] = (btScalar)vec->z;
-		}
-	}
-}
 // generic array
 template <class T>
 void convert(const JSVal_t& val, vector<T>& out)
 {
+	if(val.IsEmpty())throw TypeException();
 	out.clear();
 	v8::Handle<v8::Object> obj = val->ToObject();
 	for(unsigned i = 0; i < 0xFFFFFFFF; i++)
@@ -87,6 +47,7 @@ void convert(const JSVal_t& val, vector<T>& out)
 template <class Key, class Value>
 void convert(const JSVal_t& val, std::map<Key, Value>& out)
 {
+	if(val.IsEmpty())throw TypeException();
 	out.clear();
 	v8::Handle<v8::Object> obj = val->ToObject();
 	
@@ -126,12 +87,15 @@ template <class T1, class T2, class T3, class T4> void extract(const v8::Argumen
 	convert(arg[2], t3);
 	convert(arg[2], t4);
 }
-// Similar to extract..
-template <class T>
-void dig(v8::Handle<v8::Value> val, std::string name, T& t)
+
+// Similar to extract
+// Grabs and converts a value from a map
+template <class T, class U>
+void get(const T& container, const typename T::key_type & key, U& ret)
 {
-	if(!val->IsObject())throw TypeException();
-	convert(val->ToObject()->Get(v8::String::New(name.c_str())), t);
+	typename T::const_iterator iter = container.find(key);
+	if(iter == container.end())throw TypeException();
+	convert(iter->second, ret);
 }
 
 

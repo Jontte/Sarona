@@ -272,7 +272,7 @@ public:
   const char* GetType()
   {
 	// only the type matters, not the instance itself.
-	// excuse this hackery. (remember, t_ could be null)
+	// excuse this hackery. (remember, t_ could be null and typeid doesn't like that)
 	return typeid(reinterpret_cast<T*>(4096)).name();
   }
 

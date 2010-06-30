@@ -2,36 +2,20 @@
 #include "StdAfx.h"
 #include "BaseWorld.h"
 #include "PhysObject.h"
-#include "TimedEventReceiver.h"
 
 namespace Sarona
 {
 	// Forward decl.
 	class PhysWorld;
 
-	// Event used to call JavaScript code (used by setTimeout)
-	class JSEvent : public Event
-	{
-	private:
-		PhysWorld * m_owner;
-		v8::Persistent<v8::Value> m_function;
-	public:
-		JSEvent(PhysWorld* owner, v8::Handle<v8::Value> val) 
-			: m_owner(owner)
-			, m_function(val)
-		{}
-		~JSEvent()
-		{
-			m_function.Dispose();
-		}
-		void operator()();
-	};
+
+	class JSTimeoutEvent;
+	class TimedEventReceiver;
 	
 	class PhysWorld 
 		: public BaseWorld<PhysWorld, PhysObject>
-		, public TimedEventReceiver
 	{
-		friend class JSEvent;
+		friend class JSTimeoutEvent;
 	private:
 
 		boost::thread		m_thread;
@@ -109,8 +93,14 @@ namespace Sarona
 			ZCom_ConnID connection_id;
 			bool level_confirmed; 
 			bool disconnected;
+			PhysWorld* world;
 
-			Client() : level_confirmed(false), connection_id(0), name("Unnamed"), disconnected(true){}
+			Client(PhysWorld* world_) : 
+				level_confirmed(false), 
+				connection_id(0), 
+				name("Unnamed"), 
+				disconnected(true),
+				world(world_){}
 
 			void bind_event(const string& eventtype, const string& eventname, v8::Handle<v8::Function> func, v8::Handle<v8::Object> context);
 			void call_event(const string& eventtype, const string& eventname, std::vector<v8::Handle< v8::Value > >& args = std::vector<v8::Handle< v8::Value > >());
@@ -132,12 +122,14 @@ namespace Sarona
 		v8::Handle<v8::Value>			PlayerBind(const v8::Arguments& args);
 		v8::Handle<v8::Value>			PlayerCameraFollow(const v8::Arguments& args);
 		v8::Handle<v8::Value>			PlayerCameraSet(const v8::Arguments& args);
+		v8::Handle<v8::Value>			SetTimeout(const v8::Arguments& args);
 		
-		// static JS Functions:
+		// static JS wrappers:
 		static v8::Handle<v8::Value>	JSPrint(const v8::Arguments& args);
 		static v8::Handle<v8::Value>	JSPlayerBind(const v8::Arguments& args);
 		static v8::Handle<v8::Value>	JSPlayerCameraFollow(const v8::Arguments& args);
 		static v8::Handle<v8::Value>	JSPlayerCameraSet(const v8::Arguments& args);
+		static v8::Handle<v8::Value>	JSSetTimeout(const v8::Arguments& args);
 
 		void Loop();
 
@@ -152,13 +144,18 @@ namespace Sarona
 
 		ptr_map<string, ShapeData> m_shapecache;
 
-		// Call a JS function in the context of this world, return result
-		v8::Handle<v8::Value> CallFunction(v8::Handle<v8::Value> func, int argc = 0, v8::Handle<v8::Value>* argv = NULL);
-	
+		// Timer interface
+		scoped_ptr<TimedEventReceiver>	m_timer;
+
+		// Remove objects scheduled for deletion
+		void KillZombies();
+
+		// Send node status updates
+		void UpdateNodes();
 	public:
 
 		// Create an object in the world
-		PhysObject* CreateObject(const btVector3& position);
+		PhysObject* CreateObject(const btVector3& position, const btQuaternion& rotation);
 		
 		PhysWorld(IrrlichtDevice * dev = NULL);
 		~PhysWorld();

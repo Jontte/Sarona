@@ -49,9 +49,12 @@ namespace Sarona
 				BOOST_PP_SEQ_FOR_EACH(WRITEDEF, _stream, FIELDS)\
 			} \
 		};\
-		typedef NAME ensure_unique_ ## ID;
+		namespace UniqueId {\
+			typedef NAME ensure_unique_id_ ## ID;\
+		}
 
 		// - - - - - - - - - - T Y P E   D E F I N I T I O N S - - - - - - - - - -
+		// TYPE_DEFINITION(type, reader function, writer function)
 		TYPE_DEFINITION(u8,  getInt(8), addInt(data, 8));
 		TYPE_DEFINITION(u16, getInt(16), addInt(data, 16));
 		TYPE_DEFINITION(s16, getSignedInt(16), addSignedInt(data, 16));
@@ -74,10 +77,12 @@ namespace Sarona
 		// 0x0300 - Global events, Client -> Server
 		// 0x0400 - Global events, Server -> Client
 
-		DEF(0x0000, VersionCheck,		((s16, major)) ((s16, minor)));
-		DEF(0x0001, LevelHashCheck,		((string, sha1)));
+		DEF(0x0000, VersionCheck,		((s16, major)) ((s16, minor)))
+		DEF(0x0001, LevelHashCheck,		((string, sha1)))
 
-		DEF(0x0300, KeyPressEvent, ((u8, keycode))((bool, press)));
+		DEF(0x0200, NodeStateUpdate, ((string, mesh))((string, texture))((float, mesh_scale)))
+
+		DEF(0x0300, KeyPressEvent, ((u8, keycode))((bool, press)))
 		DEF(0x0301, LevelRequest, ((string, name)))  // Client must send either of these two as a reply to LevelSelect
 		DEF(0x0302, LevelConfirm, ((bool, unused))) 
 

@@ -3,6 +3,7 @@
 #include "PhysObject.h"
 #include "PhysWorld.h"
 #include "ObjectReplicator.h"
+#include "PacketDef.h"
 
 namespace Sarona
 {
@@ -15,41 +16,39 @@ namespace Sarona
 		,	m_meshScale(1)
 		,	m_bodyScale(1)
 		,	m_dirty(true)
-		,	ZCom_ReplicatorBasic(new ZCom_ReplicatorSetup( // Replicator setup goes here
-			ZCOM_REPFLAG_RARELYCHANGED|ZCOM_REPFLAG_MOSTRECENT|ZCOM_REPFLAG_SETUPAUTODELETE, ZCOM_REPRULE_AUTH_2_ALL
-		))
+		,	m_deleteme(false)
 	{
-		m_mesh[0] = m_texture[0] = NULL;
-		m_flags |= ZCOM_REPLICATOR_INITIALIZED;
-
 		m_zcomNode.reset(new ZCom_Node());
 		m_zcomNode->setUserData(this);
 
-		ZCom_ReplicatorSetup setup(/*flags*/ ZCOM_REPFLAG_UNRELIABLE|ZCOM_REPFLAG_MOSTRECENT, /*rules*/ ZCOM_REPRULE_AUTH_2_ALL, /*intercept_id*/ 0, /*min_delay*/ 0, /*max_delay*/ 50);
-		ObjectReplicator* replicator = new ObjectReplicator(setup.Duplicate(), this);
+		m_replicator = new ObjectReplicator(
+			new ZCom_ReplicatorSetup(ZCOM_REPFLAG_UNRELIABLE|ZCOM_REPFLAG_MOSTRECENT|ZCOM_REPFLAG_SETUPAUTODELETE, ZCOM_REPRULE_AUTH_2_ALL), this);
 
 		// BEGIN REPLICATION SETUP
-		m_zcomNode->beginReplicationSetup(2);
-			m_zcomNode -> addReplicator(replicator, true);
-			m_zcomNode -> addReplicator(this, false); // autodelete = false, pretty important when passing 'this' ;)
+		m_zcomNode->beginReplicationSetup(1);
+			m_zcomNode -> addReplicator(m_replicator, true);
 		m_zcomNode->endReplicationSetup();
 		// END REPLICATION SETUP
 
-		m_motionstate.reset(new PhysObjectMotionState(initialpos, replicator));
+		m_motionstate.reset(new PhysObjectMotionState(initialpos, m_replicator));
 		
 		recreateBody();
 
-		// This line is needed so that the position isto the clients
-		//m_motionstate->setWorldTransform(initialpos);
-
 		m_zcomNode -> setEventInterceptor(this);
 		m_zcomNode -> registerNodeDynamic(TypeRegistry::m_objectId, m_world);
+		// We want to be informed about connecting clients so that we can send our current state to them directly.
+		m_zcomNode -> setEventNotification(true, false); 
 	}
 
 	PhysObject::~PhysObject(void)
 	{
 		if(m_motionstate)
 			m_motionstate->reset(); // don't reference the replicator any longer
+
+		m_zcomNode -> setEventInterceptor(NULL);
+//		m_zcomNode -> unregisterNode();
+		m_zcomNode.reset();
+		//m_replicator.reset();
 
 		m_dynamicsWorld->removeRigidBody(get_pointer(m_rigidbody));
 	}
@@ -62,14 +61,13 @@ namespace Sarona
 
 	void PhysObject::setTexture(const std::string & texture)
 	{
-		strncpy_s(m_texture, texture.c_str(), 64);
+		if(m_texture == texture)
+			return;
+
+		m_texture = texture;
 		m_dirty = true;
 	}
 
-	/*void PhysObject::setPosition(const btVector3 & pos)
-	{
-		m_rigidbody->getCenterOfMassPosition() = pos;
-	}*/
 	void PhysObject::setBody(const std::string& body)
 	{
 		// body property is not replicated so no need to set the object dirty.
@@ -78,7 +76,10 @@ namespace Sarona
 	}
 	void PhysObject::setMesh(const std::string& mesh)
 	{
-		strncpy_s(m_mesh, mesh.c_str(), 64);
+		if(m_mesh== mesh)
+			return;
+
+		m_mesh = mesh;
 		m_dirty = true;
 	}
 	void PhysObject::setMeshScale(float in)
@@ -96,6 +97,14 @@ namespace Sarona
 		if(m_zcomNode)
 			return m_zcomNode->getNetworkID();
 		return 0;
+	}
+	void PhysObject::kill() 
+	{
+		m_deleteme = true;
+	}
+	bool PhysObject::isZombie()
+	{
+		return m_deleteme;
 	}
 	void PhysObject::recreateBody()
 	{
@@ -125,16 +134,28 @@ namespace Sarona
 	}
 	void PhysObject::push(const btVector3& force)
 	{
-		m_rigidbody->applyImpulse(force, btVector3(0,0,0));
+		if(m_rigidbody)
+			m_rigidbody->applyImpulse(force, btVector3(0,0,0));
 	}
-	void PhysObject::resync()
+
+	void PhysObject::sendUpdate()
 	{
-		if(!m_motionstate)
+		// Send status update to all peers
+		if(!m_dirty)
 			return;
 
-		btTransform current;
-		m_motionstate->getWorldTransform(current);
-		m_motionstate->setWorldTransform(current);
+		ZCom_BitStream stream;
+
+		Protocol::NodeStateUpdate state;
+		state.mesh = m_mesh;
+		state.texture = m_texture;
+		state.mesh_scale = m_meshScale;
+
+		state.write(stream);
+
+		m_zcomNode->sendEvent(eZCom_ReliableUnordered, ZCOM_REPRULE_AUTH_2_ALL, stream.Duplicate());
+
+		m_dirty = false;
 	}
 
 	bool PhysObject::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
@@ -147,6 +168,16 @@ namespace Sarona
 	bool PhysObject::recInit(ZCom_Node *_node, ZCom_ConnID _from,
 			   eZCom_NodeRole _remoterole)
 	{
+		// New client has connected
+		// Let's send our current transform to them 
+		// (important in case of static/nonmoving objects that don't generate position updates often (if at all))
+		btTransform current;
+		m_motionstate->getWorldTransform(current);
+
+		btVector3 velocity(0,0,0);
+		btVector4 omega(0,0,0,0);
+		m_replicator->Input(current.getOrigin(), current.getRotation(), velocity, omega);
+
 		return false;
 	}
 	bool PhysObject::recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from, 
@@ -184,28 +215,4 @@ namespace Sarona
 	{
 		return false;
 	}
-
-	
-	bool PhysObject::checkState ()
-	{
-		if(m_dirty)
-		{
-			m_dirty = false;
-			return true;
-		}
-		return false;
-	}
-	void PhysObject::packData (ZCom_BitStream *_stream)
-	{
-		_stream->addString(m_mesh);
-		_stream->addString(m_texture);
-		_stream->addFloat(m_meshScale, 23);
-	}
-	void PhysObject::unpackData (ZCom_BitStream *_stream, bool _store, zU32 _estimated_time_sent)
-	{
-		// We don't receive, only send.
-	}
-	void* PhysObject::peekData(){return NULL;};
-	void PhysObject::clearPeekData(){};
-	void PhysObject::Process(eZCom_NodeRole _localrole, zU32 _simulation_time_passed){};
 }

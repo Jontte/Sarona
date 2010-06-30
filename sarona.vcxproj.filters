@@ -1,0 +1,146 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="Source Files\Net">
+      <UniqueIdentifier>{4d278bce-7aee-4fed-ab33-49e586fb0476}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Phys">
+      <UniqueIdentifier>{35537c10-ebc5-4850-b75a-77a0828978b7}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\JS">
+      <UniqueIdentifier>{f64fdf3a-5d29-4872-bbbc-cf451ca0e26c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hpp;hxx;hm;inl;inc;xsd</Extensions>
+    </Filter>
+    <Filter Include="Header Files\Net">
+      <UniqueIdentifier>{fbee3bdc-3bc5-43f2-aec5-881e24427c95}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Phys">
+      <UniqueIdentifier>{9104e451-01ba-4422-9ad3-3c9bea27d58d}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\JS">
+      <UniqueIdentifier>{49359dff-b24b-4407-979a-eeac70c3a0d3}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Resource Files">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav</Extensions>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="BaseWorld.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="ObjectReplicator.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Util.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="NetObject.cpp">
+      <Filter>Source Files\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="NetWorld.cpp">
+      <Filter>Source Files\Net</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysObject.cpp">
+      <Filter>Source Files\Phys</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysWorld.cpp">
+      <Filter>Source Files\Phys</Filter>
+    </ClCompile>
+    <ClCompile Include="PhysWorld_static.cpp">
+      <Filter>Source Files\Phys</Filter>
+    </ClCompile>
+    <ClCompile Include="JSObject.cpp">
+      <Filter>Source Files\JS</Filter>
+    </ClCompile>
+    <ClCompile Include="JSVector.cpp">
+      <Filter>Source Files\JS</Filter>
+    </ClCompile>
+    <ClCompile Include="GameMenu.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="StdAfx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="TimedEventReceiver.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="JSConvert.cpp">
+      <Filter>Source Files\JS</Filter>
+    </ClCompile>
+    <ClCompile Include="JSRotation.cpp">
+      <Filter>Source Files\JS</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="BaseWorld.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ObjectReplicator.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="PacketDef.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="StdAfx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Util.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="NetObject.h">
+      <Filter>Header Files\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="NetWorld.h">
+      <Filter>Header Files\Net</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysObject.h">
+      <Filter>Header Files\Phys</Filter>
+    </ClInclude>
+    <ClInclude Include="PhysWorld.h">
+      <Filter>Header Files\Phys</Filter>
+    </ClInclude>
+    <ClInclude Include="JSConvert.h">
+      <Filter>Header Files\JS</Filter>
+    </ClInclude>
+    <ClInclude Include="JSObject.h">
+      <Filter>Header Files\JS</Filter>
+    </ClInclude>
+    <ClInclude Include="JSVector.h">
+      <Filter>Header Files\JS</Filter>
+    </ClInclude>
+    <ClInclude Include="GameMenu.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="TimedEventReceiver.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="JSRotation.h">
+      <Filter>Header Files\JS</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="testlevel\index.json">
+      <Filter>Resource Files</Filter>
+    </None>
+    <None Include="testlevel\main.js">
+      <Filter>Resource Files</Filter>
+    </None>
+  </ItemGroup>
+</Project>

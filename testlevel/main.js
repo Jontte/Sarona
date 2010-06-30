@@ -3,77 +3,98 @@
 function createblock(pos)
 {
 	var obj = new Object({
-//			body: 'saronacube.obj',
 			body: 'cube',
 			mesh: 'saronacube.obj',
 			texture: 'testgraphics.png',
 			mass: 1,
-			position: pos
+			position: pos,
+			bodyScale: 2.5
 	});	
 
-	setTimeout(1000, function(o){
+	return obj;
+}
+
+function kill_later(object, timeout)
+{
+	setTimeout(timeout, function(o){
 		return function(){
 			o.kill();
 		}
-	}(obj));
+	}(object));
+}
+
+angle = 0;
+function loop()
+{
+	var obj1 = createblock([Math.sin(angle)*50,Math.cos(angle)*50, 200])
+	var obj2 = createblock([Math.sin(angle)*-50,Math.cos(angle)*-50, 200])
+
+	kill_later(obj1, 20000);
+	kill_later(obj2, 20000);
+
+	angle += Math.PI/180.0 * 10;
+	setTimeout(500, loop);
+}
+
+function create_ground()
+{
+	// Create ground
+	
+	var ground = new Object({
+		body: 'trainmap_mask.obj',
+		mesh: 'trainmap.obj',
+		texture: 'maailma.png',
+		meshScale: 64,
+		bodyScale: 64, 
+		rotation: [0,0,0,1],
+		position: [0,0,50]
+	});
 }
 
 object = null;
 
 function level_start()
 {
-	// Create ground
-	
-	var ground = new Object({
-		body: 'maailma.obj',
-		mesh: 'maailma.obj',
-		texture: 'testgraphics.png',
-		position: [0,0,0],
-		meshScale: 8,
-		bodyScale: 8, 
-		rotation: [90,0,0]
-	});
+	create_ground();
+	loop();
 
 	print('Welcome to testimappi!');
-
-/*	for (var i = 0; i < 10; i++)
-	{
-		var obj = createblock(
-			new Vector(0,0,i*8+5)
-		);
-		
-		obj.push(0,0,0);
-	}*/
-	
+	return;
 	for(var i = 0; i < scene.players.length; i++)
 	{
 		var p = scene.players[i];
 		// Bind a key for each player in the scene.
 		
-		object = createblock(
+		var object = createblock(
 			new Vector(0,0,500)
 		);
+
+		p.cameraFollow(object, 50);
 		
-		p.bind("keydown", "space", function(){			
-			//p.cameraFollow(object, 50);
-			object.push(0,0,10);
-		})
-		p.bind("keydown", "left", function(){			
-			//p.cameraFollow(object, 50);
-			object.push(10,0,0);
-		})
-		p.bind("keydown", "right", function(){			
-			//p.cameraFollow(object, 50);
-			object.push(-10,0,0);
-		})
-		p.bind("keydown", "up", function(){			
-			//p.cameraFollow(object, 50);
-			object.push(0, 10,0);
-		})
-		p.bind("keydown", "down", function(){			
-			//p.cameraFollow(object, 50);
-			object.push(0, -10,0);
-		})
+		p.bind("keydown", "space", function(obj){return function(){			
+				obj.push(0,0,10);
+			};}(object)
+		);
+		p.bind("keydown", "a", function(obj){return function(){			
+				obj.push(0,0,-10);
+			};}(object)
+		);
+		p.bind("keydown", "left", function(obj){return function(){			
+				obj.push(10,0,0);
+			};}(object)
+		);
+		p.bind("keydown", "right", function(obj){return function(){			
+				obj.push(-10, 0,0);
+			};}(object)
+		);
+		p.bind("keydown", "up", function(obj){return function(){			
+				obj.push(0, 10,0);
+			};}(object)
+		);
+		p.bind("keydown", "down", function(obj){return function(){			
+				obj.push(0, -10,0);
+			};}(object)
+		);
 	}
 	
 	

@@ -56,9 +56,10 @@ namespace Sarona
 		return handle->REALFUNC(args);\
 	}
 
-IMPL_FUNC(PhysWorld, JSPlayerBind,				PlayerBind)
-IMPL_FUNC(PhysWorld, JSPlayerCameraFollow,		PlayerCameraFollow)
-IMPL_FUNC(PhysWorld, JSPlayerCameraSet,			PlayerCameraSet)
+IMPL_FUNC(PhysWorld,	JSPlayerBind,				PlayerBind);
+IMPL_FUNC(PhysWorld,	JSPlayerCameraFollow,		PlayerCameraFollow);
+IMPL_FUNC(PhysWorld,	JSPlayerCameraSet,			PlayerCameraSet);
+IMPL_FUNC(PhysWorld,	JSSetTimeout,				SetTimeout);
 
 	/*
 	v8::Handle<v8::Value> PhysWorld::JSSceneGetter(v8::Local<v8::String> property, const v8::AccessorInfo& info)

@@ -1,3 +1,4 @@
+
 #include <string>
 using std::string;
 
@@ -14,13 +15,13 @@ using std::vector;
 #include <irrlicht.h>
 using namespace irr;
 
-void intrusive_ptr_add_ref(IReferenceCounted* t);
-void intrusive_ptr_release(IReferenceCounted* t);
-
 #include <btBulletDynamicsCommon.h>
 
 #include <boost/shared_ptr.hpp>
 using boost::shared_ptr;
+
+#include <boost/make_shared.hpp>
+using boost::make_shared;
 
 #include <boost/scoped_ptr.hpp>
 using boost::scoped_ptr;

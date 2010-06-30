@@ -9,12 +9,15 @@ namespace Sarona
 	class PhysObjectMotionState;
 	class PhysObject
 		: public ZCom_NodeEventInterceptor // Receive regular events
-		, public ZCom_ReplicatorBasic // Act as a simple replicator ourselves
 	{
+		friend class PhysWorld;
 	private:
 		
 		// ZCom stuff
 		scoped_ptr<ZCom_Node>				m_zcomNode;
+
+		// Replicator handle. Weak ref; it is managed by zoidcom and ought to outlive this object
+		ObjectReplicator*					m_replicator;
 
 		// Global obj refs
 		btDynamicsWorld*					m_dynamicsWorld;
@@ -50,20 +53,14 @@ namespace Sarona
 		bool recFileComplete(ZCom_Node *_node, ZCom_ConnID _from,
 						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid);
 
-		// Replicator methods:
-		bool checkState ();
-		void packData (ZCom_BitStream *_stream);
-		void unpackData (ZCom_BitStream *_stream, bool _store, zU32 _estimated_time_sent);
-		void* peekData();
-		void clearPeekData();
-		void Process(eZCom_NodeRole _localrole, zU32 _simulation_time_passed);
+		// Waiting for deletion
+		bool m_deleteme;
 
-	friend class PhysWorld;
 		PhysObject(PhysWorld* world, btDynamicsWorld* dynworld, const btTransform& initialpos);
 
 		// Data to be shared with peers through replicator interface:
-		char m_mesh[65];
-		char m_texture[65];
+		string m_mesh;
+		string m_texture;
 		float m_meshScale;
 
 		// Local data
@@ -71,14 +68,15 @@ namespace Sarona
 		string m_body;
 		float m_bodyScale;
 
-		bool m_dirty; // whether an update is required.
+		// whether an update is required.
+		bool m_dirty;
 
 		void recreateBody(); // Used to update physics simulation parameters such as mass or mesh type
-		
+
 		btCollisionShape* getShape(const string& shapetext);
 
 	public:
-		typedef ZCom_NodeID Id; // Used to implement weak refs to these object
+		typedef ZCom_NodeID Id; // Used to implement weak refs to these objects
 
 		void setMass(btScalar kilos = -1);
 		//void setPosition(const btVector3& pos);
@@ -90,11 +88,15 @@ namespace Sarona
 
 		void push(const btVector3&);
 
+		// Death handling
+		void kill();
+		bool isZombie();
+		
+		// If dirty, send status update to all peers. 
+		void sendUpdate();
+
 		// Used to reference this object in the network
 		ZCom_NodeID	getNetworkId();
-
-		// Used to force a position&rotation update packet to peers
-		void resync();
 
 		~PhysObject(void);
 	};

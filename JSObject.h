@@ -20,7 +20,8 @@ namespace Sarona
 
 		JSObject(const v8::Handle<v8::Object>& args = v8::Handle<v8::Object>() );
 		~JSObject(void);
-
+		
 		v8::Handle<v8::Value> push(const v8::Arguments&);
+		v8::Handle<v8::Value> kill(const v8::Arguments&);
 	};
 }

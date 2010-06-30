@@ -1,6 +1,9 @@
 #pragma once
 #include "StdAfx.h"
 
+void intrusive_ptr_add_ref(IReferenceCounted* t);
+void intrusive_ptr_release(IReferenceCounted* t);
+
 bool readFile(
 	IrrlichtDevice* irr, 
 	const std::string& path, 

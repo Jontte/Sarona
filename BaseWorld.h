@@ -1,5 +1,6 @@
 #pragma once
 #include "StdAfx.h"
+#include "Util.h"
 
 namespace Sarona
 {
@@ -34,6 +35,67 @@ namespace Sarona
 			// has to be called after initialization, before any connections are made
 			TypeRegistry::m_objectId = this->ZCom_registerClass("Object");
 			TypeRegistry::m_commId = this->ZCom_registerClass("GlobalCommunicator");
+		}
+
+		
+		/*
+		 Call a JS function in the context of this world, return result
+		*/
+		v8::Handle<v8::Value> BaseWorld::CallFunction(
+			v8::Handle<v8::Value> func, // The function to call. String or function object
+			int argc = 0, // number of args in argv
+			v8::Handle<v8::Value>* argv = NULL, // args array
+			v8::Handle<v8::Object> ctx = v8::Handle<v8::Object>() // context of the call. empty for global object
+			)
+		{
+			// If we're not currently in a context we cannot return a value from this function.
+			bool are_in_context = v8::Context::InContext();
+
+			// Enter our context properly
+			v8::Locker locker;
+			v8::HandleScope handle_scope;
+			v8::Context::Scope scope(m_jscontext);
+
+			v8::Handle<v8::Value> result;
+			v8::TryCatch trycatch;
+
+			// Is func a string to be eval'd?
+			if(func->IsString())
+			{
+				v8::Handle<v8::String>		function = func->ToString();
+				v8::Local<v8::Script> jsscript = v8::Script::Compile(function);
+				if(jsscript.IsEmpty())
+					return v8::Handle<v8::Value>();
+				result = jsscript->Run();
+			}
+			else if(func->IsFunction())
+			{
+				v8::Handle<v8::Function>	function = v8::Handle<v8::Function>::Cast(func);
+				result = function->Call(ctx.IsEmpty() ? m_jscontext->Global() : ctx, argc, argv);
+			}
+			else
+			{
+				// What is func?
+				return v8::Handle<v8::Value>();
+			}
+
+			if(result.IsEmpty())
+			{
+				v8::Handle<v8::Value> exception = trycatch.Exception();
+				v8::Handle<v8::Message> message = trycatch.Message();
+
+				v8::String::AsciiValue exception_str(exception);
+
+				std::cout << "Exception: " << *exception_str << std::endl;
+				std::cout << "	: " << *v8::String::AsciiValue(message->GetSourceLine()) << std::endl;
+				return v8::Handle<v8::Value>();
+			}
+
+			if(are_in_context)
+				return handle_scope.Close(result);
+
+			// Can't return value, no context!
+			return v8::Handle<v8::Value>();
 		}
 
 		void LoadLevel(bool runscripts)
@@ -99,25 +161,7 @@ namespace Sarona
 					
 					v8::Handle<v8::String> jssource = v8::String::New(source.c_str());
 
-					v8::TryCatch trycatch;
-
-					v8::Handle<v8::Script> jsscript = v8::Script::Compile(jssource);
-
-					v8::Handle<v8::Value> result;
-
-					if(!jsscript.IsEmpty())
-						result = jsscript->Run();
-					
-					if(result.IsEmpty())
-					{
-						v8::Handle<v8::Value> exception = trycatch.Exception();
-						v8::Handle<v8::Message> message = trycatch.Message();
-
-						v8::String::AsciiValue exception_str(exception);
-
-						std::cout << "Exception: " << *exception_str << std::endl;
-						std::cout << "	: " << *v8::String::AsciiValue(message->GetSourceLine()) << std::endl;
-					}
+					CallFunction(jssource);
 				}
 			}
 		}

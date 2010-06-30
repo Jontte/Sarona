@@ -6,14 +6,18 @@
 
 namespace Sarona
 {
+#define THROW_IF_MAP_KEY_MISSING(MAP, KEY) \
+	if(MAP.find(KEY) == MAP.end())throw TypeException();
+
 	JSObject::JSObject(const v8::Handle<v8::Object>& args)
-		: m_obj(NULL)
+		: m_obj(0)
 	{
 		std::string mesh;
 		std::string body;
 		std::string texture;
 		btScalar mass(0);
 		btVector3 position(0,0,0);
+		btQuaternion rotation(btVector3(0,1,0), 0.0);
 
 		if(!args->Has(0))
 			throw std::out_of_range("Too few arguments!");
@@ -22,27 +26,21 @@ namespace Sarona
 
 		v8::Handle<v8::Object> config = args->Get(0)->ToObject();
 
-//		std::map<std::string, v8::Handle<v8::Value>> params;
+		std::map<std::string, v8::Handle<v8::Value>> params;
 
-//		convert(args->Get(0), params);
+		convert(args->Get(0), params);
 
 		// Required parameters:
-		//try
-		//{
-//			convert(params["body"], body);
-
-			dig(config, "body", body);
-			dig(config, "mesh", mesh);
-		//}
-		
+		try
+		{
+			get(params, "body", body);
+			get(params, "mesh", mesh);
+		} catch(...){}
 		//MANAGE_THROWS("Object","Ctor");
 
 		// Optional:
-		try
-		{
-			dig(config, "position", position);
-		} catch(...){}
-
+		try	{ get(params, "position", position); } catch(...){}
+		try	{ get(params, "rotation", rotation); } catch(...){}
 
 		// Success! Create the object
 
@@ -52,7 +50,7 @@ namespace Sarona
 
 		PhysWorld* world = static_cast<PhysWorld*>(external->Value());
 
-		PhysObject * object = world->CreateObject(position);
+		PhysObject * object = world->CreateObject(position, rotation);
 		m_obj = object->getNetworkId();
 
 		object -> setBody(body);
@@ -62,27 +60,27 @@ namespace Sarona
 		// Position:
 		try
 		{
-			dig(config, "texture", texture);
+			get(params, "texture", texture);
 			object->setTexture(texture);
 		} catch(...){}
 		// Mass:
 		try
 		{
-			dig(config, "mass", mass);
+			get(params, "mass", mass);
 			object->setMass(mass);
 		} catch(...){}
 		// MeshScaling:
 		try
 		{
 			float meshScale;
-			dig(config, "meshScale", meshScale);
+			get(params, "meshScale", meshScale);
 			object->setMeshScale(meshScale);
 		} catch(...){}
 		// BodyScaling:
 		try
 		{
-			float bodyScale;
-			dig(config, "bodyScale", bodyScale);
+			float bodyScale = 1;
+			get(params, "bodyScale", bodyScale);
 			object->setBodyScale(bodyScale);
 		} catch(...){}
 	}
@@ -127,6 +125,17 @@ namespace Sarona
 			return v8::Handle<v8::Value>();
 		}
 		MANAGE_THROWS("Object","push");
+	}
+	v8::Handle<v8::Value> JSObject::kill(const v8::Arguments& args)
+	{
+		PhysObject * c = getObject();
+		if(c)
+		{
+			c->kill();
+			// Invalidate ourselves..
+			m_obj = 0;
+		}
+		return v8::Handle<v8::Value>();
 	}
 
 }

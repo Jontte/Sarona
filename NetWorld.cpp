@@ -8,7 +8,7 @@ namespace Sarona
 
 	NetWorld::NetWorld(IrrlichtDevice* device) : BaseWorld(device)
 	{
-		ZCom_setUpstreamLimit(100000, 100000);
+		ZCom_setUpstreamLimit(30000, 30000);
 			
 		this->beginReplicationSetup(0);
 		this->endReplicationSetup();
@@ -45,7 +45,7 @@ namespace Sarona
 			m_device->getSceneManager()->addHillPlaneMesh("groundmesh", core::dimension2d<f32>(10,10), core::dimension2d<u32>(100,100)), NULL, -1, core::vector3df(0,0,0), core::vector3df(90,0,0)
 			);
 
-		node -> setMaterialTexture(0, m_device->getVideoDriver()->getTexture("saronacube.png"));
+		//node -> setMaterialTexture(0, m_device->getVideoDriver()->getTexture("saronacube.png"));
 	}
 
 	NetWorld::~NetWorld(void)
@@ -276,7 +276,7 @@ namespace Sarona
 		if (_result == eZCom_ConnAccepted)
 		{
 			ZCom_requestZoidMode(_id, zU16(1));
-			ZCom_requestDownstreamLimit(_id, (zU16)1000, (zU16)100000 );
+			ZCom_requestDownstreamLimit(_id, (zU16)30000, (zU16)30000 );
 		}
 		else
 		{

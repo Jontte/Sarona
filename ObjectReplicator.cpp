@@ -20,60 +20,61 @@ namespace Sarona
 		, m_net(net)
 		, m_phys(NULL)
 	{
-		m_position[0] = m_position[1] = m_position[2] = 10000;
-		m_setup->setMinDelay(10);
 		init_replicator();
+	}
+
+	ObjectReplicator::~ObjectReplicator()
+	{
 	}
 
 	void ObjectReplicator::init_replicator()
 	{
+		m_position[0] = m_position[1] = m_position[2] = 0;
+
+		m_setup->setMinDelay(10);
+
 		//m_flags |= ZCOM_REPLICATOR_CALLPROCESS;
 		m_flags |= ZCOM_REPLICATOR_INITIALIZED;
 	}
 
 	void ObjectReplicator::send(const btVector3& position, const btQuaternion& rotation, const btVector3& velocity, const btVector4& omega)
 	{
-		std::set<ZCom_ConnID>::iterator iter = m_connections.begin();
+		ZCom_BitStream stream;
 
-		while(iter != m_connections.end())
+		// position
+		stream.addFloat(position[0], FLOAT_BITS);
+		stream.addFloat(position[1], FLOAT_BITS);
+		stream.addFloat(position[2], FLOAT_BITS);
+		// rotation
+		stream.addFloat(rotation[0], FLOAT_BITS);
+		stream.addFloat(rotation[1], FLOAT_BITS);
+		stream.addFloat(rotation[2], FLOAT_BITS);
+		stream.addFloat(rotation[3], FLOAT_BITS);
+		// velocity
+		stream.addFloat(velocity[0], FLOAT_BITS);
+		stream.addFloat(velocity[1], FLOAT_BITS);
+		stream.addFloat(velocity[2], FLOAT_BITS);
+		// omega
+		stream.addFloat(omega[0], FLOAT_BITS);
+		stream.addFloat(omega[1], FLOAT_BITS);
+		stream.addFloat(omega[2], FLOAT_BITS);
+		stream.addFloat(omega[3], FLOAT_BITS);
+
+		for(std::set<ZCom_ConnID>::iterator iter = m_connections.begin(); iter != m_connections.end(); iter++)
 		{
 			zU32* lastupdate = getLastUpdateTime(*iter);
 			if (!lastupdate)
-				return;
+				continue;
 
 			if ((ZoidCom::getTime() - *lastupdate) < (zU32)m_setup->getMinDelay())
 			{
-				// don't send data if last update to this happened too recent
-				return;
+				// don't send data if last update to this object happened too recently
+				continue;
 			}
 			*lastupdate = ZoidCom::getTime();
-			
-
-			ZCom_BitStream stream;
-
-			// position
-			stream.addFloat(position[0], FLOAT_BITS);
-			stream.addFloat(position[1], FLOAT_BITS);
-			stream.addFloat(position[2], FLOAT_BITS);
-			// rotation
-			stream.addFloat(rotation[0], FLOAT_BITS);
-			stream.addFloat(rotation[1], FLOAT_BITS);
-			stream.addFloat(rotation[2], FLOAT_BITS);
-			stream.addFloat(rotation[3], FLOAT_BITS);
-			// velocity
-			stream.addFloat(velocity[0], FLOAT_BITS);
-			stream.addFloat(velocity[1], FLOAT_BITS);
-			stream.addFloat(velocity[2], FLOAT_BITS);
-			// omega
-			stream.addFloat(omega[0], FLOAT_BITS);
-			stream.addFloat(omega[1], FLOAT_BITS);
-			stream.addFloat(omega[2], FLOAT_BITS);
-			stream.addFloat(omega[3], FLOAT_BITS);
 
 			this->sendDataDirect(eZCom_Unreliable, *iter, stream.Duplicate()); 
 //			this->sendDataDirect(eZCom_ReliableUnordered, *iter, stream.Duplicate()); 
-
-			iter++;
 		}
 	}
 	
@@ -89,11 +90,6 @@ namespace Sarona
 
 			send(position, rotation, velocity, omega);
 		}
-	}
-	
-	ObjectReplicator::~ObjectReplicator(void)
-	{
-
 	}
 
 	void ObjectReplicator::clearPeekData ()
@@ -113,8 +109,6 @@ namespace Sarona
 	void ObjectReplicator::onConnectionAdded (ZCom_ConnID _cid, eZCom_NodeRole _remoterole)
 	{
 		m_connections.insert(_cid);
-		if(m_phys)
-			m_phys->resync();
 	}
 	
 	void ObjectReplicator::onConnectionRemoved (ZCom_ConnID _cid, eZCom_NodeRole _remoterole)

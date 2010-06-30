@@ -3,15 +3,46 @@
 #include "JSObject.h"
 #include "Util.h"
 #include "JSVector.h"
+#include "JSRotation.h"
 #include "PacketDef.h"
 #include <stdexcept>
+#include <cproxyv8-class.h>
+#include "TimedEventReceiver.h"
+#include "JSConvert.h"
 
 namespace Sarona
 {
+	
+	// Event used to call JavaScript code (used by setTimeout)
+	class JSTimeoutEvent : public TimedEventReceiver::Event
+	{
+	private:
+		PhysWorld * m_owner;
+		v8::Persistent<v8::Value> m_function;
+	public:
+		JSTimeoutEvent(PhysWorld* owner, v8::Handle<v8::Value> val) 
+			: m_owner(owner)
+		{
+			m_function = v8::Persistent<v8::Value>::New(val);
+		}
+		~JSTimeoutEvent()
+		{
+			m_function.Dispose();
+		}
+		void operator()()
+		{
+			// Time to do our thing
+
+			m_owner->CallFunction(m_function);
+		}
+	};
+
+
 	PhysWorld::PhysWorld(IrrlichtDevice * dev)
 		: BaseWorld(dev)
 	{
-		ZCom_setUpstreamLimit(100000, 100000);
+		m_timer.reset(new TimedEventReceiver);
+		ZCom_setUpstreamLimit(30000, 30000);
 
 		this->beginReplicationSetup(0);
 		this->endReplicationSetup();
@@ -50,6 +81,30 @@ namespace Sarona
 		m_thread.join();
 	}
 
+	void PhysWorld::KillZombies()
+	{
+		// Remove objects scheduled for deletion
+		for(int i = 0; i < (int)m_objects.size(); i++)
+		{
+			PhysObject& obj = m_objects[i];
+			if(obj.isZombie())
+			{
+				m_objects.erase(m_objects.begin() + i);
+				i--;
+			}
+		}
+	}
+
+	void PhysWorld::UpdateNodes()
+	{
+		// Send node status updates
+		for(int i = 0; i < (int)m_objects.size(); i++)
+		{
+			PhysObject& obj = m_objects[i];
+			obj.sendUpdate();
+		}
+	}
+
 	void PhysWorld::CreateV8Context()
 	{
 		// Get rid of any existing contexts..
@@ -62,28 +117,38 @@ namespace Sarona
 		v8::Handle<v8::ObjectTemplate> global = v8::ObjectTemplate::New();
 		global->SetInternalFieldCount(2);
 
-		// Scene
 		v8::Handle<v8::ObjectTemplate> scene = v8::ObjectTemplate::New();
 		scene->SetInternalFieldCount(1);
 
 		// Static functions
-		global->Set(v8::String::New("print"), v8::FunctionTemplate::New(PhysWorld::JSPrint));
+		global->Set(v8::String::New("print"),		v8::FunctionTemplate::New(PhysWorld::JSPrint));
+		global->Set(v8::String::New("setTimeout"),	v8::FunctionTemplate::New(PhysWorld::JSSetTimeout));
 
-		// Object
+		// Scene Object
 		global->Set(v8::String::New("scene"), scene);
 
+		// Object template
 		CProxyV8::ProxyClass<JSObject>* pJSObject = CProxyV8::ProxyClass<JSObject>::instance()->init("Object");
 		pJSObject->Expose(&JSObject::push, "push");
+		pJSObject->Expose(&JSObject::kill, "kill");
 		global->Set(v8::String::New("Object"), pJSObject->GetFunctionTemplate());
-
-		// Vector
+		
+		// Vector object
 		CProxyV8::ProxyClass<JSVector>* pJSVector = CProxyV8::ProxyClass<JSVector>::instance()->init("Vector");
 		pJSVector->Expose(&JSVector::x, "x", true, true);
 		pJSVector->Expose(&JSVector::y, "y", true, true);
 		pJSVector->Expose(&JSVector::z, "z", true, true);
 		global->Set(v8::String::New("Vector"), pJSVector->GetFunctionTemplate());
 
+		// Rotation object
+		CProxyV8::ProxyClass<JSRotation>* pJSRotation = CProxyV8::ProxyClass<JSRotation>::instance()->init("Rotation");
+		pJSRotation->Expose(&JSRotation::x, "x", true, true);
+		pJSRotation->Expose(&JSRotation::y, "y", true, true);
+		pJSRotation->Expose(&JSRotation::z, "z", true, true);
+		pJSRotation->Expose(&JSRotation::w, "w", true, true);
+		global->Set(v8::String::New("Rotation"), pJSRotation->GetFunctionTemplate());
 
+		// Init context
 		m_jscontext = v8::Context::New(NULL, global);
 		v8::Context::Scope scope(m_jscontext);
 		v8::Handle<v8::External> myself = v8::External::New(this);
@@ -175,19 +240,11 @@ namespace Sarona
 
 		// Call 'level_start' defined in script
 
-		v8::TryCatch trycatch;
-		v8::Handle<v8::Function> level_start = v8::Handle<v8::Function>::Cast(m_jscontext->Global()->Get(v8::String::New("level_start")));
-		
-		v8::Handle<v8::Value> result = level_start->Call(level_start, 0, NULL);
+		v8::Handle<v8::Value> result = CallFunction(v8::String::New("level_start();"));
 		if(result.IsEmpty())
 		{
-			v8::Handle<v8::Value> exception = trycatch.Exception();
-			v8::Handle<v8::Message> message = trycatch.Message();
-
-			v8::String::AsciiValue exception_str(exception);
-
-			std::cout << "Exception: " << *exception_str << std::endl;
-			std::cout << "	: " << *v8::String::AsciiValue(message->GetSourceLine()) << std::endl;
+			// Call failed...
+			std::cout << "Call failed!" << std::endl;
 		}
 	}
 
@@ -271,20 +328,27 @@ namespace Sarona
 		boost::posix_time::time_duration loop_avg;
 		while(true)
 		{
-			// do stuff on the server...
-
+			// Start counting frame-time
 			boost::posix_time::ptime beginframe = boost::posix_time::microsec_clock::local_time();
 
-			// 1. Send/Receive messages from network
-			// 2. Simulate physics
+			// Remove dead objects from simulation
+			KillZombies();
+
+			// Send node status updates (mesh, texture, scale, etc. slow-changing params)
+			UpdateNodes();
+
+			// Simulate physics
 			m_dynamicsWorld->stepSimulation(btScalar(1.0/targetFPS), 1);
 
 			// Step network code
-			this->ZCom_processInput();
+ 			this->ZCom_processInput();
 			this->ZCom_processOutput();
 			//this->ZCom_processReplicators(zU32(1000.0/targetFPS));
 
-			
+			// Advance the timer, calling timed callbacks
+			m_timer->TimeStep(1.0/targetFPS);
+
+			// Sleep the rest of the frame..
 			boost::posix_time::ptime endframe = boost::posix_time::microsec_clock::local_time();
 
 			ZCom_ConnStats stats = ZCom_getConnectionStats(1);
@@ -294,10 +358,9 @@ namespace Sarona
 				std::cout << m_objects.size() << " objects. Avg loop: " << loop_avg.total_microseconds() << " micros" << std::endl;
 			}
 
-			// Sleep the rest of the frame...
-
 			long long int micros = 1000000/targetFPS;
 			boost::posix_time::time_duration this_frame = boost::posix_time::time_period(beginframe, endframe).length();
+
 			micros -= this_frame.total_microseconds();
 
 			loop_avg = loop_avg /2 + this_frame/2;
@@ -315,11 +378,9 @@ namespace Sarona
 		}
 	}
 
-	PhysObject* PhysWorld::CreateObject(const btVector3& position)
+	PhysObject* PhysWorld::CreateObject(const btVector3& position, const btQuaternion& rotation)
 	{
-		btQuaternion initialrot(btVector3(0,1,0), 0.0);
-
-		PhysObject* obj = new PhysObject(this, get_pointer(m_dynamicsWorld), btTransform(initialrot, position));
+		PhysObject* obj = new PhysObject(this, get_pointer(m_dynamicsWorld), btTransform(rotation, position));
 		m_objects.push_back(obj);
 		return obj;
 	}
@@ -393,14 +454,25 @@ namespace Sarona
 		return v8::Undefined();
 	}
 
-
-	v8::Handle<v8::Value> PhysWorld::CallFunction(v8::Handle<v8::Value> func, int argc, v8::Handle<v8::Value>* argv)
-	{
-		return v8::Handle<v8::Value>();
-	}
-
 	v8::Handle<v8::Value> PhysWorld::PlayerCameraSet(const v8::Arguments& args)
 	{
+		return v8::Undefined();
+	}
+
+	v8::Handle<v8::Value> PhysWorld::SetTimeout(const v8::Arguments& args)
+	{
+		// First param: timeout in milliseconds
+		// Second param: function to be called
+
+		double milliseconds;
+		v8::Handle<v8::Value> function;
+		
+		extract(args, milliseconds, function);
+
+		shared_ptr<JSTimeoutEvent> e = make_shared<JSTimeoutEvent>(this, function);
+
+		m_timer->Schedule(milliseconds / 1000.0, e);
+
 		return v8::Undefined();
 	}
 
@@ -432,13 +504,13 @@ namespace Sarona
 		scene::IAnimatedMesh * irrmesh = m_device->getSceneManager()->getMesh(shape.c_str());
 
 		// Deal some rotation to the mesh since our coordinate system has Z axis up
-		core::matrix4 rotmatrix;
+		/*core::matrix4 rotmatrix;
 		rotmatrix.setRotationDegrees(core::vector3df(90,0,0));
 		for(unsigned i = 0; i < irrmesh->getMeshBufferCount(); i++)
 		{
 			irr::scene::IMeshBuffer * meshbuffer = irrmesh->getMeshBuffer(i);
 			m_device->getSceneManager()->getMeshManipulator()->transform(meshbuffer, rotmatrix);
-		}
+		}*/
 
 		data.mesh_interface = new btTriangleMesh();
 
@@ -516,7 +588,7 @@ namespace Sarona
 	}
 	void PhysWorld::ZCom_cbConnectionSpawned( ZCom_ConnID _id )
 	{
-		ZCom_requestDownstreamLimit(_id, (zU16)1000, (zU16)100000 );
+		ZCom_requestDownstreamLimit(_id, (zU16)30000, (zU16)30000 );
 		//ZCom_simulateLoss(_id, 0.5);
 	}
 	void PhysWorld::ZCom_cbConnectionClosed( ZCom_ConnID _id, eZCom_CloseReason _reason, ZCom_BitStream &_reasondata )
@@ -541,7 +613,7 @@ namespace Sarona
 		if (_requested_level == 1)
 		{
 			// Add new client
-			Client * c = new Client;
+			Client * c = new Client(this);
 			c->connection_id = _id;
 			c->disconnected = false ; // They're active
 			m_clients.push_back(c);
@@ -625,6 +697,10 @@ namespace Sarona
 				c->level_confirmed = true;
 			}
 		}
+		else
+		{
+			std::cerr << "FATAL: Unhandled world message with id: " << Id << std::endl;
+		}
 		return false;
 	}
 	                          
@@ -698,19 +774,11 @@ namespace Sarona
 			if(iter->eventtype == eventtype && 
 				iter->eventname == eventname)
 			{
-				v8::TryCatch trycatch;
-		
 //				v8::Handle<v8::Value> result = iter->function->Call(iter->context, 0, NULL);
-				v8::Handle<v8::Value> result = iter->function->Call(v8::Context::GetCurrent()->Global(), args.size(), args.empty()?NULL:&args[0]);
+				v8::Handle<v8::Value> result = world->CallFunction(iter->function, args.size(), args.empty()?NULL:&args[0], v8::Context::GetCurrent()->Global());
 				if(result.IsEmpty())
 				{
-					v8::Handle<v8::Value> exception = trycatch.Exception();
-					v8::Handle<v8::Message> message = trycatch.Message();
-
-					v8::String::AsciiValue exception_str(exception);
-
-					std::cout << "Exception: " << *exception_str << std::endl;
-					std::cout << "	: " << *v8::String::AsciiValue(message->GetSourceLine()) << std::endl;
+					std::cout << "Client event call failed!" << std::endl;
 				}
 			}
 			iter++;
