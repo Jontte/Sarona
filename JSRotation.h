@@ -1,4 +1,6 @@
 #pragma once
+#ifndef JSROTATION_H_
+#define JSROTATION_H_
 #include "StdAfx.h"
 
 namespace Sarona
@@ -13,3 +15,4 @@ namespace Sarona
 	};
 }
 
+#endif

@@ -7,11 +7,16 @@
 #include "GameMenu.h"
 
 #include <iostream>
-#include <windows.h>
+
+#ifdef _WIN32
+    #include <windows.h>
+#endif
 
 int main(int argc, char *argv[])
 {
+#ifdef _WIN32
 	AllocConsole();
+#endif
 	vector<string> args(argv,argv+argc);
 
 	// initialize Zoidcom
@@ -37,11 +42,11 @@ int main(int argc, char *argv[])
 		device->getLogger()->setLogLevel(ELL_INFORMATION);
 
 		// Start server, run game instances in loop
-		
+
 		while(true)
 		{
 			std::cout << "Loading server instance...";
-			
+
 			scoped_ptr<Sarona::PhysWorld> serverworld(
 				new Sarona::PhysWorld(get_pointer(device)));
 
@@ -62,13 +67,13 @@ int main(int argc, char *argv[])
 		device->getLogger()->setLogLevel(ELL_INFORMATION);
 
 		Sarona::GameMenu menu(get_pointer(device));
-	
+
 		bool local_game = true;
 		bool server = true;
 
 		// Run the main menu, let user decide what to do
 		//menu.Run(local_game, server);
-	
+
 		scoped_ptr<Sarona::NetWorld> clientworld;
 		scoped_ptr<Sarona::PhysWorld> serverworld;
 
@@ -83,7 +88,7 @@ int main(int argc, char *argv[])
 		clientworld.reset(new Sarona::NetWorld(get_pointer(device)));
 		clientworld->SetLevel("testlevel/");
 		clientworld->Connect("localhost:9192", local_game);
-	
+
 		if(serverworld)
 			serverworld->Start();
 

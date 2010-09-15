@@ -6,10 +6,10 @@
 namespace Sarona
 {
 
-	NetWorld::NetWorld(IrrlichtDevice* device) : BaseWorld(device)
+	NetWorld::NetWorld(IrrlichtDevice* device) : BaseWorld<NetWorld, NetObject>(device)
 	{
 		ZCom_setUpstreamLimit(30000, 30000);
-			
+
 		this->beginReplicationSetup(0);
 		this->endReplicationSetup();
 		this->setEventInterceptor(this);
@@ -20,7 +20,7 @@ namespace Sarona
 		m_camera.reset(new Camera(get_pointer(m_device), this));
 
 		scene::ICameraSceneNode * camera = m_device->getSceneManager()->getActiveCamera();
-		
+
 		camera->setUpVector(core::vector3df(0,0,1));
 		camera->setPosition(core::vector3df(100,50,10));
 		//camera->setTarget(core::vector3df(0,0,0));
@@ -40,7 +40,7 @@ namespace Sarona
 
 		// Create ground
 
-		scene::IMeshSceneNode * node = 
+		scene::IMeshSceneNode * node =
 		m_device->getSceneManager()->addMeshSceneNode(
 			m_device->getSceneManager()->addHillPlaneMesh("groundmesh", core::dimension2d<f32>(10,10), core::dimension2d<u32>(100,100)), NULL, -1, core::vector3df(0,0,0), core::vector3df(90,0,0)
 			);
@@ -69,7 +69,7 @@ namespace Sarona
 	void NetWorld::UpdateKeyState(u8 keycode, bool pressed)
 	{
 		// Update key press statuses using a large array for the bits..
-		
+
 		if(m_keystate[keycode] != pressed)
 		{
 			m_keystate[keycode] = pressed;
@@ -117,7 +117,7 @@ namespace Sarona
 			throw std::runtime_error("Unable to connect!");
 		}
 
-		
+
 		m_serverConnectionId = connection_id;
 	}
 
@@ -214,8 +214,8 @@ namespace Sarona
 			if(++calc > 1000.0/DeltaTime )
 			{
 				calc = 0;
-			
-				
+
+
 				ZCom_ConnStats stats = this->ZCom_getConnectionStats(1);
 
 				std::cout << "In/Out pps: " << stats.current_inp << "/" << stats.current_outp << std::endl;
@@ -241,7 +241,7 @@ namespace Sarona
 			++frame;
 		}
 	}
-	
+
 
 	void NetWorld::RemoveZombies()
 	{
@@ -269,7 +269,7 @@ namespace Sarona
 	}
 	void NetWorld::ZCom_cbConnectionClosed( ZCom_ConnID _id, eZCom_CloseReason _reason, ZCom_BitStream &_reasondata )
 	{
-	
+
 	}
 	void NetWorld::ZCom_cbConnectResult( ZCom_ConnID _id, eZCom_ConnectResult _result, ZCom_BitStream &_reply )
 	{
@@ -286,7 +286,7 @@ namespace Sarona
 	}
 	void NetWorld::ZCom_cbDataReceived( ZCom_ConnID _id, ZCom_BitStream &_data )
 	{
-	
+
 	}
 	bool NetWorld::ZCom_cbZoidRequest( ZCom_ConnID _id, zU8 _requested_level, ZCom_BitStream &_reason )
 	{
@@ -317,22 +317,22 @@ namespace Sarona
 	void NetWorld::ZCom_cbNodeRequest_Tag( ZCom_ConnID _id, ZCom_ClassID _requested_class, ZCom_BitStream *_announcedata,
 		eZCom_NodeRole _role, zU32 _tag )
 	{
-	
+
 	}
-	bool NetWorld::ZCom_cbDiscoverRequest( const ZCom_Address &_addr, ZCom_BitStream &_request, 
+	bool NetWorld::ZCom_cbDiscoverRequest( const ZCom_Address &_addr, ZCom_BitStream &_request,
 		ZCom_BitStream &_reply )
 	{
 		return false;
 	}
 	void NetWorld::ZCom_cbDiscovered( const ZCom_Address & _addr, ZCom_BitStream &_reply )
 	{
-	
+
 	}
 
 	// Node events
 
-	bool NetWorld::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
-					eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
+	bool NetWorld::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from,
+					eZCom_NodeRole _remoterole, ZCom_BitStream &_data,
 					zU32 _estimated_time_sent)
 	{
 		unsigned int Id = _data.getInt(16);
@@ -341,7 +341,7 @@ namespace Sarona
 		{
 			Protocol::GameStartNotify notify;
 			notify.read(_data); // has to be called
-			m_gamerunning = true;	
+			m_gamerunning = true;
 		}
 		else if(Id == Protocol::LevelSelect::Id)
 		{
@@ -368,20 +368,20 @@ namespace Sarona
 
 				// BaseObject
 				// Object IDs for netobjcts
-				// V8-wrapper? 
+				// V8-wrapper?
 
 				m_camera->Follow(follow.nodeid, follow.distance);
 			}
 		}
 		return false;
 	}
-	                          
+
 	bool NetWorld::recInit(ZCom_Node *_node, ZCom_ConnID _from,
 			   eZCom_NodeRole _remoterole)
 	{
 		return false;
 	}
-	bool NetWorld::recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from, 
+	bool NetWorld::recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from,
 					  eZCom_NodeRole _remoterole)
 	{
 		return false;
@@ -391,26 +391,26 @@ namespace Sarona
 	{
 		return false;
 	}
-	                        
+
 	bool NetWorld::recFileIncoming(ZCom_Node *_node, ZCom_ConnID _from,
-					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid, 
+					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid,
 					   ZCom_BitStream &_request)
 	{
 		return false;
 	}
-	                             
+
 	bool NetWorld::recFileData(ZCom_Node *_node, ZCom_ConnID _from,
 				   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{
 		return false;
 	}
-	                     
+
 	bool NetWorld::recFileAborted(ZCom_Node *_node, ZCom_ConnID _from,
-					  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) 
+					  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{
 		return false;
 	}
-	                           
+
 	bool NetWorld::recFileComplete(ZCom_Node *_node, ZCom_ConnID _from,
 					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{

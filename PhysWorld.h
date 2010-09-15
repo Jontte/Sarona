@@ -1,7 +1,17 @@
 #pragma once
+#ifndef PHYSWORLD_H_
+#define PHYSWORLD_H_
 #include "StdAfx.h"
 #include "BaseWorld.h"
 #include "PhysObject.h"
+#include "JSObject.h"
+#include "Util.h"
+#include "JSVector.h"
+#include "PacketDef.h"
+#include <stdexcept>
+#include <cproxyv8-class.h>
+#include "TimedEventReceiver.h"
+#include "JSConvert.h"
 
 namespace Sarona
 {
@@ -11,8 +21,8 @@ namespace Sarona
 
 	class JSTimeoutEvent;
 	class TimedEventReceiver;
-	
-	class PhysWorld 
+
+	class PhysWorld
 		: public BaseWorld<PhysWorld, PhysObject>
 	{
 		friend class JSTimeoutEvent;
@@ -32,33 +42,33 @@ namespace Sarona
 			eZCom_NodeRole _role, ZCom_NodeID _net_id );
 		void ZCom_cbNodeRequest_Tag( ZCom_ConnID _id, ZCom_ClassID _requested_class, ZCom_BitStream *_announcedata,
 			eZCom_NodeRole _role, zU32 _tag );
-		bool ZCom_cbDiscoverRequest( const ZCom_Address &_addr, ZCom_BitStream &_request, 
+		bool ZCom_cbDiscoverRequest( const ZCom_Address &_addr, ZCom_BitStream &_request,
 			ZCom_BitStream &_reply );
 		void ZCom_cbDiscovered( const ZCom_Address & _addr, ZCom_BitStream &_reply );
 
 		// Node event interceptor interface
-		bool recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
-						eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
+		bool recUserEvent(ZCom_Node *_node, ZCom_ConnID _from,
+						eZCom_NodeRole _remoterole, ZCom_BitStream &_data,
 						zU32 _estimated_time_sent);
-		                          
+
 		bool recInit(ZCom_Node *_node, ZCom_ConnID _from,
 				   eZCom_NodeRole _remoterole);
-		bool recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from, 
+		bool recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from,
 						  eZCom_NodeRole _remoterole);
-		                              
+
 		bool recRemoved(ZCom_Node *_node, ZCom_ConnID _from,
 					  eZCom_NodeRole _remoterole);
-		                        
+
 		bool recFileIncoming(ZCom_Node *_node, ZCom_ConnID _from,
-						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid, 
+						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid,
 						   ZCom_BitStream &_request);
-		                             
+
 		bool recFileData(ZCom_Node *_node, ZCom_ConnID _from,
 					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) ;
-		                     
+
 		bool recFileAborted(ZCom_Node *_node, ZCom_ConnID _from,
 						  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) ;
-		                           
+
 		bool recFileComplete(ZCom_Node *_node, ZCom_ConnID _from,
 						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid);
 
@@ -91,25 +101,26 @@ namespace Sarona
 		public:
 			string name; // TODO: Implement
 			ZCom_ConnID connection_id;
-			bool level_confirmed; 
+
+			bool level_confirmed;
 			bool disconnected;
 			PhysWorld* world;
 
-			Client(PhysWorld* world_) : 
-				level_confirmed(false), 
-				connection_id(0), 
-				name("Unnamed"), 
+			Client(PhysWorld* world_) :
+				name("Unnamed"),
+				connection_id(0),
+				level_confirmed(false),
 				disconnected(true),
 				world(world_){}
 
 			void bind_event(const string& eventtype, const string& eventname, v8::Handle<v8::Function> func, v8::Handle<v8::Object> context);
-			void call_event(const string& eventtype, const string& eventname, std::vector<v8::Handle< v8::Value > >& args = std::vector<v8::Handle< v8::Value > >());
+			void call_event(const string& eventtype, const string& eventname, const std::vector<v8::Handle< v8::Value > >& args = std::vector<v8::Handle< v8::Value > >());
 		};
 
 		ptr_vector<Client> m_clients;
 
 		Client* GetClientById(const ZCom_ConnID&);
-		
+
 		void AnnounceGameStart();
 
 		// Ground plane
@@ -123,7 +134,7 @@ namespace Sarona
 		v8::Handle<v8::Value>			PlayerCameraFollow(const v8::Arguments& args);
 		v8::Handle<v8::Value>			PlayerCameraSet(const v8::Arguments& args);
 		v8::Handle<v8::Value>			SetTimeout(const v8::Arguments& args);
-		
+
 		// static JS wrappers:
 		static v8::Handle<v8::Value>	JSPrint(const v8::Arguments& args);
 		static v8::Handle<v8::Value>	JSPlayerBind(const v8::Arguments& args);
@@ -137,7 +148,7 @@ namespace Sarona
 		struct ShapeData
 		{
 			btCollisionShape		*	shape;
-			btTriangleMesh			*	mesh_interface; 
+			btTriangleMesh			*	mesh_interface;
 			ShapeData() : shape(NULL), mesh_interface(NULL){}
 			~ShapeData(){delete shape; delete mesh_interface;}
 		};
@@ -156,7 +167,7 @@ namespace Sarona
 
 		// Create an object in the world
 		PhysObject* CreateObject(const btVector3& position, const btQuaternion& rotation);
-		
+
 		PhysWorld(IrrlichtDevice * dev = NULL);
 		~PhysWorld();
 
@@ -169,3 +180,4 @@ namespace Sarona
 	};
 
 }
+#endif

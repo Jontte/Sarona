@@ -1,4 +1,5 @@
 #include "StdAfx.h"
+#include "JSRotation.h"
 #include "JSConvert.h"
 
 // Implementation for the static JS-type conversion funcs
@@ -66,10 +67,10 @@ void convert(const JSVal_t& val, btQuaternion& out)
 
 	// Check if the object is a native JS Array of the form [x,y,z,w]
 	if(
-		object->Has(0) && 
-		object->Has(1) && 
-		object->Has(2) && 
-		object->Has(3) 
+		object->Has(0) &&
+		object->Has(1) &&
+		object->Has(2) &&
+		object->Has(3)
 		)
 	{
 		// Array type

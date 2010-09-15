@@ -1,4 +1,5 @@
-
+#ifndef STDAFX_H_
+#define STDAFX_H_
 #include <string>
 using std::string;
 
@@ -47,4 +48,8 @@ using boost::ptr_map;
 
 #ifndef ASSERT
 #define ASSERT(x) assert(x)
+#endif
+
+#include <cproxyv8.h>
+
 #endif

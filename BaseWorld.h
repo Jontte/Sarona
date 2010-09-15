@@ -1,12 +1,20 @@
 #pragma once
+#ifndef BASEWORLD_H_
+#define BASEWORLD_H_
 #include "StdAfx.h"
 #include "Util.h"
 
 namespace Sarona
 {
+    // ZCom Node registry ids
+	namespace TypeRegistry
+	{
+		extern int m_objectId;
+		extern int m_commId;
+	};
 
 	template <class WorldType, class ObjectType>
-	class BaseWorld 
+	class BaseWorld
 		: public ZCom_Control
 		, public ZCom_Node
 		, public ZCom_NodeEventInterceptor
@@ -37,14 +45,13 @@ namespace Sarona
 			TypeRegistry::m_commId = this->ZCom_registerClass("GlobalCommunicator");
 		}
 
-		
+
 		/*
 		 Call a JS function in the context of this world, return result
 		*/
-		v8::Handle<v8::Value> BaseWorld::CallFunction(
+		v8::Handle<v8::Value> CallFunction(
 			v8::Handle<v8::Value> func, // The function to call. String or function object
-			int argc = 0, // number of args in argv
-			v8::Handle<v8::Value>* argv = NULL, // args array
+			const vector<v8::Handle<v8::Value> >& args = vector<v8::Handle<v8::Value> >(), // args array
 			v8::Handle<v8::Object> ctx = v8::Handle<v8::Object>() // context of the call. empty for global object
 			)
 		{
@@ -71,7 +78,18 @@ namespace Sarona
 			else if(func->IsFunction())
 			{
 				v8::Handle<v8::Function>	function = v8::Handle<v8::Function>::Cast(func);
-				result = function->Call(ctx.IsEmpty() ? m_jscontext->Global() : ctx, argc, argv);
+				vector<v8::Handle<v8::Value> > arg_helper;
+				for(int i = 0; i < args.size(); i++)
+                    arg_helper.push_back(args[i]);
+
+				v8::Handle<v8::Value>* argv = NULL;
+				int argcount = 0;
+				if(!args.empty())
+				{
+                        argv = &arg_helper[0];
+                        argcount = arg_helper.size();
+                }
+				result = function->Call(ctx.IsEmpty() ? m_jscontext->Global() : ctx, argcount, argv);
 			}
 			else
 			{
@@ -105,7 +123,7 @@ namespace Sarona
 				throw std::invalid_argument("No level was selected!");
 			}
 			// Load folder
-			
+
 			bool success = m_device->getFileSystem()->addFileArchive(
 				m_levelname.c_str(),
 				false, /* ignore case */
@@ -119,12 +137,12 @@ namespace Sarona
 			}
 
 			// Read index json..
-			
+
 			std::string json_source;
 			readFile(get_pointer(m_device), "index.json", json_source);
 
 			// Parse index json..
-			Json::Value root;   
+			Json::Value root;
 			Json::Reader reader;
 			if ( !reader.parse( json_source, root ) )
 			{
@@ -156,9 +174,9 @@ namespace Sarona
 						// Read failed..
 						continue;
 					}
-					
+
 					v8::HandleScope handle_scope;
-					
+
 					v8::Handle<v8::String> jssource = v8::String::New(source.c_str());
 
 					CallFunction(jssource);
@@ -177,7 +195,7 @@ namespace Sarona
 			m_levelname = level;
 		}
 
-		BaseWorld(IrrlichtDevice* dev) 
+		BaseWorld(IrrlichtDevice* dev)
 			: m_device(dev)
 			, m_gamerunning(false)
 		{
@@ -187,7 +205,7 @@ namespace Sarona
 		virtual ~BaseWorld(void)
 		{
 			// Get rid of v8 context
-			m_jscontext.Dispose(); 
+			m_jscontext.Dispose();
 		}
 
 		ObjectType* getObject(ObjectId id)
@@ -200,11 +218,6 @@ namespace Sarona
 			return NULL;
 		}
 	};
-
-	// ZCom Node registry ids
-	namespace TypeRegistry
-	{
-		extern int m_objectId;
-		extern int m_commId;
-	};
 }
+
+#endif

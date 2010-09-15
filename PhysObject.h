@@ -1,4 +1,6 @@
 #pragma once
+#ifndef PHYSOBJECT_H_
+#define PHYSOBJECT_H_
 #include "StdAfx.h"
 #include "Util.h"
 #include "ObjectReplicator.h"
@@ -12,7 +14,7 @@ namespace Sarona
 	{
 		friend class PhysWorld;
 	private:
-		
+
 		// ZCom stuff
 		scoped_ptr<ZCom_Node>				m_zcomNode;
 
@@ -28,28 +30,28 @@ namespace Sarona
 		scoped_ptr<PhysObjectMotionState>	m_motionstate;
 		scoped_ptr<btRigidBody>				m_rigidbody;
 
-		bool recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
-						eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
+		bool recUserEvent(ZCom_Node *_node, ZCom_ConnID _from,
+						eZCom_NodeRole _remoterole, ZCom_BitStream &_data,
 						zU32 _estimated_time_sent);
-		                          
+
 		bool recInit(ZCom_Node *_node, ZCom_ConnID _from,
 				   eZCom_NodeRole _remoterole);
-		bool recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from, 
+		bool recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from,
 						  eZCom_NodeRole _remoterole);
-		                              
+
 		bool recRemoved(ZCom_Node *_node, ZCom_ConnID _from,
 					  eZCom_NodeRole _remoterole);
-		                        
+
 		bool recFileIncoming(ZCom_Node *_node, ZCom_ConnID _from,
-						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid, 
+						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid,
 						   ZCom_BitStream &_request);
-		                             
+
 		bool recFileData(ZCom_Node *_node, ZCom_ConnID _from,
 					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) ;
-		                     
+
 		bool recFileAborted(ZCom_Node *_node, ZCom_ConnID _from,
 						  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) ;
-		                           
+
 		bool recFileComplete(ZCom_Node *_node, ZCom_ConnID _from,
 						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid);
 
@@ -91,8 +93,8 @@ namespace Sarona
 		// Death handling
 		void kill();
 		bool isZombie();
-		
-		// If dirty, send status update to all peers. 
+
+		// If dirty, send status update to all peers.
 		void sendUpdate();
 
 		// Used to reference this object in the network
@@ -106,8 +108,8 @@ namespace Sarona
 	public:
 		PhysObjectMotionState(const btTransform &pos, ObjectReplicator *obj)
 			: m_body(NULL)
-			, m_pos(pos)
 			, m_obj(obj)
+			, m_pos(pos)
 		{}
 
 		void setBody(btRigidBody* body)
@@ -132,11 +134,11 @@ namespace Sarona
 
 			btVector3 pos = worldTrans.getOrigin();//matr.getTranslation();
 			btQuaternion rot = worldTrans.getRotation();
-		
+
 			// read velocity and omega from rigidbody
 
 			btVector3 vel;
-			
+
 			if(m_body)
 			{
 				vel = m_body->getLinearVelocity();
@@ -156,9 +158,10 @@ namespace Sarona
 		}
 
 	protected:
-		ObjectReplicator *m_obj;
 		btRigidBody* m_body;
+		ObjectReplicator *m_obj;
 		btTransform m_pos;
 	};
 
 }
+#endif

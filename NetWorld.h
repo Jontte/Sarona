@@ -1,4 +1,7 @@
 #pragma once
+#ifndef NETWORLD_H_
+#define NETWORLD_H_
+
 #include "BaseWorld.h"
 #include "Camera.h"
 #include "NetObject.h"
@@ -30,36 +33,36 @@ namespace Sarona
 			eZCom_NodeRole _role, ZCom_NodeID _net_id );
 		void ZCom_cbNodeRequest_Tag( ZCom_ConnID _id, ZCom_ClassID _requested_class, ZCom_BitStream *_announcedata,
 			eZCom_NodeRole _role, zU32 _tag );
-		bool ZCom_cbDiscoverRequest( const ZCom_Address &_addr, ZCom_BitStream &_request, 
+		bool ZCom_cbDiscoverRequest( const ZCom_Address &_addr, ZCom_BitStream &_request,
 			ZCom_BitStream &_reply );
 		void ZCom_cbDiscovered( const ZCom_Address & _addr, ZCom_BitStream &_reply );
 
 		// Node event interceptor interface
-		bool recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
-						eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
+		bool recUserEvent(ZCom_Node *_node, ZCom_ConnID _from,
+						eZCom_NodeRole _remoterole, ZCom_BitStream &_data,
 						zU32 _estimated_time_sent);
-		                          
+
 		bool recInit(ZCom_Node *_node, ZCom_ConnID _from,
 				   eZCom_NodeRole _remoterole);
-		bool recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from, 
+		bool recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from,
 						  eZCom_NodeRole _remoterole);
-		                              
+
 		bool recRemoved(ZCom_Node *_node, ZCom_ConnID _from,
 					  eZCom_NodeRole _remoterole);
-		                        
+
 		bool recFileIncoming(ZCom_Node *_node, ZCom_ConnID _from,
-						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid, 
+						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid,
 						   ZCom_BitStream &_request);
-		                             
+
 		bool recFileData(ZCom_Node *_node, ZCom_ConnID _from,
 					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) ;
-		                     
+
 		bool recFileAborted(ZCom_Node *_node, ZCom_ConnID _from,
 						  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) ;
-		                           
+
 		bool recFileComplete(ZCom_Node *_node, ZCom_ConnID _from,
 						   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid);
-	
+
 		ZCom_ConnID	m_serverConnectionId;
 
 		// Set key press status, send update to network
@@ -80,3 +83,4 @@ namespace Sarona
 	};
 
 }
+#endif

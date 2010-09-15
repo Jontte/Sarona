@@ -26,7 +26,7 @@ namespace Sarona
 
 		v8::Handle<v8::Object> config = args->Get(0)->ToObject();
 
-		std::map<std::string, v8::Handle<v8::Value>> params;
+		std::map<std::string, v8::Handle<v8::Value> > params;
 
 		convert(args->Get(0), params);
 
@@ -102,13 +102,13 @@ namespace Sarona
 
 		return static_cast<PhysWorld*>(external->Value());
 	}
-	
+
 	PhysObject*  JSObject::getObject() // Return null when we're invalid
 	{
 		PhysWorld* world = getWorld();
 		return world->getObject(m_obj);
 	}
-	
+
 	v8::Handle<v8::Value> JSObject::push(const v8::Arguments& arg)
 	{
 		try

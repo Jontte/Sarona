@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="Sarona" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="bin/Debug/Sarona" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Debug/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-g" />
+				</Compiler>
+				<Linker>
+					<Add library="../v8/libv8.a" />
+					<Add library="bullet3d/libbullet3d.a" />
+					<Add library="cproxyv8/libcproxyv8.a" />
+					<Add library="jsoncpp/libjsoncpp.a" />
+					<Add library="../zoidcom/lib/linux/libzoidcom.so" />
+					<Add library="../irrlicht-1.7.1/lib/Linux/libIrrlicht.a" />
+				</Linker>
+			</Target>
+			<Target title="Release">
+				<Option output="bin/Release/Sarona" prefix_auto="1" extension_auto="1" />
+				<Option object_output="obj/Release/" />
+				<Option type="1" />
+				<Option compiler="gcc" />
+				<Compiler>
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Compiler>
+			<Add option="-Wall" />
+		</Compiler>
+		<Linker>
+			<Add option="-lboost_thread" />
+			<Add option="-lX11" />
+			<Add option="-lGL" />
+		</Linker>
+		<Unit filename="BaseWorld.cpp" />
+		<Unit filename="BaseWorld.h" />
+		<Unit filename="Camera.cpp" />
+		<Unit filename="Camera.h" />
+		<Unit filename="GameMenu.cpp" />
+		<Unit filename="GameMenu.h" />
+		<Unit filename="JSConvert.cpp" />
+		<Unit filename="JSConvert.h" />
+		<Unit filename="JSObject.cpp" />
+		<Unit filename="JSObject.h" />
+		<Unit filename="JSRotation.cpp" />
+		<Unit filename="JSRotation.h" />
+		<Unit filename="JSVector.cpp" />
+		<Unit filename="JSVector.h" />
+		<Unit filename="NetObject.cpp" />
+		<Unit filename="NetObject.h" />
+		<Unit filename="NetWorld.cpp" />
+		<Unit filename="NetWorld.h" />
+		<Unit filename="ObjectReplicator.cpp" />
+		<Unit filename="ObjectReplicator.h" />
+		<Unit filename="PacketDef.h" />
+		<Unit filename="PhysObject.cpp" />
+		<Unit filename="PhysObject.h" />
+		<Unit filename="PhysWorld.cpp" />
+		<Unit filename="PhysWorld.h" />
+		<Unit filename="PhysWorld_static.cpp" />
+		<Unit filename="StdAfx.cpp" />
+		<Unit filename="StdAfx.h" />
+		<Unit filename="TimedEventReceiver.cpp" />
+		<Unit filename="TimedEventReceiver.h" />
+		<Unit filename="Util.cpp" />
+		<Unit filename="Util.h" />
+		<Unit filename="main.cpp" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

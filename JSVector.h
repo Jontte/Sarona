@@ -1,4 +1,6 @@
 #pragma once
+#ifndef JSVECTOR_H_
+#define JSVECTOR_H_
 #include "StdAfx.h"
 
 namespace Sarona
@@ -12,3 +14,4 @@ namespace Sarona
 
 }
 
+#endif

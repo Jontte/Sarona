@@ -6,10 +6,10 @@
 
 namespace Sarona
 {
-	NetObject::NetObject(ZCom_Control* control, IrrlichtDevice* dev) 
+	NetObject::NetObject(ZCom_Control* control, IrrlichtDevice* dev)
 		: m_deleteme(false)
-		, m_device(dev)
 		, m_sceneNode(NULL)
+		, m_device(dev)
 	{
 		m_zcomNode.reset(new ZCom_Node());
 		m_zcomNode->setUserData(this);
@@ -76,9 +76,9 @@ namespace Sarona
 		// smoothen out
 		core::vector3df currentpos = m_sceneNode->getPosition();
 		m_sceneNode->setPosition(
-			currentpos * 0.5 + 
+			currentpos * 0.5 +
 			(m_position + m_velocity * dt / 1000) * 0.5 );
-		
+
 		core::quaternion toeuler(m_rotation);
 		/*toeuler *= core::quaternion(core::vector3df(
 			0,0,90 // Rotation offset
@@ -130,8 +130,8 @@ namespace Sarona
 		return m_deleteme;
 	}
 
-	bool NetObject::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
-					eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
+	bool NetObject::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from,
+					eZCom_NodeRole _remoterole, ZCom_BitStream &_data,
 					zU32 _estimated_time_sent)
 	{
 		// Received event from remote node
@@ -172,13 +172,13 @@ namespace Sarona
 
 		return false;
 	}
-	                          
+
 	bool NetObject::recInit(ZCom_Node *_node, ZCom_ConnID _from,
 			   eZCom_NodeRole _remoterole)
 	{
 		return false;
 	}
-	bool NetObject::recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from, 
+	bool NetObject::recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from,
 					  eZCom_NodeRole _remoterole)
 	{
 		return false;
@@ -191,26 +191,26 @@ namespace Sarona
 		m_deleteme = true;
 		return false;
 	}
-	                        
+
 	bool NetObject::recFileIncoming(ZCom_Node *_node, ZCom_ConnID _from,
-					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid, 
+					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid,
 					   ZCom_BitStream &_request)
 	{
 		return false;
 	}
-	                             
+
 	bool NetObject::recFileData(ZCom_Node *_node, ZCom_ConnID _from,
 				   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{
 		return false;
 	}
-	                     
+
 	bool NetObject::recFileAborted(ZCom_Node *_node, ZCom_ConnID _from,
-					  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) 
+					  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{
 		return false;
 	}
-	                           
+
 	bool NetObject::recFileComplete(ZCom_Node *_node, ZCom_ConnID _from,
 					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{

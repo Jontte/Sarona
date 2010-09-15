@@ -1,4 +1,6 @@
 #pragma once
+#ifndef CAMERA_H_
+#define CAMERA_H_
 #include "StdAfx.h"
 #include "NetObject.h"
 
@@ -10,7 +12,7 @@ namespace Sarona
 	{
 	private:
 		IrrlichtDevice			* m_device;
-		scene::ICameraSceneNode * m_camera;	
+		scene::ICameraSceneNode * m_camera;
 		NetWorld				* m_world;
 
 		// Follow mode:
@@ -32,8 +34,9 @@ namespace Sarona
 
 		// Make the camera follow an existing NetObject
 		void Follow(NetObject::Id id, double distance);
-		
+
 		bool OnEvent(const SEvent& event);
 	};
 
 }
+#endif

@@ -1,4 +1,6 @@
 #pragma once
+#ifndef JSCONVERT_H_
+#define JSCONVERT_H_
 #include "StdAfx.h"
 #include "JSVector.h"
 #include "JSRotation.h"
@@ -21,7 +23,7 @@ void convert(const JSVal_t& val, btQuaternion& out);
 // Numeric types
 template <class T>
 void convert(const JSVal_t& val, T& out, typename boost::enable_if<boost::is_arithmetic<T> >::type* dummy = 0)
-{ 
+{
 //	if(!val->IsNumber())throw TypeException();
 	if(val.IsEmpty())throw TypeException();
 	v8::Handle<v8::Number> flt(val->ToNumber());
@@ -40,7 +42,7 @@ void convert(const JSVal_t& val, vector<T>& out)
 		if(!obj->Has(i))break;
 		T temporary;
 		convert(obj->Get(i), temporary);
-		out.push_back(temporary);	
+		out.push_back(temporary);
 	}
 }
 // generic map
@@ -50,7 +52,7 @@ void convert(const JSVal_t& val, std::map<Key, Value>& out)
 	if(val.IsEmpty())throw TypeException();
 	out.clear();
 	v8::Handle<v8::Object> obj = val->ToObject();
-	
+
 	v8::Local<v8::Array> names = obj->GetPropertyNames();
 
 	for(unsigned i = 0 ; i < names->Length(); i++)
@@ -118,3 +120,4 @@ void get(const T& container, const typename T::key_type & key, U& ret)
 	}
 
 
+#endif

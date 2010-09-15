@@ -1,5 +1,6 @@
 #pragma once
-
+#ifndef GAMEMENU_H_
+#define GAMEMENU_H_
 namespace Sarona
 {
 
@@ -14,7 +15,7 @@ namespace Sarona
 		IrrlichtDevice * m_device;
 
 		// Whether the game should be run locally (without even binding to ports)
-		bool				m_runlocal; 
+		bool				m_runlocal;
 
 		// Whether we should host the server too
 		bool				m_runserver;
@@ -31,3 +32,4 @@ namespace Sarona
 		bool OnEvent(const SEvent&);
 	};
 }
+#endif

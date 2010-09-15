@@ -28,10 +28,10 @@ namespace Sarona
 	GameMenu::~GameMenu()
 	{
 	}
-	
+
 	bool GameMenu::OnEvent(const SEvent& event)
 	{
-		gui::IGUIEnvironment* env = m_device->getGUIEnvironment();
+//		gui::IGUIEnvironment* env = m_device->getGUIEnvironment();
 
 		if (event.EventType != EET_GUI_EVENT)
         {
@@ -122,7 +122,7 @@ namespace Sarona
 				driver->beginScene(true, true, video::SColor(0,128,160,255));
 
 				env->drawAll();
-        
+
 				driver->endScene();
 			}
 

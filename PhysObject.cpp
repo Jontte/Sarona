@@ -31,13 +31,13 @@ namespace Sarona
 		// END REPLICATION SETUP
 
 		m_motionstate.reset(new PhysObjectMotionState(initialpos, m_replicator));
-		
+
 		recreateBody();
 
 		m_zcomNode -> setEventInterceptor(this);
 		m_zcomNode -> registerNodeDynamic(TypeRegistry::m_objectId, m_world);
 		// We want to be informed about connecting clients so that we can send our current state to them directly.
-		m_zcomNode -> setEventNotification(true, false); 
+		m_zcomNode -> setEventNotification(true, false);
 	}
 
 	PhysObject::~PhysObject(void)
@@ -98,7 +98,7 @@ namespace Sarona
 			return m_zcomNode->getNetworkID();
 		return 0;
 	}
-	void PhysObject::kill() 
+	void PhysObject::kill()
 	{
 		m_deleteme = true;
 	}
@@ -114,7 +114,7 @@ namespace Sarona
 			m_dynamicsWorld->removeRigidBody(get_pointer(m_rigidbody));
 
         btVector3 inertia(0,0,0);
-        
+
 		// Get static body if zero mass
 		m_shape = m_world->getShape(m_body, m_mass <= 0);
 		m_shape->setLocalScaling(btVector3(
@@ -126,9 +126,9 @@ namespace Sarona
 			m_shape->calculateLocalInertia(m_mass,inertia);
 		}
 
-		btRigidBody::btRigidBodyConstructionInfo CI(m_mass,get_pointer(m_motionstate),get_pointer(m_shape),inertia);
+		btRigidBody::btRigidBodyConstructionInfo CI(m_mass,get_pointer(m_motionstate),m_shape,inertia);
 		m_rigidbody.reset(new btRigidBody(CI));
-		
+
 		m_motionstate->setBody(get_pointer(m_rigidbody));
 		m_dynamicsWorld->addRigidBody(get_pointer(m_rigidbody));
 	}
@@ -158,18 +158,18 @@ namespace Sarona
 		m_dirty = false;
 	}
 
-	bool PhysObject::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
-					eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
+	bool PhysObject::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from,
+					eZCom_NodeRole _remoterole, ZCom_BitStream &_data,
 					zU32 _estimated_time_sent)
 	{
 		return false;
 	}
-	                          
+
 	bool PhysObject::recInit(ZCom_Node *_node, ZCom_ConnID _from,
 			   eZCom_NodeRole _remoterole)
 	{
 		// New client has connected
-		// Let's send our current transform to them 
+		// Let's send our current transform to them
 		// (important in case of static/nonmoving objects that don't generate position updates often (if at all))
 		btTransform current;
 		m_motionstate->getWorldTransform(current);
@@ -180,7 +180,7 @@ namespace Sarona
 
 		return false;
 	}
-	bool PhysObject::recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from, 
+	bool PhysObject::recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from,
 					  eZCom_NodeRole _remoterole)
 	{
 		return false;
@@ -190,26 +190,26 @@ namespace Sarona
 	{
 		return false;
 	}
-	                        
+
 	bool PhysObject::recFileIncoming(ZCom_Node *_node, ZCom_ConnID _from,
-					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid, 
+					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid,
 					   ZCom_BitStream &_request)
 	{
 		return false;
 	}
-	                             
+
 	bool PhysObject::recFileData(ZCom_Node *_node, ZCom_ConnID _from,
 				   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{
 		return false;
 	}
-	                     
+
 	bool PhysObject::recFileAborted(ZCom_Node *_node, ZCom_ConnID _from,
-					  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) 
+					  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{
 		return false;
 	}
-	                           
+
 	bool PhysObject::recFileComplete(ZCom_Node *_node, ZCom_ConnID _from,
 					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{

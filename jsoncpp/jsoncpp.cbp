@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+	<FileVersion major="1" minor="6" />
+	<Project>
+		<Option title="jsoncpp" />
+		<Option pch_mode="2" />
+		<Option compiler="gcc" />
+		<Build>
+			<Target title="Debug">
+				<Option output="libjsoncpp" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Debug/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-g" />
+				</Compiler>
+			</Target>
+			<Target title="Release">
+				<Option output="libjsoncpp" prefix_auto="1" extension_auto="1" />
+				<Option working_dir="" />
+				<Option object_output="obj/Release/" />
+				<Option type="2" />
+				<Option compiler="gcc" />
+				<Option createDefFile="1" />
+				<Compiler>
+					<Add option="-Wall" />
+					<Add option="-O2" />
+				</Compiler>
+				<Linker>
+					<Add option="-s" />
+				</Linker>
+			</Target>
+		</Build>
+		<Unit filename="include/json/autolink.h" />
+		<Unit filename="include/json/config.h" />
+		<Unit filename="include/json/features.h" />
+		<Unit filename="include/json/forwards.h" />
+		<Unit filename="include/json/json.h" />
+		<Unit filename="include/json/reader.h" />
+		<Unit filename="include/json/value.h" />
+		<Unit filename="include/json/writer.h" />
+		<Unit filename="json_batchallocator.h" />
+		<Unit filename="json_internalarray.inl" />
+		<Unit filename="json_internalmap.inl" />
+		<Unit filename="json_reader.cpp" />
+		<Unit filename="json_value.cpp" />
+		<Unit filename="json_valueiterator.inl" />
+		<Unit filename="json_writer.cpp" />
+		<Extensions>
+			<code_completion />
+			<debugger />
+		</Extensions>
+	</Project>
+</CodeBlocks_project_file>

@@ -22,19 +22,25 @@
 // (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 // OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
+#include <cassert>
+
+#ifndef ASSERT
+#define ASSERT(x) assert(x)
+#endif
 
 #include "cproxyv8.h"
+
 
 #include <vector>
 
 /* this is used to convert a v8::Arguments to a vector of v8 handles to v8 values */
 void args2vector(const v8::Arguments& in, v8::Handle<v8::Object>& out)
 {
-	// Arguments.operator[] does not guarantee contiguous space 
+	// Arguments.operator[] does not guarantee contiguous space
 	// so lets just copy the stuff the old way
 
 //	v8::Local<v8::FunctionTemplate> templ = v8::FunctionTemplate::New();
-	
+
 //		v8::Local<v8::External> external = v8::Local<v8::External>::Cast(in.Data());//GetInternalField(0));
 
 //		PhysWorld* world = static_cast<PhysWorld*>(external->Value());
@@ -44,7 +50,7 @@ void args2vector(const v8::Arguments& in, v8::Handle<v8::Object>& out)
 	tpl->SetInternalFieldCount(1);
 */
 	out = v8::Persistent<v8::Object>::New(v8::Object::New()); //tpl->NewInstance();
-	
+
 //	out->SetInternalField(0, external);
 
 	for(int i = 0 ; i < in.Length(); i++)

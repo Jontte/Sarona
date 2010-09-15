@@ -1,4 +1,6 @@
 #pragma once
+#ifndef PACKETDEF_H_
+#define PACKETDEF_H_
 #include "StdAfx.h"
 #include "Util.h"
 /*
@@ -11,7 +13,7 @@ namespace Sarona
 {
 	namespace Protocol
 	{
-		// Protocol type type traits 
+		// Protocol type type traits
 		// Currently field widths are hard coded...
 		template <class T> struct TypeDefinition;
 
@@ -37,7 +39,7 @@ namespace Sarona
 		#define DEF(ID, NAME, FIELDS) \
 		struct NAME\
 		{\
-			static const int Id = ID;\
+			static const unsigned int Id = ID;\
 			BOOST_PP_SEQ_FOR_EACH(FIELDDEF, _, FIELDS)\
 			void read(ZCom_BitStream & _stream) \
 			{ \
@@ -72,7 +74,7 @@ namespace Sarona
 		// - - - - - - - - - - P A C K E T   D E F I N I T I O N S - - - - - - - - - -
 		// Namespaces :
 		// 0x0000 - Connection management packages
-		// 0x0100 - Object-level events, Client -> Server 
+		// 0x0100 - Object-level events, Client -> Server
 		// 0x0200 - Object-level events, Server -> Client
 		// 0x0300 - Global events, Client -> Server
 		// 0x0400 - Global events, Server -> Client
@@ -84,7 +86,7 @@ namespace Sarona
 
 		DEF(0x0300, KeyPressEvent, ((u8, keycode))((bool, press)))
 		DEF(0x0301, LevelRequest, ((string, name)))  // Client must send either of these two as a reply to LevelSelect
-		DEF(0x0302, LevelConfirm, ((bool, unused))) 
+		DEF(0x0302, LevelConfirm, ((bool, unused)))
 
 		DEF(0x0400, LevelSelect, ((string, name)))
 		DEF(0x0401, GameStartNotify, ((bool, unused)))
@@ -109,3 +111,4 @@ namespace Sarona
 	}
 }
 
+#endif

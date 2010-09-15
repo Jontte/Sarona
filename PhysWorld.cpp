@@ -1,18 +1,9 @@
 #include "StdAfx.h"
 #include "PhysWorld.h"
-#include "JSObject.h"
-#include "Util.h"
-#include "JSVector.h"
-#include "JSRotation.h"
-#include "PacketDef.h"
-#include <stdexcept>
-#include <cproxyv8-class.h>
-#include "TimedEventReceiver.h"
-#include "JSConvert.h"
 
 namespace Sarona
 {
-	
+
 	// Event used to call JavaScript code (used by setTimeout)
 	class JSTimeoutEvent : public TimedEventReceiver::Event
 	{
@@ -20,7 +11,7 @@ namespace Sarona
 		PhysWorld * m_owner;
 		v8::Persistent<v8::Value> m_function;
 	public:
-		JSTimeoutEvent(PhysWorld* owner, v8::Handle<v8::Value> val) 
+		JSTimeoutEvent(PhysWorld* owner, v8::Handle<v8::Value> val)
 			: m_owner(owner)
 		{
 			m_function = v8::Persistent<v8::Value>::New(val);
@@ -39,7 +30,7 @@ namespace Sarona
 
 
 	PhysWorld::PhysWorld(IrrlichtDevice * dev)
-		: BaseWorld(dev)
+		: BaseWorld<PhysWorld, PhysObject>(dev)
 	{
 		m_timer.reset(new TimedEventReceiver);
 		ZCom_setUpstreamLimit(30000, 30000);
@@ -132,7 +123,7 @@ namespace Sarona
 		pJSObject->Expose(&JSObject::push, "push");
 		pJSObject->Expose(&JSObject::kill, "kill");
 		global->Set(v8::String::New("Object"), pJSObject->GetFunctionTemplate());
-		
+
 		// Vector object
 		CProxyV8::ProxyClass<JSVector>* pJSVector = CProxyV8::ProxyClass<JSVector>::instance()->init("Vector");
 		pJSVector->Expose(&JSVector::x, "x", true, true);
@@ -217,7 +208,7 @@ namespace Sarona
 
 		if(!scenevariant->IsObject())
 			return; // shouldn't happen unless someone did something nasty in the code
-		
+
 		v8::Handle<v8::Object> obj = scenevariant->ToObject();
 		v8::Handle<v8::Array> players = v8::Array::New();
 
@@ -230,7 +221,7 @@ namespace Sarona
 			tpl->SetInternalFieldCount(1);
 
 			v8::Local<v8::Object> playerobj = tpl->NewInstance();
-		
+
 			v8::Handle<v8::External> external_obj = v8::External::New(&m_clients[i]);
 			playerobj->SetInternalField(0, external_obj);
 
@@ -274,7 +265,7 @@ namespace Sarona
 				if(confirmations == m_clients.size())
 				{
 					// We're ready to go! Game begin!
-					AnnounceGameStart(); 
+					AnnounceGameStart();
 
 					// Process events for 1 second and start self.
 					boost::posix_time::ptime begin = boost::posix_time::microsec_clock::local_time();
@@ -289,7 +280,7 @@ namespace Sarona
 
 						if(timewaited > boost::posix_time::seconds(1))
 							break;
-					}	
+					}
 
 					break;
 				}
@@ -298,7 +289,7 @@ namespace Sarona
 
 
 		std::cout << "Game starting!" << std::endl;
-		
+
 		// Start physics
 		CreateBulletContext();
 		// Load level, initialize components
@@ -354,7 +345,7 @@ namespace Sarona
 			ZCom_ConnStats stats = ZCom_getConnectionStats(1);
 
 			if(frame % (targetFPS) == 0)
-			{	
+			{
 				std::cout << m_objects.size() << " objects. Avg loop: " << loop_avg.total_microseconds() << " micros" << std::endl;
 			}
 
@@ -400,11 +391,11 @@ namespace Sarona
 
 
 		// Convert to Native types
-	
+
 		string eventtype(*v8::String::Utf8Value(args[0]->ToString()));
 		string eventname(*v8::String::Utf8Value(args[1]->ToString()));
 		v8::Handle<v8::Function> function = v8::Handle<v8::Function>::Cast(args[2]);
-	
+
 		// Find Client object.
 
 		Client* c = static_cast<Client*>(v8::Handle<v8::External>::Cast(args.Holder()->GetInternalField(0))->Value());
@@ -425,7 +416,7 @@ namespace Sarona
 
 		// Convert to Native types
 
-		CProxyV8::InstaceHandle<JSObject>* jsobj_handle = 
+		CProxyV8::InstaceHandle<JSObject>* jsobj_handle =
 			static_cast<CProxyV8::InstaceHandle<JSObject>*>(v8::Handle<v8::External>::Cast(args[0]->ToObject()->GetInternalField(0))->Value());
 
 		Client* client = static_cast<Client*>(v8::Handle<v8::External>::Cast(args.Holder()->GetInternalField(0))->Value());
@@ -448,7 +439,7 @@ namespace Sarona
 			follow.nodeid = id;
 			follow.distance = (float)radius;
 			follow.write(*stream);
-			
+
 			this->sendEventDirect(eZCom_ReliableOrdered, stream, client->connection_id);
 		}
 		return v8::Undefined();
@@ -466,7 +457,7 @@ namespace Sarona
 
 		double milliseconds;
 		v8::Handle<v8::Value> function;
-		
+
 		extract(args, milliseconds, function);
 
 		shared_ptr<JSTimeoutEvent> e = make_shared<JSTimeoutEvent>(this, function);
@@ -523,7 +514,7 @@ namespace Sarona
 			if(meshbuffer->getVertexType() == video::EVT_STANDARD)
 			{
 				irr::video::S3DVertex * vertices = reinterpret_cast<video::S3DVertex*>(meshbuffer->getVertices());
-				
+
 				u16* indices = meshbuffer->getIndices();
 				int vertexcount = meshbuffer->getVertexCount();
 
@@ -559,7 +550,7 @@ namespace Sarona
 					{
 						s32 index = indices[a+k];
 						if (index > vertexcount) continue;
-						core::vector3df& pos = vertices[index].Pos * scale;
+						core::vector3df pos = vertices[index].Pos * scale;
 						triangle[k] = btVector3(pos.X, pos.Y, pos.Z);
 					}
 					data.mesh_interface->addTriangle(triangle[0], triangle[1], triangle[2]);
@@ -584,7 +575,7 @@ namespace Sarona
 	bool PhysWorld::ZCom_cbConnectionRequest(ZCom_ConnID _id, ZCom_BitStream &_request, ZCom_BitStream &_reply)
 	{
 		// Allow incoming connection when game is not running (we're in lobby)
-		return !m_gamerunning; 
+		return !m_gamerunning;
 	}
 	void PhysWorld::ZCom_cbConnectionSpawned( ZCom_ConnID _id )
 	{
@@ -602,11 +593,11 @@ namespace Sarona
 	}
 	void PhysWorld::ZCom_cbConnectResult( ZCom_ConnID _id, eZCom_ConnectResult _result, ZCom_BitStream &_reply )
 	{
-	
+
 	}
 	void PhysWorld::ZCom_cbDataReceived( ZCom_ConnID _id, ZCom_BitStream &_data )
 	{
-	
+
 	}
 	bool PhysWorld::ZCom_cbZoidRequest( ZCom_ConnID _id, zU8 _requested_level, ZCom_BitStream &_reason )
 	{
@@ -635,27 +626,27 @@ namespace Sarona
 	void PhysWorld::ZCom_cbNodeRequest_Dynamic( ZCom_ConnID _id, ZCom_ClassID _requested_class, ZCom_BitStream *_announcedata,
 		eZCom_NodeRole _role, ZCom_NodeID _net_id )
 	{
-	
+
 	}
 	void PhysWorld::ZCom_cbNodeRequest_Tag( ZCom_ConnID _id, ZCom_ClassID _requested_class, ZCom_BitStream *_announcedata,
 		eZCom_NodeRole _role, zU32 _tag )
 	{
-	
+
 	}
-	bool PhysWorld::ZCom_cbDiscoverRequest( const ZCom_Address &_addr, ZCom_BitStream &_request, 
+	bool PhysWorld::ZCom_cbDiscoverRequest( const ZCom_Address &_addr, ZCom_BitStream &_request,
 		ZCom_BitStream &_reply )
 	{
 		return false;
 	}
 	void PhysWorld::ZCom_cbDiscovered( const ZCom_Address & _addr, ZCom_BitStream &_reply )
 	{
-	
+
 	}
 
 	// Node events
 
-	bool PhysWorld::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from, 
-					eZCom_NodeRole _remoterole, ZCom_BitStream &_data, 
+	bool PhysWorld::recUserEvent(ZCom_Node *_node, ZCom_ConnID _from,
+					eZCom_NodeRole _remoterole, ZCom_BitStream &_data,
 					zU32 _estimated_time_sent)
 	{
 		// Check event type:
@@ -671,7 +662,7 @@ namespace Sarona
 			if(c)
 			{
 				// Calling an event requires a scope :p
-				
+
 				if(m_jscontext.IsEmpty())
 					return false;
 
@@ -703,13 +694,13 @@ namespace Sarona
 		}
 		return false;
 	}
-	                          
+
 	bool PhysWorld::recInit(ZCom_Node *_node, ZCom_ConnID _from,
 			   eZCom_NodeRole _remoterole)
 	{
 		return false;
 	}
-	bool PhysWorld::recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from, 
+	bool PhysWorld::recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from,
 					  eZCom_NodeRole _remoterole)
 	{
 		return false;
@@ -719,26 +710,26 @@ namespace Sarona
 	{
 		return false;
 	}
-	                        
+
 	bool PhysWorld::recFileIncoming(ZCom_Node *_node, ZCom_ConnID _from,
-					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid, 
+					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid,
 					   ZCom_BitStream &_request)
 	{
 		return false;
 	}
-	                             
+
 	bool PhysWorld::recFileData(ZCom_Node *_node, ZCom_ConnID _from,
 				   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{
 		return false;
 	}
-	                     
+
 	bool PhysWorld::recFileAborted(ZCom_Node *_node, ZCom_ConnID _from,
-					  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid) 
+					  eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{
 		return false;
 	}
-	                           
+
 	bool PhysWorld::recFileComplete(ZCom_Node *_node, ZCom_ConnID _from,
 					   eZCom_NodeRole _remoterole, ZCom_FileTransID _fid)
 	{
@@ -748,8 +739,8 @@ namespace Sarona
 
 	// Client object member functions:
 
-	
-	void PhysWorld::Client::bind_event(const string& eventtype, const string& eventname, 
+
+	void PhysWorld::Client::bind_event(const string& eventtype, const string& eventname,
 		v8::Handle<v8::Function> func, v8::Handle<v8::Object> context)
 	{
 		if(eventtype == "" || eventname == "") return;
@@ -763,7 +754,7 @@ namespace Sarona
 		e->context = v8::Persistent<v8::Object>::New(context);
 		m_events.push_back(e);
 	}
-	void PhysWorld::Client::call_event(const string& eventtype, const string& eventname, std::vector<v8::Handle< v8::Value > >& args)
+	void PhysWorld::Client::call_event(const string& eventtype, const string& eventname, const std::vector<v8::Handle< v8::Value > >& args)
 	{
 		// Call event
 		if(eventtype == "" || eventname == "") return;
@@ -771,11 +762,11 @@ namespace Sarona
 		ptr_vector<Event>::iterator iter = m_events.begin();
 		while(iter != m_events.end())
 		{
-			if(iter->eventtype == eventtype && 
+			if(iter->eventtype == eventtype &&
 				iter->eventname == eventname)
 			{
 //				v8::Handle<v8::Value> result = iter->function->Call(iter->context, 0, NULL);
-				v8::Handle<v8::Value> result = world->CallFunction(iter->function, args.size(), args.empty()?NULL:&args[0], v8::Context::GetCurrent()->Global());
+				v8::Handle<v8::Value> result = world->CallFunction(iter->function, args, v8::Context::GetCurrent()->Global());
 				if(result.IsEmpty())
 				{
 					std::cout << "Client event call failed!" << std::endl;
