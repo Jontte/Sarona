@@ -40,11 +40,11 @@ namespace Sarona
 
 		// Create ground
 
-		scene::IMeshSceneNode * node =
+	/*	scene::IMeshSceneNode * node =
 		m_device->getSceneManager()->addMeshSceneNode(
 			m_device->getSceneManager()->addHillPlaneMesh("groundmesh", core::dimension2d<f32>(10,10), core::dimension2d<u32>(100,100)), NULL, -1, core::vector3df(0,0,0), core::vector3df(90,0,0)
 			);
-
+*/
 		//node -> setMaterialTexture(0, m_device->getVideoDriver()->getTexture("saronacube.png"));
 	}
 

@@ -2,6 +2,16 @@
 #include "JSRotation.h"
 #include "JSConvert.h"
 
+namespace extractor
+{
+	mapper emap(jsobj& obj)
+	{
+		mapper m;
+		m.src = obj;
+		return m;
+	};
+}
+/*
 // Implementation for the static JS-type conversion funcs
 
 // Passthru
@@ -100,3 +110,4 @@ void convert(const JSVal_t& val, btQuaternion& out)
 	throw TypeException();
 }
 
+*/

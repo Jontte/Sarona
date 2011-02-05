@@ -12,6 +12,10 @@
     #include <windows.h>
 #endif
 
+void zoidcom_logger(const char *_log) {
+	printf("ZCOM: %s\n", _log);
+}
+
 int main(int argc, char *argv[])
 {
 #ifdef _WIN32
@@ -20,7 +24,7 @@ int main(int argc, char *argv[])
 	vector<string> args(argv,argv+argc);
 
 	// initialize Zoidcom
-	scoped_ptr<ZoidCom> zcom(new ZoidCom("zoidlog.txt"));
+	scoped_ptr<ZoidCom> zcom(new ZoidCom(zoidcom_logger));
 
 	if (!zcom || !zcom->Init())
 	{
@@ -40,15 +44,16 @@ int main(int argc, char *argv[])
 			false /* don't addref */
 		);
 		device->getLogger()->setLogLevel(ELL_INFORMATION);
+		addHeightMapLoader(get_pointer(device));
 
 		// Start server, run game instances in loop
-
 		while(true)
 		{
 			std::cout << "Loading server instance...";
 
 			scoped_ptr<Sarona::PhysWorld> serverworld(
-				new Sarona::PhysWorld(get_pointer(device)));
+				new Sarona::PhysWorld(get_pointer(device))
+			);
 
 			serverworld->SetLevel("testlevel/");
 			serverworld->Bind(9192, false);
@@ -65,6 +70,7 @@ int main(int argc, char *argv[])
 			false /* don't addref */
 		);
 		device->getLogger()->setLogLevel(ELL_INFORMATION);
+		addHeightMapLoader(get_pointer(device));
 
 		Sarona::GameMenu menu(get_pointer(device));
 
@@ -96,8 +102,11 @@ int main(int argc, char *argv[])
 		clientworld->Loop();
 
 		if(serverworld)
+		{
+			serverworld->Shutdown();
 			serverworld->Wait();
 		}
-		return 0;
+	}
+	return 0;
 }
 

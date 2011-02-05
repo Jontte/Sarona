@@ -2,12 +2,8 @@
 <CodeBlocks_workspace_file>
 	<Workspace title="Workspace">
 		<Project filename="Sarona.cbp" active="1">
-			<Depends filename="bullet3d/bullet3d.cbp" />
 			<Depends filename="jsoncpp/jsoncpp.cbp" />
-			<Depends filename="cproxyv8/cproxyv8.cbp" />
 		</Project>
-		<Project filename="bullet3d/bullet3d.cbp" />
 		<Project filename="jsoncpp/jsoncpp.cbp" />
-		<Project filename="cproxyv8/cproxyv8.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

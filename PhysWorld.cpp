@@ -1,5 +1,8 @@
 #include "StdAfx.h"
 #include "PhysWorld.h"
+#include "JSConvert.h"
+#include "JSVector.h"
+#include "JSRotation.h"
 
 namespace Sarona
 {
@@ -67,6 +70,11 @@ namespace Sarona
 		m_thread = boost::thread(&PhysWorld::Loop, this);
 	}
 
+	void PhysWorld::Shutdown()
+	{
+		m_thread.interrupt();
+	}
+
 	void PhysWorld::Wait()
 	{
 		m_thread.join();
@@ -112,38 +120,25 @@ namespace Sarona
 		scene->SetInternalFieldCount(1);
 
 		// Static functions
-		global->Set(v8::String::New("print"),		v8::FunctionTemplate::New(PhysWorld::JSPrint));
-		global->Set(v8::String::New("setTimeout"),	v8::FunctionTemplate::New(PhysWorld::JSSetTimeout));
+		global->Set(v8::String::New("print"),			v8::FunctionTemplate::New(PhysWorld::JSPrint));
+		global->Set(v8::String::New("setTimeout"),		v8::FunctionTemplate::New(PhysWorld::JSSetTimeout));
+		global->Set(v8::String::New("createObject"),	v8::FunctionTemplate::New(PhysWorld::JSCreateObject));
 
 		// Scene Object
 		global->Set(v8::String::New("scene"), scene);
-
-		// Object template
-		CProxyV8::ProxyClass<JSObject>* pJSObject = CProxyV8::ProxyClass<JSObject>::instance()->init("Object");
-		pJSObject->Expose(&JSObject::push, "push");
-		pJSObject->Expose(&JSObject::kill, "kill");
-		global->Set(v8::String::New("Object"), pJSObject->GetFunctionTemplate());
-
-		// Vector object
-		CProxyV8::ProxyClass<JSVector>* pJSVector = CProxyV8::ProxyClass<JSVector>::instance()->init("Vector");
-		pJSVector->Expose(&JSVector::x, "x", true, true);
-		pJSVector->Expose(&JSVector::y, "y", true, true);
-		pJSVector->Expose(&JSVector::z, "z", true, true);
-		global->Set(v8::String::New("Vector"), pJSVector->GetFunctionTemplate());
-
-		// Rotation object
-		CProxyV8::ProxyClass<JSRotation>* pJSRotation = CProxyV8::ProxyClass<JSRotation>::instance()->init("Rotation");
-		pJSRotation->Expose(&JSRotation::x, "x", true, true);
-		pJSRotation->Expose(&JSRotation::y, "y", true, true);
-		pJSRotation->Expose(&JSRotation::z, "z", true, true);
-		pJSRotation->Expose(&JSRotation::w, "w", true, true);
-		global->Set(v8::String::New("Rotation"), pJSRotation->GetFunctionTemplate());
 
 		// Init context
 		m_jscontext = v8::Context::New(NULL, global);
 		v8::Context::Scope scope(m_jscontext);
 		v8::Handle<v8::External> myself = v8::External::New(this);
 		v8::Handle<v8::Object>::Cast(v8::Context::GetCurrent()->Global()->GetPrototype())->SetInternalField(0, myself);
+
+		v8::Handle<v8::Object> global_obj = v8::Context::GetCurrent()->Global();
+
+		JSObject::SetupClass(global_obj);
+		JSVector::SetupClass(global_obj);
+		JSRotation::SetupClass(global_obj);
+
 	}
 
 	void PhysWorld::CreateBulletContext()
@@ -163,12 +158,12 @@ namespace Sarona
 
 		m_dynamicsWorld->setGravity(btVector3(0,0,-9.80665f));
 	}
-	PhysWorld::Client* PhysWorld::GetClientById(const ZCom_ConnID& id)
+	Client* PhysWorld::GetClientById(const ZCom_ConnID& id)
 	{
 		ptr_vector<Client>::iterator iter = m_clients.begin();
 		while(iter != m_clients.end())
 		{
-			if(iter->connection_id == id)
+			if(iter->m_connection_id == id)
 				return &*iter;
 			iter++;
 		}
@@ -190,7 +185,7 @@ namespace Sarona
 		ptr_vector<Client>::iterator iter = m_clients.begin();
 		while(iter != m_clients.end())
 		{
-			this->sendEventDirect(eZCom_ReliableOrdered, stream.Duplicate(), iter->connection_id);
+			this->sendEventDirect(eZCom_ReliableOrdered, stream.Duplicate(), iter->m_connection_id);
 			iter++;
 		}
 	}
@@ -214,18 +209,15 @@ namespace Sarona
 
 		for( unsigned i = 0 ; i < m_clients.size(); i++)
 		{
-			v8::Local<v8::ObjectTemplate> tpl = v8::ObjectTemplate::New();
-			tpl->Set(v8::String::New("bind"),			v8::FunctionTemplate::New(PhysWorld::JSPlayerBind			));
-			tpl->Set(v8::String::New("cameraFollow"),	v8::FunctionTemplate::New(PhysWorld::JSPlayerCameraFollow	));
-			tpl->Set(v8::String::New("cameraSet"),		v8::FunctionTemplate::New(PhysWorld::JSPlayerCameraSet		));
-			tpl->SetInternalFieldCount(1);
+			// Instantiate new instance of Client::JSHandle via JS:
+			typedef v8::juice::cw::ClassWrap<Client::JSHandle> CW;
+			v8::Handle<v8::Object> jobj = CW::Instance().NewInstance(0, NULL);
 
-			v8::Local<v8::Object> playerobj = tpl->NewInstance();
+			// Get ref to the native type & implant the weak ref to PhysWorld-owned Client class
+			Client::JSHandle *handle = CW::ToNative::Value(jobj);
+			handle->initialize(&m_clients[i]);
 
-			v8::Handle<v8::External> external_obj = v8::External::New(&m_clients[i]);
-			playerobj->SetInternalField(0, external_obj);
-
-			players->Set(i, playerobj);
+			players->Set(i, jobj);
 		}
 		obj->Set(v8::String::New("players"), players);
 
@@ -241,9 +233,13 @@ namespace Sarona
 
 	void PhysWorld::Loop()
 	{
+		boost::this_thread::disable_interruption disable;
 		// Wait until enough players have joined...
 		while(true)
 		{
+			if(boost::this_thread::interruption_requested())
+				return;
+
 			// Step network code
 			this->ZCom_processInput();
 			this->ZCom_processOutput();
@@ -253,11 +249,11 @@ namespace Sarona
 			if(!m_gamerunning && m_clients.size() > 0)
 			{
 				// Wait for enough confirmations to start the game
-				int confirmations = 0;
+				unsigned confirmations = 0;
 				ptr_vector<Client>::iterator iter = m_clients.begin();
 				while(iter != m_clients.end())
 				{
-					if(iter->level_confirmed)
+					if(iter->m_level_confirmed)
 						confirmations++;
 					iter++;
 				}
@@ -315,10 +311,12 @@ namespace Sarona
 
 		int targetFPS = 50;
 
-		//while(m_device->run())
 		boost::posix_time::time_duration loop_avg;
 		while(true)
 		{
+			if(boost::this_thread::interruption_requested())
+				return;
+
 			// Start counting frame-time
 			boost::posix_time::ptime beginframe = boost::posix_time::microsec_clock::local_time();
 
@@ -329,7 +327,7 @@ namespace Sarona
 			UpdateNodes();
 
 			// Simulate physics
-			m_dynamicsWorld->stepSimulation(btScalar(1.0/targetFPS), 1);
+			m_dynamicsWorld->stepSimulation(btScalar(1.0/targetFPS), 10);
 
 			// Step network code
  			this->ZCom_processInput();
@@ -371,94 +369,83 @@ namespace Sarona
 
 	PhysObject* PhysWorld::CreateObject(const btVector3& position, const btQuaternion& rotation)
 	{
+		// Creates bare object
 		PhysObject* obj = new PhysObject(this, get_pointer(m_dynamicsWorld), btTransform(rotation, position));
 		m_objects.push_back(obj);
 		return obj;
 	}
-
-	v8::Handle<v8::Value> PhysWorld::PlayerBind(const v8::Arguments& args)
+	v8::Handle<v8::Value> PhysWorld::CreateObject(const v8::Arguments& arg)
 	{
-		// Bind event handling function.
+		using namespace extractor;
 
-		if(args.Length() != 3)
-			return v8::ThrowException(v8::String::New("Invalid number of arguments passed to player.bind"));
-		if(!args[0]->IsString())
-			return v8::ThrowException(v8::String::New("Invalid type"));
-		if(!args[1]->IsString())
-			return v8::ThrowException(v8::String::New("Invalid type"));
-		if(!args[2]->IsFunction())
-			return v8::ThrowException(v8::String::New("Invalid type"));
+		if(arg.Length() != 1 || !arg[0]->IsObject())
+			return v8::Undefined();
 
+		v8::Handle<v8::Object> obj = arg[0]->ToObject();
 
-		// Convert to Native types
+		// Creates object in JS context
+		std::cout << "Creating JSObject" << std::endl;
+		std::string mesh;
+		std::string body;
+		std::string texture;
+		double mass(0), bodyScale(1), meshScale(1);
+		btVector3 position(0,0,0);
+		btQuaternion rotation(btVector3(0,1,0), 0.0);
 
-		string eventtype(*v8::String::Utf8Value(args[0]->ToString()));
-		string eventname(*v8::String::Utf8Value(args[1]->ToString()));
-		v8::Handle<v8::Function> function = v8::Handle<v8::Function>::Cast(args[2]);
+		std::map<std::string, v8::Handle<v8::Value> > params;
 
-		// Find Client object.
-
-		Client* c = static_cast<Client*>(v8::Handle<v8::External>::Cast(args.Holder()->GetInternalField(0))->Value());
-		c->bind_event(eventtype, eventname, function, args.Holder());
-
-		return v8::Undefined();
-	}
-
-	v8::Handle<v8::Value> PhysWorld::PlayerCameraFollow(const v8::Arguments& args)
-	{
-		// Make player camera follow some object
- 		if(args.Length() != 2)
-			return v8::ThrowException(v8::String::New("Invalid number of arguments passed to player.cameraFollow"));
-		if(!args[0]->IsObject())
-			return v8::ThrowException(v8::String::New("Invalid type"));
-		if(!args[1]->IsNumber())
-			return v8::ThrowException(v8::String::New("Invalid type"));
-
-		// Convert to Native types
-
-		CProxyV8::InstaceHandle<JSObject>* jsobj_handle =
-			static_cast<CProxyV8::InstaceHandle<JSObject>*>(v8::Handle<v8::External>::Cast(args[0]->ToObject()->GetInternalField(0))->Value());
-
-		Client* client = static_cast<Client*>(v8::Handle<v8::External>::Cast(args.Holder()->GetInternalField(0))->Value());
-
-		JSObject * jsobj = **jsobj_handle;
-
-		PhysObject* physobj = jsobj->getObject();
-		if(physobj)
+		try
 		{
-			ZCom_NodeID	id = physobj->getNetworkId();
-
-			// Find radius
-			double radius = args[1]->ToNumber()->Value();
-
-			// Send cameraFollow packet...
-
-			ZCom_BitStream * stream = new ZCom_BitStream;
-
-			Protocol::CameraFollow follow;
-			follow.nodeid = id;
-			follow.distance = (float)radius;
-			follow.write(*stream);
-
-			this->sendEventDirect(eZCom_ReliableOrdered, stream, client->connection_id);
+			emap(obj)
+				("body",		body, 		0) // default body = cube
+				("mesh",		mesh, 		0) // default mesh = cube
+				("position", 	position,	REQUIRED)
+				("rotation", 	rotation,	0)
+				("texture", 	texture,	0)
+				("mass",		mass,		0)
+				("bodyScale",	bodyScale,	0)
+				("meshScale",	meshScale,	0);
 		}
-		return v8::Undefined();
+		catch(...)
+		{
+			return v8::Undefined();
+		}
+//		std::cout << "tex " << texture << " mesh " << mesh << std::endl;
+		// Success! Create the object
+		v8::Local<v8::External> external = v8::Local<v8::External>::Cast(
+			v8::Handle<v8::Object>::Cast(v8::Context::GetCurrent()->Global()->GetPrototype())
+				->GetInternalField(0));
+		PhysWorld* world = static_cast<PhysWorld*>(external->Value());
+		PhysObject * object = world->CreateObject(position, rotation);
+
+
+		typedef v8::juice::cw::ClassWrap<JSObject> CW;
+		v8::Handle<v8::Object> jobj = CW::Instance().NewInstance(0, NULL);
+
+		// Get ref to the native type & implant the weak ref to PhysWorld-owned Client class
+		JSObject *handle = CW::ToNative::Value(jobj);
+		handle -> initialize(object->getNetworkId());
+
+		object -> setBody(body);
+		object -> setMesh(mesh);
+		object -> setMass(mass);
+		object -> setTexture(texture);
+		object -> setMeshScale(meshScale);
+		object -> setBodyScale(bodyScale);
+
+		return jobj;
 	}
 
-	v8::Handle<v8::Value> PhysWorld::PlayerCameraSet(const v8::Arguments& args)
-	{
-		return v8::Undefined();
-	}
 
 	v8::Handle<v8::Value> PhysWorld::SetTimeout(const v8::Arguments& args)
 	{
 		// First param: timeout in milliseconds
 		// Second param: function to be called
 
-		double milliseconds;
-		v8::Handle<v8::Value> function;
+		if(args.Length() != 2)return v8::Undefined();
 
-		extract(args, milliseconds, function);
+		double milliseconds = v8::juice::convert::CastFromJS<double>(args[0]);
+		v8::Handle<v8::Value> function = args[1];
 
 		shared_ptr<JSTimeoutEvent> e = make_shared<JSTimeoutEvent>(this, function);
 
@@ -479,20 +466,18 @@ namespace Sarona
 		}
 		// Create index
 		ShapeData & data = m_shapecache[cachename];
+		data.mesh_interface = NULL;
 
-		// Predefined shape
-		if(shape == "cube")
+		// load body from file using irrlicht unles its cub
+		scene::IAnimatedMesh * irrmesh = NULL;
+		if(shape == "cube" || !(irrmesh = m_device->getSceneManager()->getMesh(shape.c_str())))
 		{
 			float length = 1;
 			data.shape = new btBoxShape(btVector3(length/2, length/2, length/2));
-			data.mesh_interface = NULL;
 			return data.shape;
 		}
 
-		// Custom shape
-		// load body from file using irrlicht
-
-		scene::IAnimatedMesh * irrmesh = m_device->getSceneManager()->getMesh(shape.c_str());
+		data.mesh_interface = new btTriangleMesh();
 
 		// Deal some rotation to the mesh since our coordinate system has Z axis up
 		/*core::matrix4 rotmatrix;
@@ -503,7 +488,6 @@ namespace Sarona
 			m_device->getSceneManager()->getMeshManipulator()->transform(meshbuffer, rotmatrix);
 		}*/
 
-		data.mesh_interface = new btTriangleMesh();
 
 		const btScalar scale = 1.0;
 
@@ -588,7 +572,7 @@ namespace Sarona
 		Client *c = GetClientById(_id);
 		if(c)
 		{
-			c->disconnected = true;
+			c->m_disconnected = true;
 		}
 	}
 	void PhysWorld::ZCom_cbConnectResult( ZCom_ConnID _id, eZCom_ConnectResult _result, ZCom_BitStream &_reply )
@@ -605,8 +589,8 @@ namespace Sarona
 		{
 			// Add new client
 			Client * c = new Client(this);
-			c->connection_id = _id;
-			c->disconnected = false ; // They're active
+			c->m_connection_id = _id;
+			c->m_disconnected = false ; // They're active
 			m_clients.push_back(c);
 			return true;
 		}
@@ -670,7 +654,7 @@ namespace Sarona
 				v8::HandleScope handle_scope;
 				v8::Context::Scope scope(m_jscontext);
 
-				c->call_event(event.press?"keydown":"keyup", keycode2string(event.keycode));
+				c->CallEvent(event.press?"keydown":"keyup", keycode2string(event.keycode));
 			}
 //			std::cout << "KeyPress: " << event.press << " " << event.keycode << std::endl;
 		}
@@ -685,7 +669,7 @@ namespace Sarona
 			Client* c = GetClientById(_from);
 			if(c)
 			{
-				c->level_confirmed = true;
+				c->m_level_confirmed = true;
 			}
 		}
 		else
@@ -740,39 +724,4 @@ namespace Sarona
 	// Client object member functions:
 
 
-	void PhysWorld::Client::bind_event(const string& eventtype, const string& eventname,
-		v8::Handle<v8::Function> func, v8::Handle<v8::Object> context)
-	{
-		if(eventtype == "" || eventname == "") return;
-
-		// Register event
-		//TODO: doesn't handle duplicates
-		Event * e = new Event;
-		e->eventtype = eventtype;
-		e->eventname = eventname;
-		e->function = v8::Persistent<v8::Function>::New(func);
-		e->context = v8::Persistent<v8::Object>::New(context);
-		m_events.push_back(e);
-	}
-	void PhysWorld::Client::call_event(const string& eventtype, const string& eventname, const std::vector<v8::Handle< v8::Value > >& args)
-	{
-		// Call event
-		if(eventtype == "" || eventname == "") return;
-
-		ptr_vector<Event>::iterator iter = m_events.begin();
-		while(iter != m_events.end())
-		{
-			if(iter->eventtype == eventtype &&
-				iter->eventname == eventname)
-			{
-//				v8::Handle<v8::Value> result = iter->function->Call(iter->context, 0, NULL);
-				v8::Handle<v8::Value> result = world->CallFunction(iter->function, args, v8::Context::GetCurrent()->Global());
-				if(result.IsEmpty())
-				{
-					std::cout << "Client event call failed!" << std::endl;
-				}
-			}
-			iter++;
-		}
-	}
 }

@@ -1,10 +1,11 @@
 #include "StdAfx.h"
 #include "GameMenu.h"
-#include "PhysWorld.h"
-#include "NetWorld.h"
 
 namespace Sarona
 {
+	class PhysWorld;
+	class NetWorld;
+
 	enum {
 		GUI_ID_BUTTON_LOCAL = 101,
 		GUI_ID_BUTTON_HOST,

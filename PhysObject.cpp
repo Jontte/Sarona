@@ -178,6 +178,17 @@ namespace Sarona
 		btVector4 omega(0,0,0,0);
 		m_replicator->Input(current.getOrigin(), current.getRotation(), velocity, omega);
 
+		// We will also send our current state (mesh, texture, etc)
+
+		ZCom_BitStream stream;
+		Protocol::NodeStateUpdate state;
+		state.mesh = m_mesh;
+		state.texture = m_texture;
+		state.mesh_scale = m_meshScale;
+		state.write(stream);
+
+		m_zcomNode->sendEventDirect(eZCom_ReliableUnordered, stream.Duplicate(), _from);
+
 		return false;
 	}
 	bool PhysObject::recSyncRequest(ZCom_Node *_node, ZCom_ConnID _from,

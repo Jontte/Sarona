@@ -11,6 +11,8 @@ namespace Sarona
 		, m_sceneNode(NULL)
 		, m_device(dev)
 	{
+		m_meshScale = 1;
+
 		m_zcomNode.reset(new ZCom_Node());
 		m_zcomNode->setUserData(this);
 
@@ -28,12 +30,6 @@ namespace Sarona
 		m_zcomNode -> setEventInterceptor(this);
 
 		reloadNode();
-
-		// Send notification about our existence
-/*		Protocol::NodeReady ready;
-		ZCom_BitStream * stream = new ZCom_BitStream;
-		ready.write(*stream);
-		m_zcomNode->sendEvent(eZCom_ReliableOrdered, ZCOM_REPRULE_AUTH_2_ALL, stream);*/
 	}
 
 	NetObject::~NetObject(void)
@@ -59,12 +55,14 @@ namespace Sarona
 		m_omega[2] = omega[2];
 		m_omega[3] = omega[3];
 		m_when = when;
-		//std::cout << "CLIENT:	" << position.X << ",	" << position.Y << ",		" << position.Z << std::endl;
+//		std::cout << "CLIENT:	" << position.X << ",	" << position.Y << ",		" << position.Z << std::endl;
 	}
 
 	void NetObject::RefreshPosRot()
 	{
 		// manage extrapolation and all here
+
+
 
 		boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
 
@@ -76,8 +74,9 @@ namespace Sarona
 		// smoothen out
 		core::vector3df currentpos = m_sceneNode->getPosition();
 		m_sceneNode->setPosition(
-			currentpos * 0.5 +
-			(m_position + m_velocity * dt / 1000) * 0.5 );
+			currentpos * 0.6 +
+			(m_position + m_velocity * dt / 1000) * 0.4 );
+//		m_sceneNode->setPosition(m_position);
 
 		core::quaternion toeuler(m_rotation);
 		/*toeuler *= core::quaternion(core::vector3df(
@@ -99,15 +98,28 @@ namespace Sarona
 		m_rotation.toEuler(euler);
 
 		scene::IMesh * mesh = m_mesh.length() ? m_device->getSceneManager()->getMesh(m_mesh.c_str()) : NULL;
-		m_sceneNode = m_device->getSceneManager()->addMeshSceneNode(
-			mesh,
-			0, // parent
-			-1, // id
-			m_position, // position
-			euler, // rotation
-			core::vector3df(m_meshScale, m_meshScale, m_meshScale), // scale
-			true					// alsoAddIfMeshPointerZero, pretty important here.
-			);
+
+		if(mesh)
+		{
+			m_sceneNode = m_device->getSceneManager()->addMeshSceneNode(
+				mesh,
+				0, // parent
+				-1, // id
+				m_position, // position
+				euler, // rotation
+				core::vector3df(m_meshScale, m_meshScale, m_meshScale), // scale
+				true// alsoAddIfMeshPointerZero
+				);
+		}
+		else
+		{
+			m_sceneNode = m_device->getSceneManager()->addCubeSceneNode (
+				m_meshScale,
+				0,
+				-1,
+				m_position,
+				euler);
+		}
 		m_sceneNode->setMaterialFlag(video::EMF_LIGHTING, false);
 
 //		m_device->getSceneManager()->getMeshManipulator()->recalculateNormals(m_sceneNode->getMesh(), true, true);
@@ -160,7 +172,7 @@ namespace Sarona
 				m_meshScale = state.mesh_scale;
 			}
 
-			//std::cout << "Updated: " << m_texture << ", " << m_mesh << ", " << m_meshScale << std::endl;
+//			std::cout << "Updated: " << m_texture << ", " << m_mesh << ", " << m_meshScale << std::endl;
 
 			if(dirty)
 				reloadNode();

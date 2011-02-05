@@ -1,5 +1,6 @@
 #ifndef STDAFX_H_
 #define STDAFX_H_
+
 #include <string>
 using std::string;
 
@@ -7,15 +8,30 @@ using std::string;
 using std::vector;
 
 #include <bitset>
-
 #include <set>
+#include <memory>
+using std::auto_ptr;
 
+// JsonCpp json parsing
 #include <json/json.h>
+
+// Zoidcom networking
 #include <zoidcom.h>
+
+// V8 Javascript engine by Google
 #include <v8.h>
+
+// v8-juice, a v8 helper library
+#include <v8/juice/convert.h>
+#include <v8/juice/ClassWrap.h>
+#include <v8/juice/forwarding.h>
+#include <v8/juice/ClassWrap_JuiceBind.h>
+
+// Irrlicht graphics engine
 #include <irrlicht.h>
 using namespace irr;
 
+// Bullet physics engine
 #include <btBulletDynamicsCommon.h>
 
 #include <boost/shared_ptr.hpp>
@@ -49,7 +65,5 @@ using boost::ptr_map;
 #ifndef ASSERT
 #define ASSERT(x) assert(x)
 #endif
-
-#include <cproxyv8.h>
 
 #endif

@@ -1,6 +1,7 @@
 #pragma once
 #ifndef PHYSWORLD_H_
 #define PHYSWORLD_H_
+#include <stdexcept>
 #include "StdAfx.h"
 #include "BaseWorld.h"
 #include "PhysObject.h"
@@ -8,10 +9,9 @@
 #include "Util.h"
 #include "JSVector.h"
 #include "PacketDef.h"
-#include <stdexcept>
-#include <cproxyv8-class.h>
 #include "TimedEventReceiver.h"
 #include "JSConvert.h"
+#include "Client.h"
 
 namespace Sarona
 {
@@ -83,41 +83,8 @@ namespace Sarona
 		ptr_vector<PhysObject>			m_objects;
 
 		// Clients
-		struct Client
-		{
-		private:
-			struct Event
-			{
-				string eventtype;
-				string eventname;
-				v8::Persistent<v8::Function> function;
-				v8::Persistent<v8::Object> context;
 
-				~Event() {function.Dispose(); context.Dispose();}
-			};
-
-			ptr_vector<Event> m_events;
-
-		public:
-			string name; // TODO: Implement
-			ZCom_ConnID connection_id;
-
-			bool level_confirmed;
-			bool disconnected;
-			PhysWorld* world;
-
-			Client(PhysWorld* world_) :
-				name("Unnamed"),
-				connection_id(0),
-				level_confirmed(false),
-				disconnected(true),
-				world(world_){}
-
-			void bind_event(const string& eventtype, const string& eventname, v8::Handle<v8::Function> func, v8::Handle<v8::Object> context);
-			void call_event(const string& eventtype, const string& eventname, const std::vector<v8::Handle< v8::Value > >& args = std::vector<v8::Handle< v8::Value > >());
-		};
-
-		ptr_vector<Client> m_clients;
+		ptr_vector<Client> 				m_clients;
 
 		Client* GetClientById(const ZCom_ConnID&);
 
@@ -130,17 +97,13 @@ namespace Sarona
 		void CreateV8Context();
 		void RunSceneJS();
 
-		v8::Handle<v8::Value>			PlayerBind(const v8::Arguments& args);
-		v8::Handle<v8::Value>			PlayerCameraFollow(const v8::Arguments& args);
-		v8::Handle<v8::Value>			PlayerCameraSet(const v8::Arguments& args);
 		v8::Handle<v8::Value>			SetTimeout(const v8::Arguments& args);
+		v8::Handle<v8::Value>			CreateObject(const v8::Arguments& args);
 
 		// static JS wrappers:
 		static v8::Handle<v8::Value>	JSPrint(const v8::Arguments& args);
-		static v8::Handle<v8::Value>	JSPlayerBind(const v8::Arguments& args);
-		static v8::Handle<v8::Value>	JSPlayerCameraFollow(const v8::Arguments& args);
-		static v8::Handle<v8::Value>	JSPlayerCameraSet(const v8::Arguments& args);
 		static v8::Handle<v8::Value>	JSSetTimeout(const v8::Arguments& args);
+		static v8::Handle<v8::Value>	JSCreateObject(const v8::Arguments& args);
 
 		void Loop();
 
@@ -163,17 +126,23 @@ namespace Sarona
 
 		// Send node status updates
 		void UpdateNodes();
-	public:
 
-		// Create an object in the world
+		// Create an object in the world (not in js, tho)
 		PhysObject* CreateObject(const btVector3& position, const btQuaternion& rotation);
+	public:
 
 		PhysWorld(IrrlichtDevice * dev = NULL);
 		~PhysWorld();
 
 		void Bind(int port, bool local = false);
 
+		// Starts the background thread
 		void Start();
+
+		// Sends a shutdown signal to the thread (causing Wait() to return)
+		void Shutdown();
+
+		// Waits for the thread to finish
 		void Wait();
 
 		btCollisionShape* getShape(const string& byname, bool isStatic);

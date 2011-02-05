@@ -12,9 +12,10 @@ bool readFile(
 	std::string& result);
 
 void btTransformToIrrlichtMatrix(const btTransform& worldTrans, irr::core::matrix4 &matr) ;
-
 void btTransformFromIrrlichtMatrix(const irr::core::matrix4& irrmat, btTransform &transform) ;
 
+// Adds support for loading 3d models from 2d textures
+void addHeightMapLoader(IrrlichtDevice* device);
 
 string keycode2string(irr::u8 code);
 

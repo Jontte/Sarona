@@ -2,9 +2,6 @@
 #ifndef JSCONVERT_H_
 #define JSCONVERT_H_
 #include "StdAfx.h"
-#include "JSVector.h"
-#include "JSRotation.h"
-#include <cproxyv8-class.h>
 
 /*
 	A couple of utilies to help with conversion from v8::Arguments to proper c++ types
@@ -13,59 +10,6 @@
 typedef v8::Handle<v8::Value> JSVal_t;
 struct TypeException : public std::exception {};
 
-// Single variable conversion
-
-void convert(const JSVal_t& val, JSVal_t& out);
-void convert(const JSVal_t& val, string& out);
-void convert(const JSVal_t& val, btVector3& out);
-void convert(const JSVal_t& val, btQuaternion& out);
-
-// Numeric types
-template <class T>
-void convert(const JSVal_t& val, T& out, typename boost::enable_if<boost::is_arithmetic<T> >::type* dummy = 0)
-{
-//	if(!val->IsNumber())throw TypeException();
-	if(val.IsEmpty())throw TypeException();
-	v8::Handle<v8::Number> flt(val->ToNumber());
-	out = (T)flt->NumberValue();
-}
-
-// generic array
-template <class T>
-void convert(const JSVal_t& val, vector<T>& out)
-{
-	if(val.IsEmpty())throw TypeException();
-	out.clear();
-	v8::Handle<v8::Object> obj = val->ToObject();
-	for(unsigned i = 0; i < 0xFFFFFFFF; i++)
-	{
-		if(!obj->Has(i))break;
-		T temporary;
-		convert(obj->Get(i), temporary);
-		out.push_back(temporary);
-	}
-}
-// generic map
-template <class Key, class Value>
-void convert(const JSVal_t& val, std::map<Key, Value>& out)
-{
-	if(val.IsEmpty())throw TypeException();
-	out.clear();
-	v8::Handle<v8::Object> obj = val->ToObject();
-
-	v8::Local<v8::Array> names = obj->GetPropertyNames();
-
-	for(unsigned i = 0 ; i < names->Length(); i++)
-	{
-		Value temp1;
-		Key temp2;
-
-		convert(obj->Get(names->Get(i))	,	temp1);
-		convert(names->Get(i)			,	temp2);
-
-		out[temp2] = temp1;
-	}
-}
 
 template <class T1> void extract(const v8::Arguments& arg, T1& t1) {
 	if(arg.Length() < 1)throw std::out_of_range("Out of range");
@@ -90,16 +34,39 @@ template <class T1, class T2, class T3, class T4> void extract(const v8::Argumen
 	convert(arg[2], t4);
 }
 
-// Similar to extract
-// Grabs and converts a value from a map
-template <class T, class U>
-void get(const T& container, const typename T::key_type & key, U& ret)
+namespace extractor
 {
-	typename T::const_iterator iter = container.find(key);
-	if(iter == container.end())throw TypeException();
-	convert(iter->second, ret);
-}
+	typedef v8::Handle<v8::Object> jsobj;
 
+	enum {
+		REQUIRED = 1
+	};
+
+	struct mapper
+	{
+		jsobj src;
+
+		template <class T>
+		mapper operator()(string fieldname, T& fieldvar, int flags)
+		{
+			v8::Handle<v8::String> key = v8::String::New(fieldname.c_str());
+			if(src->Has(key))
+			{
+				fieldvar = ::v8::juice::convert::CastFromJS<T>(src->Get(key));
+			}
+			else
+			{
+				if(flags & REQUIRED)
+				{
+					throw TypeException();
+				}
+			}
+			return *this; // copy of self
+		}
+	};
+
+	mapper emap(jsobj& obj);
+}
 
 /*
 	This code is used to simplify the catch(...) part around your JSObject member functions

@@ -3,8 +3,10 @@
 	<FileVersion major="1" minor="6" />
 	<Project>
 		<Option title="Sarona" />
+		<Option platforms="Windows;Unix;" />
 		<Option pch_mode="2" />
 		<Option compiler="gcc" />
+		<Option virtualFolders="Levels/;" />
 		<Build>
 			<Target title="Debug">
 				<Option output="bin/Debug/Sarona" prefix_auto="1" extension_auto="1" />
@@ -15,9 +17,7 @@
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
-					<Add library="../v8/libv8.a" />
 					<Add library="bullet3d/libbullet3d.a" />
-					<Add library="cproxyv8/libcproxyv8.a" />
 					<Add library="jsoncpp/libjsoncpp.a" />
 					<Add library="../zoidcom/lib/linux/libzoidcom.so" />
 					<Add library="../irrlicht-1.7.1/lib/Linux/libIrrlicht.a" />
@@ -43,11 +43,15 @@
 			<Add option="-lboost_thread" />
 			<Add option="-lX11" />
 			<Add option="-lGL" />
+			<Add option="-lv8" />
+			<Add option="-lv8-juice" />
 		</Linker>
 		<Unit filename="BaseWorld.cpp" />
 		<Unit filename="BaseWorld.h" />
 		<Unit filename="Camera.cpp" />
 		<Unit filename="Camera.h" />
+		<Unit filename="Client.cpp" />
+		<Unit filename="Client.h" />
 		<Unit filename="GameMenu.cpp" />
 		<Unit filename="GameMenu.h" />
 		<Unit filename="JSConvert.cpp" />
@@ -71,12 +75,25 @@
 		<Unit filename="PhysWorld.h" />
 		<Unit filename="PhysWorld_static.cpp" />
 		<Unit filename="StdAfx.cpp" />
-		<Unit filename="StdAfx.h" />
+		<Unit filename="StdAfx.h">
+			<Option compile="1" />
+			<Option weight="40" />
+		</Unit>
 		<Unit filename="TimedEventReceiver.cpp" />
 		<Unit filename="TimedEventReceiver.h" />
 		<Unit filename="Util.cpp" />
 		<Unit filename="Util.h" />
 		<Unit filename="main.cpp" />
+		<Unit filename="testlevel/index.json" />
+		<Unit filename="testlevel/level_mask.obj" />
+		<Unit filename="testlevel/main.js" />
+		<Unit filename="testlevel/pohja.mtl" />
+		<Unit filename="testlevel/pohja.obj" />
+		<Unit filename="testlevel/saronacube.mtl" />
+		<Unit filename="testlevel/saronacube.obj" />
+		<Unit filename="testlevel/saronacube.png" />
+		<Unit filename="testlevel/tekstuuri.png" />
+		<Unit filename="testlevel/testgraphics.png" />
 		<Extensions>
 			<code_completion />
 			<debugger />

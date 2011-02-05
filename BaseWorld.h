@@ -21,6 +21,9 @@ namespace Sarona
 	{
 		typedef typename ObjectType::Id ObjectId;
 
+	private:
+		std::map<std::string, intrusive_ptr<scene::IAnimatedMesh> > m_heightmap_cache;
+
 	protected:
 		// Level config
 		string m_name;
@@ -45,76 +48,6 @@ namespace Sarona
 			TypeRegistry::m_commId = this->ZCom_registerClass("GlobalCommunicator");
 		}
 
-
-		/*
-		 Call a JS function in the context of this world, return result
-		*/
-		v8::Handle<v8::Value> CallFunction(
-			v8::Handle<v8::Value> func, // The function to call. String or function object
-			const vector<v8::Handle<v8::Value> >& args = vector<v8::Handle<v8::Value> >(), // args array
-			v8::Handle<v8::Object> ctx = v8::Handle<v8::Object>() // context of the call. empty for global object
-			)
-		{
-			// If we're not currently in a context we cannot return a value from this function.
-			bool are_in_context = v8::Context::InContext();
-
-			// Enter our context properly
-			v8::Locker locker;
-			v8::HandleScope handle_scope;
-			v8::Context::Scope scope(m_jscontext);
-
-			v8::Handle<v8::Value> result;
-			v8::TryCatch trycatch;
-
-			// Is func a string to be eval'd?
-			if(func->IsString())
-			{
-				v8::Handle<v8::String>		function = func->ToString();
-				v8::Local<v8::Script> jsscript = v8::Script::Compile(function);
-				if(jsscript.IsEmpty())
-					return v8::Handle<v8::Value>();
-				result = jsscript->Run();
-			}
-			else if(func->IsFunction())
-			{
-				v8::Handle<v8::Function>	function = v8::Handle<v8::Function>::Cast(func);
-				vector<v8::Handle<v8::Value> > arg_helper;
-				for(int i = 0; i < args.size(); i++)
-                    arg_helper.push_back(args[i]);
-
-				v8::Handle<v8::Value>* argv = NULL;
-				int argcount = 0;
-				if(!args.empty())
-				{
-                        argv = &arg_helper[0];
-                        argcount = arg_helper.size();
-                }
-				result = function->Call(ctx.IsEmpty() ? m_jscontext->Global() : ctx, argcount, argv);
-			}
-			else
-			{
-				// What is func?
-				return v8::Handle<v8::Value>();
-			}
-
-			if(result.IsEmpty())
-			{
-				v8::Handle<v8::Value> exception = trycatch.Exception();
-				v8::Handle<v8::Message> message = trycatch.Message();
-
-				v8::String::AsciiValue exception_str(exception);
-
-				std::cout << "Exception: " << *exception_str << std::endl;
-				std::cout << "	: " << *v8::String::AsciiValue(message->GetSourceLine()) << std::endl;
-				return v8::Handle<v8::Value>();
-			}
-
-			if(are_in_context)
-				return handle_scope.Close(result);
-
-			// Can't return value, no context!
-			return v8::Handle<v8::Value>();
-		}
 
 		void LoadLevel(bool runscripts)
 		{
@@ -190,6 +123,71 @@ namespace Sarona
 
 	public:
 
+		/*
+			Call a JS function in the context of this world, return result
+		*/
+		v8::Handle<v8::Value> CallFunction(
+			v8::Handle<v8::Value> func, // The function to call. String or function object
+			vector<v8::Handle<v8::Value> > args = vector<v8::Handle<v8::Value> >(), // args array
+			v8::Handle<v8::Object> ctx = v8::Handle<v8::Object>() // context of the call. empty for global object
+			)
+		{
+			// If we're not currently in a context we cannot return a value from this function.
+			bool are_in_context = v8::Context::InContext();
+
+			// Enter our context properly
+			v8::Locker locker;
+			v8::HandleScope handle_scope;
+			v8::Context::Scope scope(m_jscontext);
+
+			v8::Handle<v8::Value> result;
+			v8::TryCatch trycatch;
+
+			// Is func a string to be eval'd?
+			if(func->IsString())
+			{
+				v8::Handle<v8::String>		function = func->ToString();
+				v8::Local<v8::Script> jsscript = v8::Script::Compile(function);
+				if(jsscript.IsEmpty())
+					return v8::Handle<v8::Value>();
+				result = jsscript->Run();
+			}
+			else if(func->IsFunction())
+			{
+				v8::Handle<v8::Function>	function = v8::Handle<v8::Function>::Cast(func);
+
+				result = function->Call(
+					ctx.IsEmpty() ? m_jscontext->Global() : ctx, 	// context
+					args.size(),  									// arg count
+					args.empty() ? NULL : &args[0] 					// args
+				);
+			}
+			else
+			{
+				// What is func?
+				return v8::Handle<v8::Value>();
+			}
+
+			if(result.IsEmpty())
+			{
+				v8::Handle<v8::Value> exception = trycatch.Exception();
+				v8::Handle<v8::Message> message = trycatch.Message();
+
+				v8::String::AsciiValue exception_str(exception);
+
+				std::cout << "Exception: " << *exception_str << std::endl;
+				std::cout << "	: " << *v8::String::AsciiValue(message->GetSourceLine()) << std::endl;
+				return v8::Handle<v8::Value>();
+			}
+
+			if(are_in_context)
+				return handle_scope.Close(result);
+
+			// Can't return value, no context!
+			return v8::Handle<v8::Value>();
+		}
+
+
 		void SetLevel(std::string level)
 		{
 			m_levelname = level;
@@ -202,7 +200,7 @@ namespace Sarona
 			RegisterZComObjects();
 		}
 
-		virtual ~BaseWorld(void)
+		virtual ~BaseWorld()
 		{
 			// Get rid of v8 context
 			m_jscontext.Dispose();
