@@ -27,14 +27,17 @@ function kill_later(object, timeout)
 angle = 0;
 function loop()
 {
-	var r = 90;
+	var r = 10;
 	var obj1 = createblock([Math.sin(angle)*r,Math.cos(angle)*r, 220])
 	var obj2 = createblock([Math.sin(angle)*-r,Math.cos(angle)*-r, 220])
 
-	kill_later(obj1, 10 * 1000);
-	kill_later(obj2, 10 * 1000);
+	obj1.push(0,0,-100);
+	obj2.push(0,0,-100);
 
-	angle += Math.PI/180.0 * 10;
+	kill_later(obj1, 60 * 1000);
+	kill_later(obj2, 60 * 1000);
+
+	angle += Math.PI/180.0 * 30;
 	setTimeout(500, loop);
 }
 
@@ -43,13 +46,13 @@ function create_ground()
 	// Create ground
 
 	var ground = createObject({
-		body: 'hill_heightmap.png',
-		mesh: 'hill_heightmap.png',
-		texture: 'hill_texture.png',
-		meshScale: 200,
-		bodyScale: 200,
+		body: 'pohja.obj', //'hill_heightmap.png',
+		mesh: 'pohja.obj', //'hill_heightmap.png',
+		texture: 'tekstuuri.png', //'hill_texture.png',
+		meshScale: 2,
+		bodyScale: 2,
 		rotation: [0,0,0,1],
-		position: [0,0,100]
+		position: [0,0,0]
 	});
 }
 
@@ -59,7 +62,7 @@ function level_start()
 {
 	print('Welcome to testimappi!');
 
-	for(var i = 0 ; i < 1; i++)
+	for(var i = 0 ; i < 0; i++)
 	{
 		var obj = createObject({
 			position : [0,0,1.5+i*3],
@@ -76,24 +79,22 @@ function level_start()
 
     print("Moi olen Javascript ja printtaus toimii");
 	create_ground();
-//	createblock([0,0,10]);
 	loop();
-    return;
 
 	print('Welcome to testimappi!');
-	return;
 	for(var i = 0; i < scene.players.length; i++)
 	{
 		var p = scene.players[i];
 		// Bind a key for each player in the scene.
 
-		var object = createblock(
-			new Vector(0,0,500)
+		var obj = createblock(
+			new Vector(0,0,100)
 		);
 
-		p.cameraFollow(object, 50);
+		obj.push(0,0,0);
+		p.cameraFollow(obj, 50);
 
-		p.bind("keydown", "space", function(obj){return function(){
+		/*p.bind("keydown", "space", function(obj){return function(){
 				obj.push(0,0,10);
 			};}(object)
 		);
@@ -116,7 +117,7 @@ function level_start()
 		p.bind("keydown", "down", function(obj){return function(){
 				obj.push(0, -10,0);
 			};}(object)
-		);
+		);*/
 	}
 
 

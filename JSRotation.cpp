@@ -53,5 +53,5 @@ namespace Sarona
 
 
 #define CLASSWRAP_BOUND_TYPE Sarona::JSRotation
-#include <v8/juice/ClassWrap_JuiceBind.h>
+#include <v8/juice/ClassWrap-JSToNative.h>
 

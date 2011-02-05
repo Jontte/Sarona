@@ -49,12 +49,14 @@ class Client
 		m_world(world_){}
 
 
-	void CameraFollow(const JSObject& target, double radius);
-	void CameraSet(const v8::Arguments& args);
-	void BindEvent(string type, string subtype, v8::Handle<v8::Value> func, v8::Handle<v8::Object> ctx = v8::Handle<v8::Object>());
 	void CallEvent(const string& type, const string& subtype, const std::vector<v8::Handle< v8::Value > >& args = vector<v8::Handle<v8::Value> >());
 
-	static v8::Handle<v8::Object> SetupClass(v8::Handle<v8::Object> dest);
+	// JS Side:
+
+	void quack(){}
+	void CameraFollow(JSObject& target, double radius);
+	void CameraSet(const v8::Arguments& args);
+	void BindEvent(string type, string subtype, v8::Handle<v8::Value> func, v8::Handle<v8::Object> ctx = v8::Handle<v8::Object>());
 };
 
 
@@ -65,6 +67,18 @@ class Client::JSHandle
 	public:
 		JSHandle():m_ref(NULL){};
 		void initialize(Client* ref){m_ref = ref;}
+
+		// wrapper functions that direct the calls to the native object
+		// throw exception if handle is invalid for some reason
+		// TODO: this copypaste mess could be cleaned with some template/macro hackery?
+		void CameraFollow(JSObject& target, double radius)
+		{
+			if(!m_ref)
+				throw std::string("Invalid client handle");
+			return m_ref->CameraFollow(target, radius);
+		}
+
+		static v8::Handle<v8::Object> SetupClass(v8::Handle<v8::Object> dest);
 };
 
 }
@@ -82,5 +96,8 @@ namespace v8{namespace juice{namespace cw{
 	>
 	{};
 }}}
+
+#define CLASSWRAP_BOUND_TYPE Sarona::Client::JSHandle
+#include <v8/juice/ClassWrap_TwoWay.h>
 
 #endif // CLIENT_H_

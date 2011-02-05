@@ -138,7 +138,7 @@ namespace Sarona
 		JSObject::SetupClass(global_obj);
 		JSVector::SetupClass(global_obj);
 		JSRotation::SetupClass(global_obj);
-
+		Client::JSHandle::SetupClass(global_obj);
 	}
 
 	void PhysWorld::CreateBulletContext()
@@ -416,8 +416,8 @@ namespace Sarona
 			v8::Handle<v8::Object>::Cast(v8::Context::GetCurrent()->Global()->GetPrototype())
 				->GetInternalField(0));
 		PhysWorld* world = static_cast<PhysWorld*>(external->Value());
-		PhysObject * object = world->CreateObject(position, rotation);
 
+		PhysObject * object = world->CreateObject(position, rotation);
 
 		typedef v8::juice::cw::ClassWrap<JSObject> CW;
 		v8::Handle<v8::Object> jobj = CW::Instance().NewInstance(0, NULL);

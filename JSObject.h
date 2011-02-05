@@ -26,7 +26,8 @@ namespace Sarona
 		JSObject();
 		~JSObject();
 
-		void push(vector<double> force) const;
+		void push(double x, double y, double z) const;
+		void push(btVector3 force) const;
 		void kill();
 
 		static v8::Handle<v8::Object> SetupClass(v8::Handle<v8::Object> dest);
@@ -45,19 +46,11 @@ namespace v8{namespace juice{namespace cw{
 		>
 	>
 	{};
-}}}/*
-namespace v8 { namespace juice { namespace convert {
-template <> struct JSToNative<Sarona::JSObject>
-{
-	typedef Sarona::JSObject* ResultType;
-	Sarona::JSObject* operator()( v8::Handle<v8::Value> const & h ) const
-	{
-		Sarona::JSObject* obj = ::v8::juice::WeakJSClassCreator<Sarona::JSObject>::GetNative( h );
-		Sarona::PhysObject* phys = obj->getObject();
-		if(phys)
-			return phys->getNetworkId();
-		return -1;
-	}
-};
-} } }*/ // namespaces
+}}}
+
+#define CLASSWRAP_BOUND_TYPE Sarona::JSObject
+#include <v8/juice/ClassWrap_TwoWay.h>
+
+//JUICE_CLASSWRAP_JSTONATIVE(Sarona::JSObject)
+
 #endif

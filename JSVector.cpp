@@ -6,7 +6,6 @@ namespace Sarona
 	JSVector::JSVector(const v8::Handle<v8::Object>& arg)
 	{
 		// Arg is either empty or has three scalars
-
 		if(
 			arg->Has(0) &&
 			arg->Has(1) &&
@@ -18,6 +17,9 @@ namespace Sarona
 			z = arg->Get(2)->ToNumber()->Value();
 		}
 	}
+	JSVector::JSVector(double x_, double y_, double z_)
+		: x(x_), y(y_), z(z_)
+	{}
 
 
 	v8::Handle<v8::Object> JSVector::SetupClass(v8::Handle<v8::Object> dest)
@@ -38,5 +40,3 @@ namespace Sarona
 }
 
 
-#define CLASSWRAP_BOUND_TYPE Sarona::JSVector
-#include <v8/juice/ClassWrap_JuiceBind.h>

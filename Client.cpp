@@ -8,10 +8,11 @@
 namespace Sarona
 {
 
-void Client::CameraFollow(const JSObject& target, double radius)
+void Client::CameraFollow(JSObject& target, double radius)
 {
 	// Make player camera follow some object
 	// Convert to Native types
+
 	PhysObject* physobj = target.getObject();
 	if(physobj)
 	{
@@ -82,6 +83,22 @@ void Client::CallEvent(const string& type, const string& subtype, const std::vec
 			std::cout << "Client event call failed!" << std::endl;
 		}
 	}
+}
+
+
+v8::Handle<v8::Object> Client::JSHandle::SetupClass(v8::Handle<v8::Object> dest)
+{
+	// Setup JS bindings to client object
+	typedef v8::juice::cw::ClassWrap<Client::JSHandle> CW;
+	typedef v8::juice::convert::MemFuncInvocationCallbackCreator<Client::JSHandle> ICM;
+
+	CW & b (CW::Instance());
+
+	b.Set("cameraFollow", ICM::M2::Invocable<void, JSObject&, double, &Client::JSHandle::CameraFollow>);
+
+	b.Seal();
+	b.AddClassTo(dest);
+	return b.CtorTemplate()->GetFunction();
 }
 
 }

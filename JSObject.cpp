@@ -41,19 +41,16 @@ namespace Sarona
 		return world->getObject(m_obj);
 	}
 
-	void JSObject::push(vector<double> force) const
+	void JSObject::push(double x, double y, double z) const
 	{
-		if(force.size() != 3)
-			return;
-
+		push(btVector3(x,y,x));
+	}
+	void JSObject::push(btVector3 force) const
+	{
 		PhysObject * c = getObject();
 		if(c)
 		{
-			c -> push(btVector3(
-				force[0],
-				force[1],
-				force[2]
-			));
+			c -> push(force);
 		}
 	}
 	void JSObject::kill()
@@ -73,7 +70,9 @@ namespace Sarona
 
 		CW & b (CW::Instance());
 
-		b.Set("push", ICM::M1::Invocable<void, vector<double>, &JSObject::push>);
+		b.Set("push", ICM::M1::Invocable<void, btVector3, &JSObject::push>);
+		b.Set("push", ICM::M3::Invocable<void, double, double, double, &JSObject::push>);
+
 		b.Set("kill", ICM::M0::Invocable<void, &JSObject::kill>);
 
 		b.Seal();
@@ -83,5 +82,21 @@ namespace Sarona
 
 }
 
-#define CLASSWRAP_BOUND_TYPE Sarona::JSObject
-#include <v8/juice/ClassWrap_JuiceBind.h>
+/*
+namespace v8 { namespace juice { namespace convert {
+template <> struct JSToNative<Sarona::JSObject>
+{
+	typedef Sarona::JSObject * ResultType;
+	ResultType operator()( v8::Handle<v8::Value> const & h ) const
+	{
+//		return v8::juice::convert::CastFromJS<Sarona::JSObject>(h);
+		return ::v8::juice::WeakJSClassCreator<Sarona::JSObject>::GetNative( h );
+	}
+};
+} } } // namespaces
+
+*/
+
+//#define CLASSWRAP_BOUND_TYPE Sarona::JSObject
+//#include <v8/juice/ClassWrap-JSToNative.h>
+
