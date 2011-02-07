@@ -14,9 +14,11 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
+					<Add option="-pg" />
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
+					<Add option="-pg" />
 					<Add library="bullet3d/libbullet3d.a" />
 					<Add library="jsoncpp/libjsoncpp.a" />
 					<Add library="../zoidcom/lib/linux/libzoidcom.so" />
@@ -97,6 +99,7 @@
 		<Extensions>
 			<code_completion />
 			<debugger />
+			<envvars />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

@@ -149,7 +149,16 @@ namespace Sarona
 				v8::Handle<v8::String>		function = func->ToString();
 				v8::Local<v8::Script> jsscript = v8::Script::Compile(function);
 				if(jsscript.IsEmpty())
+				{
+					v8::Handle<v8::Value> exception = trycatch.Exception();
+					v8::Handle<v8::Message> message = trycatch.Message();
+
+					v8::String::AsciiValue exception_str(exception);
+
+					std::cout << "Exception: " << *exception_str << std::endl;
+					std::cout << "	: " << *v8::String::AsciiValue(message->GetSourceLine()) << std::endl;
 					return v8::Handle<v8::Value>();
+				}
 				result = jsscript->Run();
 			}
 			else if(func->IsFunction())

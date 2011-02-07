@@ -235,6 +235,7 @@ namespace Sarona
 	{
 		boost::this_thread::disable_interruption disable;
 		// Wait until enough players have joined...
+
 		while(true)
 		{
 			if(boost::this_thread::interruption_requested())
@@ -306,19 +307,21 @@ namespace Sarona
 		m_dynamicsWorld->addRigidBody(get_pointer(m_ground));
 
 		unsigned long long frame = 0;
-
+		unsigned long long framecounter = 0;
 		// Set our delta time and time stamp
 
-		int targetFPS = 50;
-
-		boost::posix_time::time_duration loop_avg;
+		const int targetFPS = 50;
+		double frametime = 0;
+		double totalframetime = 1.0/targetFPS;
+		SimpleTimer timer;
 		while(true)
 		{
 			if(boost::this_thread::interruption_requested())
-				return;
+				break;
 
-			// Start counting frame-time
-			boost::posix_time::ptime beginframe = boost::posix_time::microsec_clock::local_time();
+			// Simulate physics
+//			m_dynamicsWorld->stepSimulation(btScalar(1.0/targetFPS), 5);
+			m_dynamicsWorld->stepSimulation(totalframetime, 20);
 
 			// Remove dead objects from simulation
 			KillZombies();
@@ -326,50 +329,44 @@ namespace Sarona
 			// Send node status updates (mesh, texture, scale, etc. slow-changing params)
 			UpdateNodes();
 
-			// Simulate physics
-			m_dynamicsWorld->stepSimulation(btScalar(1.0/targetFPS), 10);
-
 			// Step network code
  			this->ZCom_processInput();
 			this->ZCom_processOutput();
 			//this->ZCom_processReplicators(zU32(1000.0/targetFPS));
 
 			// Advance the timer, calling timed callbacks
-			m_timer->TimeStep(1.0/targetFPS);
+			m_timer->TimeStep(totalframetime);
 
-			// Sleep the rest of the frame..
-			boost::posix_time::ptime endframe = boost::posix_time::microsec_clock::local_time();
-
-			ZCom_ConnStats stats = ZCom_getConnectionStats(1);
-
-			if(frame % (targetFPS) == 0)
+			framecounter++;
+			frame++;
+			double elapsed = timer.elapsed();
+			if(elapsed >= 1.0)
 			{
-				std::cout << m_objects.size() << " objects. Avg loop: " << loop_avg.total_microseconds() << " micros" << std::endl;
+				timer.restart();
+				double lastsleep = 1.0/targetFPS-frametime;
+				frametime = elapsed / framecounter;
+				totalframetime = frametime;
+				frametime -= lastsleep;
+				std::cout << m_objects.size() << " objects. 		Server FPS: " << framecounter << " frametime " << frametime << ", " << totalframetime << std::endl;
+				framecounter = 0;
 			}
 
-			long long int micros = 1000000/targetFPS;
-			boost::posix_time::time_duration this_frame = boost::posix_time::time_period(beginframe, endframe).length();
-
-			micros -= this_frame.total_microseconds();
-
-			loop_avg = loop_avg /2 + this_frame/2;
-
-			if(micros > 0)
+			// Limit fps by sleeping?
+			double tosleep = 1.0/targetFPS-frametime;
+			if(tosleep > 0)
 			{
-				boost::this_thread::sleep(boost::posix_time::microseconds(micros));
+				boost::this_thread::sleep(boost::posix_time::microseconds(1000000.0*tosleep));
 			}
 			else
 			{
 				//std::cout << "Time dilatation..." << std::endl;
 			}
-
-			frame++;
 		}
 	}
 
 	PhysObject* PhysWorld::CreateObject(const btVector3& position, const btQuaternion& rotation)
 	{
-		// Creates bare object
+		// Creates bare object in the dynamics simulation context
 		PhysObject* obj = new PhysObject(this, get_pointer(m_dynamicsWorld), btTransform(rotation, position));
 		m_objects.push_back(obj);
 		return obj;
@@ -384,7 +381,6 @@ namespace Sarona
 		v8::Handle<v8::Object> obj = arg[0]->ToObject();
 
 		// Creates object in JS context
-		std::cout << "Creating JSObject" << std::endl;
 		std::string mesh;
 		std::string body;
 		std::string texture;

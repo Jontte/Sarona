@@ -19,5 +19,27 @@ void addHeightMapLoader(IrrlichtDevice* device);
 
 string keycode2string(irr::u8 code);
 
+/*
+	A simple timer class that uses boost::posix_time
+	boost::timer uses clock() which makes it practically useless
+*/
+class SimpleTimer
+{
+	private:
+		boost::posix_time::ptime m_start;
+	public:
+		SimpleTimer();
+		void restart();
+		// if parameter is given, return time in seconds between restart and that time
+		double elapsed(const boost::posix_time::ptime& now = boost::posix_time::microsec_clock::local_time());
+};
+
+
+// A simple macro to time function calls
+#define PROFILE(NAME, ...)\
+	SimpleTimer NAME ## _profiler_;\
+	__VA_ARGS__;\
+	std::cout << "PROFILER: " << BOOST_PP_STRINGIZE(NAME) << " = " << NAME ## _profiler_.elapsed() << " s" << std::endl;
+
 
 #endif

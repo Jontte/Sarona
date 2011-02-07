@@ -43,7 +43,7 @@ namespace Sarona
 
 	void JSObject::push(double x, double y, double z) const
 	{
-		push(btVector3(x,y,x));
+		push(btVector3(x,y,z));
 	}
 	void JSObject::push(btVector3 force) const
 	{

@@ -96,6 +96,10 @@ v8::Handle<v8::Object> Client::JSHandle::SetupClass(v8::Handle<v8::Object> dest)
 
 	b.Set("cameraFollow", ICM::M2::Invocable<void, JSObject&, double, &Client::JSHandle::CameraFollow>);
 
+	// with or without context
+	b.Set("bind", ICM::M3::Invocable<void, string, string, v8::Handle<v8::Value>, &Client::JSHandle::BindEvent>);
+//	b.Set("bind", ICM::M4::Invocable<void, string, string, v8::Handle<v8::Value>, v8::Handle<v8::Value>, &Client::JSHandle::BindEvent>);
+
 	b.Seal();
 	b.AddClassTo(dest);
 	return b.CtorTemplate()->GetFunction();

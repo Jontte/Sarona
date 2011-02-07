@@ -77,6 +77,20 @@ class Client::JSHandle
 				throw std::string("Invalid client handle");
 			return m_ref->CameraFollow(target, radius);
 		}
+		void BindEvent(string type, string subtype, v8::Handle<v8::Value> func, v8::Handle<v8::Value> ctx)
+		{
+			if(!m_ref)
+				throw std::string("Invalid client handle");
+			if(!ctx->IsObject())
+				throw std::string("Invalid context passed");
+			return m_ref->BindEvent(type, subtype, func, ctx->ToObject());
+		}
+		void BindEvent(string type, string subtype, v8::Handle<v8::Value> func)
+		{
+			if(!m_ref)
+				throw std::string("Invalid client handle");
+			return m_ref->BindEvent(type, subtype, func, v8::Handle<v8::Object>());
+		}
 
 		static v8::Handle<v8::Object> SetupClass(v8::Handle<v8::Object> dest);
 };

@@ -2,6 +2,7 @@
 #ifndef NETOBJECT_H_
 #define NETOBJECT_H_
 #include "StdAfx.h"
+#include "Util.h"
 
 namespace Sarona
 {
@@ -55,11 +56,16 @@ namespace Sarona
 		string m_texture;
 		float m_meshScale;
 
+		// Timer used to calculate time from last position update
+		// Used to extrapolate motion
+		SimpleTimer m_timer;
+
 		void reloadNode();
 	public:
 		typedef ZCom_NodeID Id; // Used to implement weak refs to these object
 
-		void RefreshPosRot();
+		// param1: current time
+		void RefreshPosRot(const boost::posix_time::ptime& now);
 
 		void UpdateLastKnown(
 			const core::vector3df& position, const core::quaternion& rotation,

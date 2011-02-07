@@ -135,7 +135,10 @@ namespace Sarona
 	void PhysObject::push(const btVector3& force)
 	{
 		if(m_rigidbody)
+		{
+			m_rigidbody->activate();
 			m_rigidbody->applyImpulse(force, btVector3(0,0,0));
+		}
 	}
 
 	void PhysObject::sendUpdate()

@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
 		throw std::runtime_error("Unable to initialize ZoidCom!");
 	}
 
-	zcom->setLogLevel(2);
+	zcom->setLogLevel(0);
 
 	intrusive_ptr<IrrlichtDevice> device;
 
@@ -69,7 +69,7 @@ int main(int argc, char *argv[])
 			createDevice(video::EDT_OPENGL, core::dimension2d<u32>(800,600), 16, false, true, true),
 			false /* don't addref */
 		);
-		device->getLogger()->setLogLevel(ELL_INFORMATION);
+		device->getLogger()->setLogLevel(ELL_WARNING);
 		addHeightMapLoader(get_pointer(device));
 
 		Sarona::GameMenu menu(get_pointer(device));

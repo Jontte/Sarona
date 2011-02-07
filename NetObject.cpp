@@ -30,6 +30,10 @@ namespace Sarona
 		m_zcomNode -> setEventInterceptor(this);
 
 		reloadNode();
+
+		// the node is first shown after the first status update packet
+		// which shows up pretty soon now that we've notified the endpoint of obj creation
+		m_sceneNode->setVisible(false);
 	}
 
 	NetObject::~NetObject(void)
@@ -55,27 +59,21 @@ namespace Sarona
 		m_omega[2] = omega[2];
 		m_omega[3] = omega[3];
 		m_when = when;
+		m_timer.restart();
 //		std::cout << "CLIENT:	" << position.X << ",	" << position.Y << ",		" << position.Z << std::endl;
 	}
 
-	void NetObject::RefreshPosRot()
+	void NetObject::RefreshPosRot(const boost::posix_time::ptime& now)
 	{
 		// manage extrapolation and all here
-
-
-
-		boost::posix_time::ptime now = boost::posix_time::microsec_clock::local_time();
-
-		boost::posix_time::time_duration dur = boost::posix_time::time_period(m_when, now).length();
-
-		float dt = dur.total_seconds() + float(dur.fractional_seconds()) / 1000;
-
-
 		// smoothen out
 		core::vector3df currentpos = m_sceneNode->getPosition();
 		m_sceneNode->setPosition(
-			currentpos * 0.6 +
-			(m_position + m_velocity * dt / 1000) * 0.4 );
+			currentpos * 0.5 +
+			(m_position + m_velocity * m_timer.elapsed(now) / 1000) * 0.5 );
+//		m_sceneNode->setPosition(
+//			currentpos + m_velocity*dt
+//			);
 //		m_sceneNode->setPosition(m_position);
 
 		core::quaternion toeuler(m_rotation);
@@ -93,7 +91,6 @@ namespace Sarona
 			m_sceneNode->remove();
 
 		// Create an irrlicht node..
-
 		core::vector3df euler;
 		m_rotation.toEuler(euler);
 
@@ -124,7 +121,7 @@ namespace Sarona
 
 //		m_device->getSceneManager()->getMeshManipulator()->recalculateNormals(m_sceneNode->getMesh(), true, true);
 
-		if(m_sceneNode->getMaterialCount() > 0)
+		if(m_sceneNode->getMaterialCount() > 0 && m_texture != "")
 		{
 			// set texture..
 			video::ITexture * texture = m_device->getVideoDriver()->getTexture(m_texture.c_str());
@@ -171,7 +168,6 @@ namespace Sarona
 				dirty = true;
 				m_meshScale = state.mesh_scale;
 			}
-
 //			std::cout << "Updated: " << m_texture << ", " << m_mesh << ", " << m_meshScale << std::endl;
 
 			if(dirty)

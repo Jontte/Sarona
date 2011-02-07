@@ -93,15 +93,6 @@ namespace Sarona
 		DEF(0x0402, CameraFollow, ((u32, nodeid))((float, distance)))
 		DEF(0x0403, CameraSet, ((u32, nodeid))((btVector3, position))((btVector3, lookat))((float, seconds)))
 
-		// Utility functions
-
-/*
-		template <class PacketClass>
-		u16 PacketID(const PacketClass& p)
-		{
-			return PacketClass::ID;
-		}
-*/
 		// Cleanup..
 		#undef DEF
 		#undef FIELDDEF

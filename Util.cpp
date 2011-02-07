@@ -323,3 +323,21 @@ void addHeightMapLoader(IrrlichtDevice* device)
 	device->getSceneManager()->addExternalMeshLoader(loader);
 }
 
+SimpleTimer::SimpleTimer()
+{
+	restart();
+}
+void SimpleTimer::restart()
+{
+	m_start = boost::posix_time::microsec_clock::local_time();
+}
+double SimpleTimer::elapsed(const boost::posix_time::ptime& now)
+{
+	boost::posix_time::time_period period(m_start, now);
+	return double(period.length().total_microseconds())/1000000;
+}
+
+
+
+
+

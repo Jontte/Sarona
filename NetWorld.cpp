@@ -8,7 +8,7 @@ namespace Sarona
 
 	NetWorld::NetWorld(IrrlichtDevice* device) : BaseWorld<NetWorld, NetObject>(device)
 	{
-		ZCom_setUpstreamLimit(30000, 30000);
+		ZCom_setUpstreamLimit(0, 0);
 
 		this->beginReplicationSetup(0);
 		this->endReplicationSetup();
@@ -117,7 +117,6 @@ namespace Sarona
 			throw std::runtime_error("Unable to connect!");
 		}
 
-
 		m_serverConnectionId = connection_id;
 	}
 
@@ -165,8 +164,7 @@ namespace Sarona
 		LoadLevel(false); // false = don't run scripts (we're not the host)
 
 		// Set our delta time and time stamp
-		u32 TimeStamp = m_device->getTimer()->getTime();
-		u32 DeltaTime = 0;
+		SimpleTimer timer;
 
 		int mouseprevx = -1;
 		int mouseprevy = -1;
@@ -175,14 +173,15 @@ namespace Sarona
 		m_device->getCursorControl()->setVisible(false);
 
 		unsigned long int frame = 0;
-		int calc = 0;
+		unsigned long int framecounter = 0;
+
+		double frametime = 1.0/50;
 
 		while(m_device->run())
 		{
 			driver->beginScene(true, true, video::SColor(255, 128, 160, 255));
 
 			// manage mouse
-
 			if(m_device->isWindowFocused())
 			{
 				int currentx = m_device->getCursorControl()->getPosition().X;
@@ -200,48 +199,49 @@ namespace Sarona
 			mouseprevx = m_device->getCursorControl()->getPosition().X;
 			mouseprevy = m_device->getCursorControl()->getPosition().Y;
 
-			// calculate dt
-			DeltaTime = m_device->getTimer()->getTime() - TimeStamp;
-			TimeStamp = m_device->getTimer()->getTime();
-
-			// Tiukka looppi.
-
 			// Step network code
 			this->ZCom_processInput();
 			this->ZCom_processOutput();
 			//this->ZCom_processReplicators(DeltaTime);
 
-			if(++calc > 1000.0/DeltaTime )
-			{
-				calc = 0;
-
-
-				ZCom_ConnStats stats = this->ZCom_getConnectionStats(1);
-
-				std::cout << "In/Out pps: " << stats.current_inp << "/" << stats.current_outp << std::endl;
-			}
-
 			// Move camera
-			m_camera->Step(DeltaTime * 0.001f);
+			m_camera->Step(frametime);
 
 			// Remove objects scheduled for deletion
 			RemoveZombies();
 
 			// Refresh object positions
+			const boost::posix_time::ptime& now = boost::posix_time::microsec_clock::local_time();
 			for(unsigned i = 0; i < m_objects.size(); i++)
 			{
-				m_objects[i].RefreshPosRot();
+				m_objects[i].RefreshPosRot(now);
 			}
 
 			// Draw everything
 			scenemgr->drawAll();
-
 			driver->endScene();
 
 			++frame;
+			++framecounter;
+			double elapsed = timer.elapsed();
+			if(elapsed > 1.0)
+			{
+				timer.restart();
+				frametime = elapsed/framecounter;
+				framecounter = 0;
+				ZCom_ConnStats stats = this->ZCom_getConnectionStats(1);
+
+				std::cout << "In/Out pps: " << stats.current_inp << "/" << stats.current_outp << " 	Client FPS: " << driver->getFPS() << ", " << 1.0/frametime << std::endl;
+
+				core::stringw str = L"Sarona [";
+				str += driver->getName();
+				str += L"] FPS: ";
+				str += (s32)driver->getFPS();
+
+				m_device->setWindowCaption(str.c_str());
+			}
 		}
 	}
-
 
 	void NetWorld::RemoveZombies()
 	{
@@ -276,7 +276,7 @@ namespace Sarona
 		if (_result == eZCom_ConnAccepted)
 		{
 			ZCom_requestZoidMode(_id, zU16(1));
-			ZCom_requestDownstreamLimit(_id, (zU16)30000, (zU16)30000 );
+			ZCom_requestDownstreamLimit(_id, (zU16)60, (zU16)50000 );
 		}
 		else
 		{
@@ -294,14 +294,14 @@ namespace Sarona
 	}
 	void NetWorld::ZCom_cbZoidResult( ZCom_ConnID _id, eZCom_ZoidResult _result, zU8 _new_level, ZCom_BitStream &_reason )
 	{
-		if (_result == eZCom_ZoidEnabled)
+/*		if (_result == eZCom_ZoidEnabled)
 		{
 			std::cout << "Zoidlevel " << _new_level << " entered" << std::endl;
 		}
 		else
 		{
 			std::cout << "Request for higher zoid level was denied!" << std::endl;
-		}
+		}*/
 	}
 	void NetWorld::ZCom_cbNodeRequest_Dynamic( ZCom_ConnID _id, ZCom_ClassID _requested_class, ZCom_BitStream *_announcedata,
 		eZCom_NodeRole _role, ZCom_NodeID _net_id )
@@ -364,12 +364,6 @@ namespace Sarona
 
 			if(m_camera)
 			{
-				//TODO: Refactoring:
-
-				// BaseObject
-				// Object IDs for netobjcts
-				// V8-wrapper?
-
 				m_camera->Follow(follow.nodeid, follow.distance);
 			}
 		}
