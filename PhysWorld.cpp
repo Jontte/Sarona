@@ -123,6 +123,7 @@ namespace Sarona
 		global->Set(v8::String::New("print"),			v8::FunctionTemplate::New(PhysWorld::JSPrint));
 		global->Set(v8::String::New("setTimeout"),		v8::FunctionTemplate::New(PhysWorld::JSSetTimeout));
 		global->Set(v8::String::New("createObject"),	v8::FunctionTemplate::New(PhysWorld::JSCreateObject));
+		global->Set(v8::String::New("createConstraint"),v8::FunctionTemplate::New(PhysWorld::JSCreateConstraint));
 
 		// Scene Object
 		global->Set(v8::String::New("scene"), scene);
@@ -376,7 +377,7 @@ namespace Sarona
 		using namespace extractor;
 
 		if(arg.Length() != 1 || !arg[0]->IsObject())
-			return v8::Undefined();
+			return v8::ThrowException(v8::String::New("Invalid arguments"));
 
 		v8::Handle<v8::Object> obj = arg[0]->ToObject();
 
@@ -404,7 +405,7 @@ namespace Sarona
 		}
 		catch(...)
 		{
-			return v8::Undefined();
+			return v8::ThrowException(v8::String::New("'position' not specified in createObject"));
 		}
 //		std::cout << "tex " << texture << " mesh " << mesh << std::endl;
 		// Success! Create the object
@@ -430,6 +431,81 @@ namespace Sarona
 		object -> setBodyScale(bodyScale);
 
 		return jobj;
+	}
+	v8::Handle<v8::Value> PhysWorld::CreateConstraint(const v8::Arguments& arg)
+	{
+		using namespace extractor;
+
+		if(arg.Length() != 1 || !arg[0]->IsObject())
+			return v8::ThrowException(v8::String::New("Invalid arguments"));
+
+		try
+		{
+			v8::Handle<v8::Object> obj = arg[0]->ToObject();
+
+			std::string type;
+			try
+			{
+				emap(obj)("type",		type, 		REQUIRED);
+			}
+			catch(...)
+			{
+				return v8::ThrowException(v8::String::New("Constraint type not specified in createConstraint"));
+			}
+
+			if(type == "hinge")
+			{
+				vector<v8::Handle<v8::Value> > objects;
+				btVector3 position;
+				btVector3 axis;
+
+				emap(obj)
+					("objects",		objects, 		REQUIRED)
+					("position",	position, 		REQUIRED)
+					("axis",		axis, 			REQUIRED);
+
+				if(objects.size() != 2 || !objects[0]->IsObject() || !objects[1]->IsObject())
+				{
+					return v8::ThrowException(v8::String::New("Two objects must be passed to createConstraint"));
+				}
+
+				JSObject* obj1 = v8::juice::cw::ClassWrap<JSObject>::ToNative::Value(objects[0]->ToObject());
+				JSObject* obj2 = v8::juice::cw::ClassWrap<JSObject>::ToNative::Value(objects[1]->ToObject());
+
+				if(!obj1 || !obj2)
+					return v8::ThrowException(v8::String::New("Invalid object handle"));
+
+				PhysObject * obj1phys = obj1->getObject();
+				PhysObject * obj2phys = obj2->getObject();
+
+				if(!obj1phys || !obj2phys || !obj1phys->m_rigidbody || !obj2phys->m_rigidbody)
+					return v8::ThrowException(v8::String::New("Invalid object handle"));
+
+				const btTransform& obj1pos = obj1phys->m_rigidbody->getWorldTransform();
+				const btTransform& obj2pos = obj2phys->m_rigidbody->getWorldTransform();
+
+				btVector3 rot1 = axis.rotate(obj1pos.getRotation().getAxis(), -obj1pos.getRotation().getAngle());
+				btVector3 rot2 = axis.rotate(obj2pos.getRotation().getAxis(), -obj2pos.getRotation().getAngle());
+				btHingeConstraint * c = new btHingeConstraint(
+					*get_pointer(obj1phys->m_rigidbody),
+					*get_pointer(obj2phys->m_rigidbody),
+					position-obj1pos.getOrigin(),
+					position-obj2pos.getOrigin(),
+					rot1,
+					rot2
+				);
+				m_dynamicsWorld->addConstraint(c);
+			}
+			else
+			{
+				return v8::ThrowException(v8::String::New("Unknown constraint type passed to createConstraint"));
+			}
+		}
+		catch(...)
+		{
+			return v8::ThrowException(v8::String::New("Invalid or missing argument"));
+		}
+		return v8::Undefined();
 	}
 
 

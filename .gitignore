@@ -1,15 +1,21 @@
 
 *.suo
+*.save
+*.gch
+*~
+*.a
+
+bin/
 
 Release/*
 Debug/*
+obj/*
 
 bullet3d/Debug/*
 bullet3d/Release/*
-
-cproxyv8/Debug/*
-cproxyv8/Release/*
+bullet3d/obj/*
 
 jsoncpp/Debug/*
 jsoncpp/Release/*
+jsoncpp/obj/*
 

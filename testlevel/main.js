@@ -40,6 +40,61 @@ function loop()
 	setTimeout(500, loop);
 }
 
+function create_car(pos)
+{
+	pos[2] += 5;
+	var body = createObject({
+		mesh: 'saronacube.obj',
+		body: 'saronacube.obj',
+		texture: 'saronacube.png',
+		bodyScale: 2.5,
+		meshScale: 2.5,
+		position: pos,
+		mass: 1
+	});
+	pos[2]-=5;
+
+	var tires = [
+		[-2.5,-2.5-1,-2.5, [1 ,0,0,1]],
+		[-2.5, 2.5+1,-2.5, [-1,0,0,1]],
+		[ 2.5,-2.5-1,-2.5, [1 ,0,0,1]],
+		[ 2.5, 2.5+1,-2.5, [-1,0,0,1]]
+	];
+	for(var i = 0; i < 4; i++)
+	{
+		tires[i][0] += pos[0];
+		tires[i][1] += pos[1];
+		tires[i][2] += pos[2];
+
+		tires[i][2] += 5;
+		var tire = createObject({
+			mesh: 'tire.obj',
+			body: 'tire.obj',
+			texture: 'tire.png',
+			position: tires[i],
+			rotation: tires[i][3],
+			mass: 1,
+			bodyScale: 2,
+			meshScale: 2
+		});
+
+		try
+		{
+			createConstraint({
+				type: 'hinge',
+				objects: [body, tire],
+				position: tires[i],
+				axis: [0,1,0]
+			});
+		}
+		catch(e)
+		{
+			print('exception: ' + e);
+		}
+	}
+	return body;
+}
+
 function create_ground()
 {
 	// Create ground
@@ -48,8 +103,8 @@ function create_ground()
 		body: 'maailma.obj',//'pohja.obj', //'hill_heightmap.png',
 		mesh: 'maailma.obj',//'pohja.obj', //'hill_heightmap.png',
 		texture: 'maailma.png',//'tekstuuri.png', //'hill_texture.png',
-		meshScale: 1,
-		bodyScale: 1,
+		meshScale: 5,
+		bodyScale: 5,
 		rotation: [1,0,0,1],
 		position: [0,0,0]
 	});
@@ -61,7 +116,7 @@ function level_start()
 {
 	print('Welcome to testimappi!');
 
-	for(var i = 0 ; i < 100; i++)
+/*	for(var i = 0 ; i < 100; i++)
 	{
 		var obj = createObject({
 			position : [0,0,1.5+i*3],
@@ -73,19 +128,17 @@ function level_start()
 			meshScale: 3
         });
 	}
-
-//	create_ground();
+*/
+	create_ground();
 //	loop();
+
 
 	for(var i = 0; i < scene.players.length; i++)
 	{
 		var p = scene.players[i];
 		// Bind a key for each player in the scene.
 
-		var obj = createblock(
-			new Vector(10,0,10)
-		);
-		obj.push(0,0,0);
+		var obj = create_car([0,0,50]);
 
 		p.cameraFollow(obj, 50);
 

@@ -99,11 +99,13 @@ namespace Sarona
 
 		v8::Handle<v8::Value>			SetTimeout(const v8::Arguments& args);
 		v8::Handle<v8::Value>			CreateObject(const v8::Arguments& args);
+		v8::Handle<v8::Value>			CreateConstraint(const v8::Arguments& args);
 
 		// static JS wrappers:
 		static v8::Handle<v8::Value>	JSPrint(const v8::Arguments& args);
 		static v8::Handle<v8::Value>	JSSetTimeout(const v8::Arguments& args);
 		static v8::Handle<v8::Value>	JSCreateObject(const v8::Arguments& args);
+		static v8::Handle<v8::Value>	JSCreateConstraint(const v8::Arguments& args);
 
 		void Loop();
 

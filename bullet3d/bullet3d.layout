@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_layout_file>
+	<ActiveTarget name="Debug" />
+	<File name="Bullet-C-Api.h" open="0" top="0" tabpos="0">
+		<Cursor position="7220" topLine="159" />
+	</File>
+	<File name="BulletCollision/BroadphaseCollision/btAxisSweep3.cpp" open="0" top="0" tabpos="0">
+		<Cursor position="1887" topLine="20" />
+	</File>
+	<File name="BulletCollision/BroadphaseCollision/btBroadphaseInterface.h" open="0" top="0" tabpos="0">
+		<Cursor position="3578" topLine="65" />
+	</File>
+	<File name="LinearMath/btAlignedAllocator.h" open="0" top="0" tabpos="1">
+		<Cursor position="3934" topLine="81" />
+	</File>
+</CodeBlocks_layout_file>

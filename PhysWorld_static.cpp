@@ -41,7 +41,7 @@ namespace Sarona
 
 IMPL_FUNC(PhysWorld,	JSSetTimeout,				SetTimeout);
 IMPL_FUNC(PhysWorld,	JSCreateObject,				CreateObject);
-
+IMPL_FUNC(PhysWorld,	JSCreateConstraint,			CreateConstraint);
 	/*
 	v8::Handle<v8::Value> PhysWorld::JSSceneGetter(v8::Local<v8::String> property, const v8::AccessorInfo& info)
 	{
