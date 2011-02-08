@@ -157,6 +157,7 @@ namespace Sarona
 
 					std::cout << "Exception: " << *exception_str << std::endl;
 					std::cout << "	: " << *v8::String::AsciiValue(message->GetSourceLine()) << std::endl;
+					std::cout << "On line " << message->GetLineNumber() << std::endl;
 					return v8::Handle<v8::Value>();
 				}
 				result = jsscript->Run();

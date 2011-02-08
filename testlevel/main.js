@@ -42,24 +42,30 @@ function loop()
 
 function create_car(pos)
 {
+	var ret = {};
 	pos[2] += 5;
 	var body = createObject({
-		mesh: 'saronacube.obj',
-		body: 'saronacube.obj',
+		mesh: 'cube',
+		body: 'cube',
 		texture: 'saronacube.png',
 		bodyScale: 2.5,
 		meshScale: 2.5,
 		position: pos,
-		mass: 1
+		mass: 10
 	});
 	pos[2]-=5;
 
+	ret.body = body;
+
 	var tires = [
-		[-2.5,-2.5-1,-2.5, [1 ,0,0,1]],
-		[-2.5, 2.5+1,-2.5, [-1,0,0,1]],
-		[ 2.5,-2.5-1,-2.5, [1 ,0,0,1]],
-		[ 2.5, 2.5+1,-2.5, [-1,0,0,1]]
+		[-2.5+0.45,-2.5-0.75,-2.5, [1 ,0,0,1], 1],
+		[-2.5+0.45, 2.5+0.75,-2.5, [-1,0,0,1], -1],
+		[ 2.5-0.45,-2.5-0.75,-2.5, [1 ,0,0,1], 1],
+		[ 2.5-0.45, 2.5+0.75,-2.5, [-1,0,0,1], -1]
 	];
+
+	ret.tires = [];
+	ret.constraints = [];
 	for(var i = 0; i < 4; i++)
 	{
 		tires[i][0] += pos[0];
@@ -73,26 +79,30 @@ function create_car(pos)
 			texture: 'tire.png',
 			position: tires[i],
 			rotation: tires[i][3],
-			mass: 1,
+			mass: 0.1,
 			bodyScale: 2,
 			meshScale: 2
 		});
 
+		tires.push(tire);
+
 		try
 		{
-			createConstraint({
+			var c = createConstraint({
 				type: 'hinge',
 				objects: [body, tire],
 				position: tires[i],
 				axis: [0,1,0]
 			});
+//			c.setMotor(false, 0, 0);
+			ret.constraints.push(c);
 		}
 		catch(e)
 		{
 			print('exception: ' + e);
 		}
 	}
-	return body;
+	return ret;
 }
 
 function create_ground()
@@ -138,14 +148,68 @@ function level_start()
 		var p = scene.players[i];
 		// Bind a key for each player in the scene.
 
-		var obj = create_car([0,0,50]);
+		var car = create_car([0,0,50]);
 
-		p.cameraFollow(obj, 50);
+		p.cameraFollow(car.body, 50);
 
-		p.bind("keydown", "space", function(){
-				obj.push(0,0,10);
-		});
-		p.bind("keydown", "left", function(){
+		var states = {
+			left : false,
+			right: false,
+			up   : false,
+			down : false
+		};
+
+		function key_update(major, minor)
+		{
+			return function()
+			{
+				states[minor] = (major=="keydown")?true:false;
+
+				var speed = 10;
+				var strength = 0.5;
+
+				var left = 0;
+				var right = 0;
+
+				if(states.up && !states.down)
+				{
+					left = states.left?0:1;
+					right = states.right?0:1;
+				}
+				else if(states.down && !states.up)
+				{
+					left = states.right?0:-1;
+					right = states.left?0:-1;
+				}
+				else if(states.left && !states.right)
+				{
+					left = -1; right = 1;
+				}
+				else if(states.right && !states.left)
+				{
+					left = 1; right = -1;
+				}
+
+				car.constraints[0].setMotor(right != 0, speed * right, strength);
+				car.constraints[2].setMotor(right != 0, speed * right, strength);
+
+				car.constraints[1].setMotor(left != 0, speed * left, strength);
+				car.constraints[3].setMotor(left != 0, speed * left, strength);
+			};
+		};
+
+		var states = ["keydown","keyup"];
+		var keys = ["down","up","left","right"];
+		for(var b = 0; b < 2; b++)
+		{
+			for(var a = 0; a < keys.length; a++)
+			{
+				p.bind(states[b], keys[a], key_update(states[b],keys[a]));
+			}
+		}
+		p.bind("keydown", "space", function(){car.body.push(0,0,20);});
+
+		/*p.bind("keydown", "left", function(){
 				obj.push(10,0,0);
 		});
 		p.bind("keydown", "right", function(){
@@ -156,7 +220,7 @@ function level_start()
 		});
 		p.bind("keydown", "down", function(){
 				obj.push(0,-10,0);
-		});
+		});*/
 	}
 
 

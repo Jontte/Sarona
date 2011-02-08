@@ -34,7 +34,7 @@
 	<boost/tuple/tuple.hpp>
 	<boost/type_traits.hpp>
 
-1297003981 /home/joonas/Sarona/BaseWorld.h
+1297194732 /home/joonas/Sarona/BaseWorld.h
 	"StdAfx.h"
 	"Util.h"
 
@@ -65,7 +65,7 @@
 
 1284478817 /home/joonas/Sarona/GameMenu.h
 
-1297166294 /home/joonas/Sarona/PhysWorld.h
+1297179666 /home/joonas/Sarona/PhysWorld.h
 	<stdexcept>
 	"StdAfx.h"
 	"BaseWorld.h"
@@ -109,11 +109,10 @@
 	"JSConvert.h"
 	"PhysWorld.h"
 
-1296943455 /home/joonas/Sarona/JSObject.h
+1297180371 /home/joonas/Sarona/JSObject.h
 	"StdAfx.h"
 	"JSConvert.h"
 	"PhysObject.h"
-	<v8/juice/WeakJSClassCreator.h>
 	<v8/juice/ClassWrap_TwoWay.h>
 
 1296928591 source:/home/joonas/Sarona/JSRotation.cpp
@@ -121,7 +120,7 @@
 	"JSRotation.h"
 	<v8/juice/ClassWrap-JSToNative.h>
 
-1296942492 source:/home/joonas/Sarona/JSVector.cpp
+1297179888 source:/home/joonas/Sarona/JSVector.cpp
 	"StdAfx.h"
 	"JSVector.h"
 
@@ -159,12 +158,13 @@
 1284479013 /home/joonas/Sarona/TimedEventReceiver.h
 	"StdAfx.h"
 
-1297173883 source:/home/joonas/Sarona/PhysWorld.cpp
+1297194148 source:/home/joonas/Sarona/PhysWorld.cpp
 	"StdAfx.h"
 	"PhysWorld.h"
 	"JSConvert.h"
 	"JSVector.h"
 	"JSRotation.h"
+	"JSConstraint.h"
 
 1297166318 source:/home/joonas/Sarona/PhysWorld_static.cpp
 	"StdAfx.h"
@@ -692,4 +692,13 @@
 	<boost/version.hpp>
 	<boost/chrono/process_times.hpp>
 	<iostream>
+
+1297193719 source:/home/joonas/Sarona/JSConstraint.cpp
+	"StdAfx.h"
+	"JSConstraint.h"
+
+1297193726 /home/joonas/Sarona/JSConstraint.h
+	"StdAfx.h"
+	"PhysWorld.h"
+	<v8/juice/ClassWrap-JSToNative.h>
 

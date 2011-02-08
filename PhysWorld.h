@@ -15,16 +15,15 @@
 
 namespace Sarona
 {
-	// Forward decl.
 	class PhysWorld;
-
-
 	class JSTimeoutEvent;
 	class TimedEventReceiver;
 
 	class PhysWorld
 		: public BaseWorld<PhysWorld, PhysObject>
 	{
+	public:
+		typedef int32_t ConstraintID;
 		friend class JSTimeoutEvent;
 	private:
 
@@ -78,6 +77,8 @@ namespace Sarona
 		scoped_ptr<btCollisionDispatcher>				m_dispatcher;
 		scoped_ptr<btSequentialImpulseConstraintSolver> m_solver;
 		scoped_ptr<btDiscreteDynamicsWorld>				m_dynamicsWorld;
+		ConstraintID									m_constraintCounter; // used to alloc new handles
+		std::map<ConstraintID, btTypedConstraint*> 		m_constraints;
 		void CreateBulletContext();
 
 		ptr_vector<PhysObject>			m_objects;
@@ -131,6 +132,7 @@ namespace Sarona
 
 		// Create an object in the world (not in js, tho)
 		PhysObject* CreateObject(const btVector3& position, const btQuaternion& rotation);
+
 	public:
 
 		PhysWorld(IrrlichtDevice * dev = NULL);
@@ -148,7 +150,14 @@ namespace Sarona
 		void Wait();
 
 		btCollisionShape* getShape(const string& byname, bool isStatic);
+
+		// Constraint management
+		ConstraintID 		AddConstraint(btTypedConstraint* constraint);
+		btTypedConstraint* 	GetConstraint(ConstraintID id);
+		void 				DropConstraint(ConstraintID id);
 	};
 
 }
 #endif
+
+

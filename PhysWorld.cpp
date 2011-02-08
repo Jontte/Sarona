@@ -3,6 +3,7 @@
 #include "JSConvert.h"
 #include "JSVector.h"
 #include "JSRotation.h"
+#include "JSConstraint.h"
 
 namespace Sarona
 {
@@ -34,6 +35,7 @@ namespace Sarona
 
 	PhysWorld::PhysWorld(IrrlichtDevice * dev)
 		: BaseWorld<PhysWorld, PhysObject>(dev)
+		, m_constraintCounter(0)
 	{
 		m_timer.reset(new TimedEventReceiver);
 		ZCom_setUpstreamLimit(30000, 30000);
@@ -49,8 +51,14 @@ namespace Sarona
 		// Remove ground plane
 		if(m_ground)
 			m_dynamicsWorld->removeRigidBody(get_pointer(m_ground));
+				m_ground.reset();
 
-		m_ground.reset();
+		// Remove constraints
+		while(!m_constraints.empty())
+		{
+			delete m_constraints.begin()->second;
+			m_constraints.erase(m_constraints.begin());
+		}
 
 		m_objects.clear(); // Objects must die before the phys engine dies...
 	}
@@ -140,6 +148,7 @@ namespace Sarona
 		JSVector::SetupClass(global_obj);
 		JSRotation::SetupClass(global_obj);
 		Client::JSHandle::SetupClass(global_obj);
+		JSConstraint::SetupClass(global_obj);
 	}
 
 	void PhysWorld::CreateBulletContext()
@@ -158,6 +167,28 @@ namespace Sarona
 			));
 
 		m_dynamicsWorld->setGravity(btVector3(0,0,-9.80665f));
+	}
+	// Constraint management
+	PhysWorld::ConstraintID PhysWorld::AddConstraint(btTypedConstraint* constraint)
+	{
+		m_constraints[++m_constraintCounter] = constraint;
+		m_dynamicsWorld->addConstraint(constraint);
+		return m_constraintCounter;
+	}
+	btTypedConstraint* PhysWorld::GetConstraint(ConstraintID id)
+	{
+		std::map<ConstraintID, btTypedConstraint*>::iterator iter = m_constraints.find(id);
+		if(iter == m_constraints.end())
+			return NULL;
+		return iter->second;
+	}
+	void PhysWorld::DropConstraint(ConstraintID id)
+	{
+		std::map<ConstraintID, btTypedConstraint*>::iterator iter = m_constraints.find(id);
+		if(iter == m_constraints.end())
+			return;
+		delete iter->second;
+		m_constraints.erase(iter);
 	}
 	Client* PhysWorld::GetClientById(const ZCom_ConnID& id)
 	{
@@ -494,7 +525,14 @@ namespace Sarona
 					rot1,
 					rot2
 				);
-				m_dynamicsWorld->addConstraint(c);
+
+				typedef v8::juice::cw::ClassWrap<JSConstraint> CW;
+				v8::Handle<v8::Object> jobj = CW::Instance().NewInstance(0, NULL);
+
+				JSConstraint *handle = CW::ToNative::Value(jobj);
+				handle -> m_constraint = AddConstraint(c);
+
+				return jobj;
 			}
 			else
 			{

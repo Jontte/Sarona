@@ -4,7 +4,6 @@
 #include "StdAfx.h"
 #include "JSConvert.h"
 #include "PhysObject.h"
-#include <v8/juice/WeakJSClassCreator.h>
 
 namespace Sarona
 {
