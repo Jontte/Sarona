@@ -1,7 +1,37 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
 <CodeBlocks_layout_file>
 	<ActiveTarget name="Debug" />
-	<File name="Camera.cpp" open="1" top="1" tabpos="0">
-		<Cursor position="2259" topLine="88" />
+	<File name="BaseWorld.cpp" open="1" top="0" tabpos="8">
+		<Cursor position="0" topLine="0" />
+	</File>
+	<File name="BaseWorld.h" open="1" top="0" tabpos="9">
+		<Cursor position="4169" topLine="143" />
+	</File>
+	<File name="JSConstraint.cpp" open="1" top="0" tabpos="5">
+		<Cursor position="756" topLine="30" />
+	</File>
+	<File name="JSConstraint.h" open="1" top="0" tabpos="4">
+		<Cursor position="359" topLine="0" />
+	</File>
+	<File name="JSObject.cpp" open="1" top="0" tabpos="12">
+		<Cursor position="2280" topLine="78" />
+	</File>
+	<File name="JSObject.h" open="1" top="0" tabpos="11">
+		<Cursor position="517" topLine="7" />
+	</File>
+	<File name="PhysObject.h" open="1" top="0" tabpos="13">
+		<Cursor position="777" topLine="17" />
+	</File>
+	<File name="PhysWorld.cpp" open="1" top="0" tabpos="3">
+		<Cursor position="12839" topLine="435" />
+	</File>
+	<File name="PhysWorld.h" open="1" top="0" tabpos="2">
+		<Cursor position="5194" topLine="129" />
+	</File>
+	<File name="PhysWorld_static.cpp" open="0" top="0" tabpos="0">
+		<Cursor position="884" topLine="26" />
+	</File>
+	<File name="testlevel/main.js" open="1" top="1" tabpos="1">
+		<Cursor position="2704" topLine="139" />
 	</File>
 </CodeBlocks_layout_file>

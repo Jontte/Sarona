@@ -78,7 +78,7 @@
 	"JSConvert.h"
 	"Client.h"
 
-1284478962 /home/joonas/Sarona/PhysObject.h
+1297199663 /home/joonas/Sarona/PhysObject.h
 	"StdAfx.h"
 	"Util.h"
 	"ObjectReplicator.h"
@@ -103,13 +103,13 @@
 	"StdAfx.h"
 	"JSConvert.h"
 
-1297097115 source:/home/joonas/Sarona/JSObject.cpp
+1297199883 source:/home/joonas/Sarona/JSObject.cpp
 	"StdAfx.h"
 	"JSObject.h"
 	"JSConvert.h"
 	"PhysWorld.h"
 
-1297180371 /home/joonas/Sarona/JSObject.h
+1297199632 /home/joonas/Sarona/JSObject.h
 	"StdAfx.h"
 	"JSConvert.h"
 	"PhysObject.h"

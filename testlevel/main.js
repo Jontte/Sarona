@@ -45,8 +45,6 @@ function create_car(pos)
 	var ret = {};
 	pos[2] += 5;
 	var body = createObject({
-		mesh: 'cube',
-		body: 'cube',
 		texture: 'saronacube.png',
 		bodyScale: 2.5,
 		meshScale: 2.5,
@@ -58,10 +56,10 @@ function create_car(pos)
 	ret.body = body;
 
 	var tires = [
-		[-2.5+0.45,-2.5-0.75,-2.5, [1 ,0,0,1], 1],
-		[-2.5+0.45, 2.5+0.75,-2.5, [-1,0,0,1], -1],
-		[ 2.5-0.45,-2.5-0.75,-2.5, [1 ,0,0,1], 1],
-		[ 2.5-0.45, 2.5+0.75,-2.5, [-1,0,0,1], -1]
+		[-2.5+0.4,-2.5-1,-2.5, [1 ,0,0,1], 1],
+		[-2.5+0.4, 2.5+1,-2.5, [-1,0,0,1], -1],
+		[ 2.5-0.4,-2.5-1,-2.5, [1 ,0,0,1], 1],
+		[ 2.5-0.4, 2.5+1,-2.5, [-1,0,0,1], -1]
 	];
 
 	ret.tires = [];
@@ -84,6 +82,8 @@ function create_car(pos)
 			meshScale: 2
 		});
 
+		tire.restitution = 0.0;
+		tire.friction = 2.0;
 		tires.push(tire);
 
 		try

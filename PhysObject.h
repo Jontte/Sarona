@@ -9,10 +9,12 @@ namespace Sarona
 {
 	class PhysWorld;
 	class PhysObjectMotionState;
+	class JSObject;
 	class PhysObject
 		: public ZCom_NodeEventInterceptor // Receive regular events
 	{
 		friend class PhysWorld;
+		friend class JSObject;
 	private:
 
 		// ZCom stuff

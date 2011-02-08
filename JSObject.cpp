@@ -62,6 +62,22 @@ namespace Sarona
 			invalidate();
 		}
 	}
+	void JSObject::setRestitution(double x)
+	{
+		PhysObject * c = getObject(); if(c)c->m_rigidbody->setRestitution(x);
+	}
+	void JSObject::setFriction(double x)
+	{
+		PhysObject * c = getObject(); if(c)c->m_rigidbody->setFriction(x);
+	}
+	double JSObject::getRestitution()
+	{
+		PhysObject * c = getObject(); if(c)return c->m_rigidbody->getRestitution(); return 0;
+	}
+	double JSObject::getFriction()
+	{
+		PhysObject * c = getObject(); if(c)return c->m_rigidbody->getFriction(); return 0;
+	}
 
 	v8::Handle<v8::Object> JSObject::SetupClass(v8::Handle<v8::Object> dest)
 	{
@@ -74,6 +90,16 @@ namespace Sarona
 		b.Set("push", ICM::M3::Invocable<void, double, double, double, &JSObject::push>);
 
 		b.Set("kill", ICM::M0::Invocable<void, &JSObject::kill>);
+
+		b.BindGetterSetter<double,
+			&JSObject::getFriction,
+			void,double,&JSObject::setFriction>
+			( "friction");
+		b.BindGetterSetter<double,
+			&JSObject::getRestitution,
+			void,double,&JSObject::setRestitution>
+			( "restitution");
+
 
 		b.Seal();
 		b.AddClassTo(dest);

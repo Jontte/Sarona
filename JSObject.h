@@ -22,6 +22,11 @@ namespace Sarona
 		void initialize(PhysObject::Id obj = 0);
 		void invalidate();
 
+		double getFriction();
+		void   setFriction(double);
+		double getRestitution();
+		void   setRestitution(double);
+
 		JSObject();
 		~JSObject();
 
