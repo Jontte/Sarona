@@ -18,7 +18,7 @@
 				</Compiler>
 				<Linker>
 					<Add library="bullet3d/bin/Debug/libbullet3d.a" />
-					<Add library="jsoncpp/bin/Debug/jsoncpp.a" />
+					<Add library="jsoncpp/bin/Debug/libjsoncpp.a" />
 					<Add library="../zoidcom/lib/linux/libzoidcomd.so" />
 					<Add library="../irrlicht-1.7.1/lib/Linux/libIrrlicht.a" />
 				</Linker>
