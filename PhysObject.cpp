@@ -10,13 +10,13 @@ namespace Sarona
 	PhysObject::PhysObject(PhysWorld* world, btDynamicsWorld* dynworld, const btTransform& initialpos)
 		:	m_dynamicsWorld(dynworld)
 		,	m_world(world)
-		,	m_body("cube")
 		,	m_shape(NULL)
+		,	m_body("cube")
+		,	m_meshScale(1,1,1)
 		,	m_mass(0)
-		,	m_meshScale(1)
-		,	m_bodyScale(1)
-		,	m_dirty(true)
+		,	m_bodyScale(1,1,1)
 		,	m_deleteme(false)
+		,	m_dirty(true)
 	{
 		m_zcomNode.reset(new ZCom_Node());
 		m_zcomNode->setUserData(this);
@@ -82,12 +82,12 @@ namespace Sarona
 		m_mesh = mesh;
 		m_dirty = true;
 	}
-	void PhysObject::setMeshScale(float in)
+	void PhysObject::setMeshScale(btVector3 in)
 	{
 		m_meshScale = in;
 		m_dirty = true;
 	}
-	void PhysObject::setBodyScale(float in)
+	void PhysObject::setBodyScale(btVector3 in)
 	{
 		m_bodyScale = in;
 		recreateBody();
@@ -116,10 +116,10 @@ namespace Sarona
         btVector3 inertia(0,0,0);
 
 		// Get static body if zero mass
-		m_shape = m_world->getShape(m_body, m_mass <= 0);
-		m_shape->setLocalScaling(btVector3(
+		m_shape = m_world->getShape(m_body, m_bodyScale, m_mass <= 0);
+/*		m_shape->setLocalScaling(btVector3(
 			m_bodyScale, m_bodyScale, m_bodyScale
-			));
+			));*/
 
 		if(m_mass > 0)
 		{

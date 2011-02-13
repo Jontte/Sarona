@@ -5,12 +5,11 @@
 namespace Sarona
 {
 
-	Camera::Camera(IrrlichtDevice* dev, NetWorld* world) 
+	Camera::Camera(IrrlichtDevice* dev, NetWorld* world)
 		: m_device(dev)
 		, m_world(world)
-		, m_state(CAMERA_FREEFLY)
+		, m_state(CAMERA_FREE)
 	{
-
 		m_camera = dev->getSceneManager()->addCameraSceneNode();
 		m_device->getSceneManager()->setActiveCamera(m_camera);
 
@@ -20,17 +19,16 @@ namespace Sarona
 	Camera::~Camera(void)
 	{
 	}
-	
+
 	void Camera::Translate(int dx, int dy)
 	{
-		if(m_state != CAMERA_FREEFLY)
+		if(m_state != CAMERA_FREE)
 			return;
 
 		const float speed = 0.5;
 		core::vector3df target = (m_camera->getTarget() - m_camera->getAbsolutePosition());
-		core::vector3df relativeRotation; 
+		core::vector3df relativeRotation;
 
-		
 		relativeRotation.Z = -(f32)(atan2((f64)target.X, (f64)target.Y) * core::RADTODEG64);
 
 		if (relativeRotation.Z < 0)
@@ -46,7 +44,6 @@ namespace Sarona
 			relativeRotation.X += 360;
 		if (relativeRotation.X > 180)
 			relativeRotation.X -= 360;
-
 
 		relativeRotation.X += dy*speed;
 		relativeRotation.Z += dx*speed;
@@ -67,7 +64,7 @@ namespace Sarona
 
 	void Camera::Step(float dt)
 	{
-		if(m_state == CAMERA_FREEFLY)
+		if(m_state == CAMERA_FREE)
 		{
 			const float speed = 50.0;
 
@@ -87,10 +84,9 @@ namespace Sarona
 			m_camera->setTarget(m_camera->getTarget() + move * dt * speed);
 			m_camera->setPosition(m_camera->getPosition() + move * dt * speed);
 		}
-		else if(m_state == CAMERA_FOLLOW)
+		else if(m_state == CAMERA_CHASE)
 		{
 			// See if object is still valid..
-
 			NetObject * obj = m_world->getObject(m_followTarget);
 
 			if(obj)
@@ -102,23 +98,41 @@ namespace Sarona
 
 				// Calculate current distance...
 				core::vector3df mypos = m_camera->getPosition();
+				core::vector3df offset = obj->getRotation();
 
-				core::vector3df d = mypos-pos;
-				
-				d.normalize();
+				if(m_followFollowPitch == false)
+				{
+					offset.X = offset.Y = 0;
+				}
+				offset = offset.rotationToDirection(core::vector3df(m_followDistance, 0, m_followHeight));
 
-				d *= (float)m_followDistance;
+				core::vector3df newpos = pos + offset;
 
-				m_camera->setPosition(mypos * 0.75 + (pos + d) * 0.25);
+				m_camera->setPosition(mypos * 0.75 + newpos * 0.25);
 			}
 		}
 	}
 
-
-	void Camera::Follow(NetObject::Id id, double distance)
+	void Camera::SetCameraChase(NetObject::Id id, double distance, double height, bool follow_pitch)
 	{
-		m_state = CAMERA_FOLLOW;
+		m_state = CAMERA_CHASE;
 		m_followTarget = id;
 		m_followDistance = distance;
+		m_followHeight = height;
+		m_followFollowPitch = follow_pitch;
+	}
+	void Camera::SetCameraPos(btVector3 pos_begin, btVector3 pos_end, btVector3 target_begin, btVector3 target_end, double time)
+	{
+		m_state = CAMERA_POSITION;
+		m_pos_begin = pos_begin;
+		m_pos_end = pos_end;
+		m_target_begin = target_begin;
+		m_target_end = target_end;
+		m_time_begin = boost::posix_time::microsec_clock::local_time();
+		m_time_end = boost::posix_time::microsec_clock::local_time() + boost::posix_time::microseconds(time * 1000000);
+	}
+	void Camera::SetCameraFree()
+	{
+		m_state = CAMERA_FREE;
 	}
 }

@@ -148,8 +148,8 @@ void btRigidBody::setGravity(const btVector3& acceleration)
 
 void btRigidBody::setDamping(btScalar lin_damping, btScalar ang_damping)
 {
-	m_linearDamping = GEN_clamped(lin_damping, (btScalar)btScalar(0.0), (btScalar)btScalar(1.0));
-	m_angularDamping = GEN_clamped(ang_damping, (btScalar)btScalar(0.0), (btScalar)btScalar(1.0));
+	m_linearDamping = btClamped(lin_damping, (btScalar)btScalar(0.0), (btScalar)btScalar(1.0));
+	m_angularDamping = btClamped(ang_damping, (btScalar)btScalar(0.0), (btScalar)btScalar(1.0));
 }
 
 
@@ -239,6 +239,9 @@ void btRigidBody::setMassProps(btScalar mass, const btVector3& inertia)
 		m_collisionFlags &= (~btCollisionObject::CF_STATIC_OBJECT);
 		m_inverseMass = btScalar(1.0) / mass;
 	}
+
+	//Fg = m * a
+	m_gravity = mass * m_gravity_acceleration;
 	
 	m_invInertiaLocal.setValue(inertia.x() != btScalar(0.0) ? btScalar(1.0) / inertia.x(): btScalar(0.0),
 				   inertia.y() != btScalar(0.0) ? btScalar(1.0) / inertia.y(): btScalar(0.0),
@@ -328,10 +331,10 @@ void	btRigidBody::internalWritebackVelocity(btScalar timeStep)
 		setWorldTransform(newTransform);
 		//m_originalBody->setCompanionId(-1);
 	}
-	m_deltaLinearVelocity.setZero();
-	m_deltaAngularVelocity .setZero();
-	m_pushVelocity.setZero();
-	m_turnVelocity.setZero();
+//	m_deltaLinearVelocity.setZero();
+//	m_deltaAngularVelocity .setZero();
+//	m_pushVelocity.setZero();
+//	m_turnVelocity.setZero();
 }
 
 

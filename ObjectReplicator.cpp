@@ -8,17 +8,17 @@ namespace Sarona
 
 	static const int FLOAT_BITS = 12;
 
-	ObjectReplicator::ObjectReplicator(ZCom_ReplicatorSetup* setup, PhysObject* phys) 
+	ObjectReplicator::ObjectReplicator(ZCom_ReplicatorSetup* setup, PhysObject* phys)
 		: ZCom_ReplicatorAdvanced(setup)
 		, m_phys(phys)
 		, m_net(NULL)
 	{
 		init_replicator();
 	}
-	ObjectReplicator::ObjectReplicator(ZCom_ReplicatorSetup* setup, NetObject* net) 
+	ObjectReplicator::ObjectReplicator(ZCom_ReplicatorSetup* setup, NetObject* net)
 		: ZCom_ReplicatorAdvanced(setup)
-		, m_net(net)
 		, m_phys(NULL)
+		, m_net(net)
 	{
 		init_replicator();
 	}
@@ -73,11 +73,11 @@ namespace Sarona
 			}
 			*lastupdate = ZoidCom::getTime();
 
-			this->sendDataDirect(eZCom_Unreliable, *iter, stream.Duplicate()); 
-//			this->sendDataDirect(eZCom_ReliableUnordered, *iter, stream.Duplicate()); 
+			this->sendDataDirect(eZCom_Unreliable, *iter, stream.Duplicate());
+//			this->sendDataDirect(eZCom_ReliableUnordered, *iter, stream.Duplicate());
 		}
 	}
-	
+
 	void ObjectReplicator::Input(const btVector3& position, const btQuaternion& rotation, const btVector3& velocity, const btVector4& omega)
 	{
 		// mark dirty if position change significant
@@ -94,28 +94,28 @@ namespace Sarona
 
 	void ObjectReplicator::clearPeekData ()
 	{
-	
+
 	}
 	void* ObjectReplicator::peekData()
 	{
 		return NULL;
 	}
-	
+
 	void ObjectReplicator::Process (eZCom_NodeRole _localrole, zU32 _simulation_time_passed)
 	{
 		//send();
 	}
-	
+
 	void ObjectReplicator::onConnectionAdded (ZCom_ConnID _cid, eZCom_NodeRole _remoterole)
 	{
 		m_connections.insert(_cid);
 	}
-	
+
 	void ObjectReplicator::onConnectionRemoved (ZCom_ConnID _cid, eZCom_NodeRole _remoterole)
 	{
 		m_connections.erase(_cid);
 	}
-	
+
 	void ObjectReplicator::onDataReceived (ZCom_ConnID _cid, eZCom_NodeRole _remoterole, ZCom_BitStream &_stream, bool _store, zU32 _estimated_time_sent)
 	{
 		btVector3 position;
@@ -146,7 +146,7 @@ namespace Sarona
 		{
 			core::vector3df pos(position[0], position[1], position[2]);
 			core::quaternion rot;
-			
+
 			rot.X =	rotation.x();
 			rot.Y =	rotation.y();
 			rot.Z =	rotation.z();
@@ -169,38 +169,38 @@ namespace Sarona
 			m_net->UpdateLastKnown(pos, rot, vel, omg, when);
 		}
 	}
-	
+
 	void ObjectReplicator::onLocalRoleChanged (eZCom_NodeRole _oldrole, eZCom_NodeRole _newrole)
 	{
-	
+
 	}
-	
+
 	void ObjectReplicator::onPacketReceived (ZCom_ConnID _cid)
 	{
-	
+
 	}
-	
+
 	void ObjectReplicator::onPreSendData (ZCom_ConnID _cid, eZCom_NodeRole _remoterole, zU32 *_lastupdate)
 	{
-	
+
 	}
-	
+
 	void ObjectReplicator::onRemoteRoleChanged (ZCom_ConnID _cid, eZCom_NodeRole _oldrole, eZCom_NodeRole _newrole)
 	{
-	
-	}
-	
-	
 
-	
+	}
+
+
+
+
 	void ObjectReplicator::onDataAcked(ZCom_ConnID _cid, zU32 _reference_id, ZCom_BitStream *_data)
 	{
-	
+
 	}
-	
+
 	void ObjectReplicator::onDataLost(ZCom_ConnID _cid, zU32 _reference_id, ZCom_BitStream *_data)
 	{
-	
+
 	}
 
 }

@@ -10,9 +10,8 @@ namespace Sarona
 		: m_deleteme(false)
 		, m_sceneNode(NULL)
 		, m_device(dev)
+		, m_meshScale(1,1,1)
 	{
-		m_meshScale = 1;
-
 		m_zcomNode.reset(new ZCom_Node());
 		m_zcomNode->setUserData(this);
 
@@ -104,14 +103,14 @@ namespace Sarona
 				-1, // id
 				m_position, // position
 				euler, // rotation
-				core::vector3df(m_meshScale, m_meshScale, m_meshScale), // scale
+				m_meshScale, // scale
 				true// alsoAddIfMeshPointerZero
 				);
 		}
 		else
 		{
 			m_sceneNode = m_device->getSceneManager()->addCubeSceneNode (
-				m_meshScale,
+				m_meshScale.getLength(),
 				0,
 				-1,
 				m_position,
@@ -132,6 +131,11 @@ namespace Sarona
 	core::vector3df NetObject::getPosition()
 	{
 		return m_sceneNode->getPosition();
+	}
+
+	core::vector3df NetObject::getRotation()
+	{
+		return m_sceneNode->getRotation();
 	}
 
 	bool NetObject::IsZombie()
@@ -163,10 +167,15 @@ namespace Sarona
 				dirty = true;
 				m_texture = state.texture;
 			}
-			if(m_meshScale != state.mesh_scale) // TODO: compare with epsilon
+			core::vector3df scale(
+				state.mesh_scale.x(),
+				state.mesh_scale.y(),
+				state.mesh_scale.z()
+			);
+			if(m_meshScale.getDistanceFromSQ(scale)>0.0001) // TODO: compare with epsilon
 			{
 				dirty = true;
-				m_meshScale = state.mesh_scale;
+				m_meshScale = scale;
 			}
 //			std::cout << "Updated: " << m_texture << ", " << m_mesh << ", " << m_meshScale << std::endl;
 

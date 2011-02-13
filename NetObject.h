@@ -54,7 +54,7 @@ namespace Sarona
 		// Synchronized data
 		string m_mesh;
 		string m_texture;
-		float m_meshScale;
+		core::vector3df m_meshScale;
 
 		// Timer used to calculate time from last position update
 		// Used to extrapolate motion
@@ -74,6 +74,7 @@ namespace Sarona
 
 		// Getters
 		core::vector3df getPosition();
+		core::vector3df getRotation();
 
 		// Returns whether this object is waiting to be deleted
 		bool IsZombie();

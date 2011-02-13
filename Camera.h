@@ -18,11 +18,21 @@ namespace Sarona
 		// Follow mode:
 		NetObject::Id	m_followTarget;
 		double			m_followDistance;
+		double			m_followHeight;
+		bool 			m_followFollowPitch;
+
+		// Position mode:
+		btVector3 m_pos_begin;
+		btVector3 m_pos_end;
+		btVector3 m_target_begin;
+		btVector3 m_target_end;
+		boost::posix_time::ptime m_time_begin;
+		boost::posix_time::ptime m_time_end;
 
 		enum {
-			CAMERA_FOLLOW,
-			CAMERA_FREEFLY,
-			CAMERA_TRANSITION
+			CAMERA_CHASE,
+			CAMERA_POSITION,
+			CAMERA_FREE
 		} m_state;
 
 	public:
@@ -33,7 +43,9 @@ namespace Sarona
 		~Camera();
 
 		// Make the camera follow an existing NetObject
-		void Follow(NetObject::Id id, double distance);
+		void SetCameraChase(NetObject::Id id, double distance, double height, bool follow_pitch);
+		void SetCameraPos(btVector3 pos_begin, btVector3 pos_end, btVector3 target_begin, btVector3 target_end, double time);
+		void SetCameraFree();
 
 		bool OnEvent(const SEvent& event);
 	};

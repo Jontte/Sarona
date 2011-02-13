@@ -32,7 +32,7 @@ using std::auto_ptr;
 using namespace irr;
 
 // Bullet physics engine
-#include <btBulletDynamicsCommon.h>
+#include "bullet3d/btBulletDynamicsCommon.h"
 
 #include <boost/shared_ptr.hpp>
 using boost::shared_ptr;

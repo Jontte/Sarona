@@ -30,7 +30,7 @@ namespace Sarona
 		m_device->getSceneManager()->addLightSceneNode(	NULL, core::vector3df(50, 30, 310), video::SColorf(1.0f, 1.0f, 1.0f), 300.0f);
 
 		gui::IGUIEnvironment* env = m_device->getGUIEnvironment();
-		gui::IGUISkin* skin = env->getSkin();
+//		gui::IGUISkin* skin = env->getSkin();
 		//skin->setFont(env->getBuiltInFont(), gui::EGDF_TOOLTIP);
 
 		// Create textbox..
@@ -231,7 +231,9 @@ namespace Sarona
 				framecounter = 0;
 				ZCom_ConnStats stats = this->ZCom_getConnectionStats(1);
 
-				std::cout << "In/Out pps: " << stats.current_inp << "/" << stats.current_outp << " 	Client FPS: " << driver->getFPS() << ", " << 1.0/frametime << std::endl;
+	//			stats.
+//				std::cout << "In/Out pps: " << stats.current_inp << "/" << stats.current_outp << " Client FPS: " << driver->getFPS() << ", " << 1.0/frametime << std::endl;
+				std::cout << "In/Out pps: " << stats.last_sec_inp << "/" << stats.last_sec_outp<< " Client FPS: " << driver->getFPS() << " loss: " << (int)stats.last_sec_loss_percent << "% ping: " << stats.avg_ping << "ms" << std::endl;
 
 				core::stringw str = L"Sarona [";
 				str += driver->getName();
@@ -276,7 +278,7 @@ namespace Sarona
 		if (_result == eZCom_ConnAccepted)
 		{
 			ZCom_requestZoidMode(_id, zU16(1));
-			ZCom_requestDownstreamLimit(_id, (zU16)60, (zU16)50000 );
+			ZCom_requestDownstreamLimit(_id, (zU16)50, (zU16)65535 );
 		}
 		else
 		{
@@ -357,15 +359,25 @@ namespace Sarona
 			confirm.write(*stream);
 			this->sendEventDirect(eZCom_ReliableOrdered, stream, _from);
 		}
-		else if(Id == Protocol::CameraFollow::Id)
+		else if(Id == Protocol::SetCameraChase::Id)
 		{
-			Protocol::CameraFollow follow;
- 			follow.read(_data);
-
+			Protocol::SetCameraChase chase;
+ 			chase.read(_data);
 			if(m_camera)
-			{
-				m_camera->Follow(follow.nodeid, follow.distance);
-			}
+				m_camera->SetCameraChase(chase.nodeid, chase.distance, chase.height, chase.follow_pitch);
+		}
+		else if(Id == Protocol::SetCameraPos::Id)
+		{
+			Protocol::SetCameraPos position;
+ 			position.read(_data);
+			if(m_camera)
+				m_camera->SetCameraPos(
+					position.position_begin,
+					position.position_end,
+					position.lookat_begin,
+					position.lookat_end,
+					position.seconds
+				);
 		}
 		return false;
 	}

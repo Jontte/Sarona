@@ -53,7 +53,13 @@ enum btConstraintParams
 class btTypedConstraint : public btTypedObject
 {
 	int	m_userConstraintType;
-	int	m_userConstraintId;
+
+	union
+	{
+		int	m_userConstraintId;
+		void* m_userConstraintPtr;
+	};
+
 	bool m_needsFeedback;
 
 	btTypedConstraint&	operator=(btTypedConstraint&	other)
@@ -72,13 +78,7 @@ protected:
 	///internal method used by the constraint solver, don't use them directly
 	btScalar getMotorFactor(btScalar pos, btScalar lowLim, btScalar uppLim, btScalar vel, btScalar timeFact);
 	
-	static btRigidBody& getFixedBody()
-	{
-		static btRigidBody s_fixed(0, 0,0);
-		s_fixed.setMassProps(btScalar(0.),btVector3(btScalar(0.),btScalar(0.),btScalar(0.)));
-		return s_fixed;
-	}	
-
+	static btRigidBody& getFixedBody();
 
 public:
 
@@ -119,6 +119,9 @@ public:
 		int *findex;
 		// number of solver iterations
 		int m_numIterations;
+
+		//damping of the velocity
+		btScalar	m_damping;
 	};
 
 	///internal method used by the constraint solver, don't use them directly
@@ -151,7 +154,7 @@ public:
 	}
 
 	///internal method used by the constraint solver, don't use them directly
-	virtual	void	solveConstraintObsolete(btRigidBody& bodyA,btRigidBody& bodyB,btScalar	timeStep) {};
+	virtual	void	solveConstraintObsolete(btRigidBody& /*bodyA*/,btRigidBody& /*bodyB*/,btScalar	/*timeStep*/) {};
 
 	
 	const btRigidBody& getRigidBodyA() const
@@ -190,6 +193,16 @@ public:
 	int getUserConstraintId() const
 	{
 		return m_userConstraintId;
+	}
+
+	void	setUserConstraintPtr(void* ptr)
+	{
+		m_userConstraintPtr = ptr;
+	}
+
+	void*	getUserConstraintPtr()
+	{
+		return m_userConstraintPtr;
 	}
 
 	int getUid() const
@@ -255,13 +268,13 @@ SIMD_FORCE_INLINE btScalar btAdjustAngleToLimits(btScalar angleInRadians, btScal
 	}
 	else if(angleInRadians < angleLowerLimitInRadians)
 	{
-		btScalar diffLo = btNormalizeAngle(angleLowerLimitInRadians - angleInRadians); // this is positive
+		btScalar diffLo = btFabs(btNormalizeAngle(angleLowerLimitInRadians - angleInRadians));
 		btScalar diffHi = btFabs(btNormalizeAngle(angleUpperLimitInRadians - angleInRadians));
 		return (diffLo < diffHi) ? angleInRadians : (angleInRadians + SIMD_2_PI);
 	}
 	else if(angleInRadians > angleUpperLimitInRadians)
 	{
-		btScalar diffHi = btNormalizeAngle(angleInRadians - angleUpperLimitInRadians); // this is positive
+		btScalar diffHi = btFabs(btNormalizeAngle(angleInRadians - angleUpperLimitInRadians));
 		btScalar diffLo = btFabs(btNormalizeAngle(angleInRadians - angleLowerLimitInRadians));
 		return (diffLo < diffHi) ? (angleInRadians - SIMD_2_PI) : angleInRadians;
 	}

@@ -188,13 +188,13 @@ public:
 	///but a rigidbody is derived from btCollisionObject, so we can safely perform an upcast
 	static const btRigidBody*	upcast(const btCollisionObject* colObj)
 	{
-		if (colObj->getInternalType()==btCollisionObject::CO_RIGID_BODY)
+		if (colObj->getInternalType()&btCollisionObject::CO_RIGID_BODY)
 			return (const btRigidBody*)colObj;
 		return 0;
 	}
 	static btRigidBody*	upcast(btCollisionObject* colObj)
 	{
-		if (colObj->getInternalType()==btCollisionObject::CO_RIGID_BODY)
+		if (colObj->getInternalType()&btCollisionObject::CO_RIGID_BODY)
 			return (btRigidBody*)colObj;
 		return 0;
 	}
@@ -519,6 +519,26 @@ public:
 		return m_rigidbodyFlags;
 	}
 
+	const btVector3& getDeltaLinearVelocity() const
+	{
+		return m_deltaLinearVelocity;
+	}
+
+	const btVector3& getDeltaAngularVelocity() const
+	{
+		return m_deltaAngularVelocity;
+	}
+
+	const btVector3& getPushVelocity() const 
+	{
+		return m_pushVelocity;
+	}
+
+	const btVector3& getTurnVelocity() const 
+	{
+		return m_turnVelocity;
+	}
+
 
 	////////////////////////////////////////////////
 	///some internal methods, don't use them
@@ -589,8 +609,8 @@ public:
 		{
 			setLinearVelocity(getLinearVelocity()+ m_deltaLinearVelocity);
 			setAngularVelocity(getAngularVelocity()+m_deltaAngularVelocity);
-			m_deltaLinearVelocity.setZero();
-			m_deltaAngularVelocity .setZero();
+			//m_deltaLinearVelocity.setZero();
+			//m_deltaAngularVelocity .setZero();
 			//m_originalBody->setCompanionId(-1);
 		}
 	}

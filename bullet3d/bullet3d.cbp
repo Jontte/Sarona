@@ -7,7 +7,7 @@
 		<Option compiler="gcc" />
 		<Build>
 			<Target title="Debug">
-				<Option output="libbullet3d" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Debug/libbullet3d" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
 				<Option object_output="obj/Debug/" />
 				<Option type="2" />
@@ -19,7 +19,7 @@
 				</Compiler>
 			</Target>
 			<Target title="Release">
-				<Option output="libbullet3d" prefix_auto="1" extension_auto="1" />
+				<Option output="bin/Release/libbullet3d" prefix_auto="1" extension_auto="1" />
 				<Option working_dir="" />
 				<Option object_output="obj/Release/" />
 				<Option type="2" />
@@ -292,6 +292,7 @@
 		<Unit filename="BulletDynamics/Vehicle/btVehicleRaycaster.h" />
 		<Unit filename="BulletDynamics/Vehicle/btWheelInfo.cpp" />
 		<Unit filename="BulletDynamics/Vehicle/btWheelInfo.h" />
+		<Unit filename="BulletMultiThreaded/HeapManager.h" />
 		<Unit filename="BulletMultiThreaded/MiniCL.cpp" />
 		<Unit filename="BulletMultiThreaded/MiniCLTask/MiniCLTask.cpp" />
 		<Unit filename="BulletMultiThreaded/MiniCLTask/MiniCLTask.h" />
@@ -335,6 +336,8 @@
 		<Unit filename="BulletMultiThreaded/SpuSampleTaskProcess.cpp" />
 		<Unit filename="BulletMultiThreaded/SpuSampleTaskProcess.h" />
 		<Unit filename="BulletMultiThreaded/SpuSync.h" />
+		<Unit filename="BulletMultiThreaded/TrbDynBody.h" />
+		<Unit filename="BulletMultiThreaded/TrbStateVec.h" />
 		<Unit filename="BulletMultiThreaded/Win32ThreadSupport.cpp" />
 		<Unit filename="BulletMultiThreaded/Win32ThreadSupport.h" />
 		<Unit filename="BulletMultiThreaded/btGpu3DGridBroadphase.cpp" />
@@ -356,6 +359,8 @@
 		<Unit filename="BulletMultiThreaded/vectormath/scalar/cpp/vec_aos.h" />
 		<Unit filename="BulletMultiThreaded/vectormath/scalar/cpp/vectormath_aos.h" />
 		<Unit filename="BulletMultiThreaded/vectormath2bullet.h" />
+		<Unit filename="BulletSoftBody/btDefaultSoftBodySolver.cpp" />
+		<Unit filename="BulletSoftBody/btDefaultSoftBodySolver.h" />
 		<Unit filename="BulletSoftBody/btSoftBody.cpp" />
 		<Unit filename="BulletSoftBody/btSoftBody.h" />
 		<Unit filename="BulletSoftBody/btSoftBodyConcaveCollisionAlgorithm.cpp" />
@@ -365,6 +370,8 @@
 		<Unit filename="BulletSoftBody/btSoftBodyInternals.h" />
 		<Unit filename="BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.cpp" />
 		<Unit filename="BulletSoftBody/btSoftBodyRigidBodyCollisionConfiguration.h" />
+		<Unit filename="BulletSoftBody/btSoftBodySolverVertexBuffer.h" />
+		<Unit filename="BulletSoftBody/btSoftBodySolvers.h" />
 		<Unit filename="BulletSoftBody/btSoftRigidCollisionAlgorithm.cpp" />
 		<Unit filename="BulletSoftBody/btSoftRigidCollisionAlgorithm.h" />
 		<Unit filename="BulletSoftBody/btSoftRigidDynamicsWorld.cpp" />
@@ -429,18 +436,35 @@
 		<Unit filename="LinearMath/btTransform.h" />
 		<Unit filename="LinearMath/btTransformUtil.h" />
 		<Unit filename="LinearMath/btVector3.h" />
+		<Unit filename="MiniCL/MiniCL.cpp" />
+		<Unit filename="MiniCL/MiniCLTask/MiniCLTask.cpp" />
+		<Unit filename="MiniCL/MiniCLTask/MiniCLTask.h" />
+		<Unit filename="MiniCL/MiniCLTaskScheduler.cpp" />
+		<Unit filename="MiniCL/MiniCLTaskScheduler.h" />
 		<Unit filename="MiniCL/cl.h" />
 		<Unit filename="MiniCL/cl_MiniCL_Defs.h" />
 		<Unit filename="MiniCL/cl_gl.h" />
 		<Unit filename="MiniCL/cl_platform.h" />
 		<Unit filename="btBulletCollisionCommon.h" />
 		<Unit filename="btBulletDynamicsCommon.h" />
-		<Unit filename="main.c">
-			<Option compilerVar="CC" />
-		</Unit>
+		<Unit filename="vectormath/scalar/boolInVec.h" />
+		<Unit filename="vectormath/scalar/floatInVec.h" />
+		<Unit filename="vectormath/scalar/mat_aos.h" />
+		<Unit filename="vectormath/scalar/quat_aos.h" />
+		<Unit filename="vectormath/scalar/vec_aos.h" />
+		<Unit filename="vectormath/scalar/vectormath_aos.h" />
+		<Unit filename="vectormath/sse/boolInVec.h" />
+		<Unit filename="vectormath/sse/floatInVec.h" />
+		<Unit filename="vectormath/sse/mat_aos.h" />
+		<Unit filename="vectormath/sse/quat_aos.h" />
+		<Unit filename="vectormath/sse/vec_aos.h" />
+		<Unit filename="vectormath/sse/vecidx_aos.h" />
+		<Unit filename="vectormath/sse/vectormath_aos.h" />
+		<Unit filename="vectormath/vmInclude.h" />
 		<Extensions>
 			<code_completion />
 			<debugger />
+			<envvars />
 		</Extensions>
 	</Project>
 </CodeBlocks_project_file>

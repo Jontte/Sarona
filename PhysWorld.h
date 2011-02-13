@@ -149,7 +149,8 @@ namespace Sarona
 		// Waits for the thread to finish
 		void Wait();
 
-		btCollisionShape* getShape(const string& byname, bool isStatic);
+		// Doesn't give ownership
+		btCollisionShape* getShape(const string& byname, btVector3 scale, bool isStatic);
 
 		// Constraint management
 		ConstraintID 		AddConstraint(btTypedConstraint* constraint);

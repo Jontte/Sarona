@@ -14,7 +14,7 @@ class PhysWorld;
 	Client::JSHandle is a helper class owned by the JS engine and
 	provides weak-ref access to the real Client class.
 
-	TODO: The Client class, though, outlives the JS engine?
+	TODO: The Client class, though, outlives the JS engine? always?
 */
 class Client
 {
@@ -53,9 +53,7 @@ class Client
 
 	// JS Side:
 
-	void quack(){}
-	void CameraFollow(JSObject& target, double radius);
-	void CameraSet(const v8::Arguments& args);
+	void SetCamera(v8::Handle<v8::Value> options);
 	void BindEvent(string type, string subtype, v8::Handle<v8::Value> func, v8::Handle<v8::Object> ctx = v8::Handle<v8::Object>());
 };
 
@@ -71,11 +69,11 @@ class Client::JSHandle
 		// wrapper functions that direct the calls to the native object
 		// throw exception if handle is invalid for some reason
 		// TODO: this copypaste mess could be cleaned with some template/macro hackery?
-		void CameraFollow(JSObject& target, double radius)
+		void SetCamera(v8::Handle<v8::Value> val)
 		{
 			if(!m_ref)
 				throw std::string("Invalid client handle");
-			return m_ref->CameraFollow(target, radius);
+			return m_ref->SetCamera(val);
 		}
 		void BindEvent(string type, string subtype, v8::Handle<v8::Value> func, v8::Handle<v8::Value> ctx)
 		{

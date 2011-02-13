@@ -3,7 +3,9 @@
 	<Workspace title="Workspace">
 		<Project filename="Sarona.cbp" active="1">
 			<Depends filename="jsoncpp/jsoncpp.cbp" />
+			<Depends filename="bullet3d/bullet3d.cbp" />
 		</Project>
 		<Project filename="jsoncpp/jsoncpp.cbp" />
+		<Project filename="bullet3d/bullet3d.cbp" />
 	</Workspace>
 </CodeBlocks_workspace_file>

@@ -8,7 +8,15 @@ namespace extractor
 	{
 		mapper m;
 		m.src = obj;
+		m.last_operation_result = false;
 		return m;
+	};
+	mapper emap(v8::Handle<v8::Value>& val)
+	{
+		if(!val->IsObject())
+			throw TypeException();
+		v8::Handle<v8::Object> obj = val->ToObject();
+		return emap(obj);
 	};
 }
 /*

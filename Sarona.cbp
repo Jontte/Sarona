@@ -14,14 +14,12 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
-					<Add option="-pg" />
 					<Add option="-g" />
 				</Compiler>
 				<Linker>
-					<Add option="-pg" />
-					<Add library="bullet3d/libbullet3d.a" />
-					<Add library="jsoncpp/libjsoncpp.a" />
-					<Add library="../zoidcom/lib/linux/libzoidcom.so" />
+					<Add library="bullet3d/bin/Debug/libbullet3d.a" />
+					<Add library="jsoncpp/bin/Debug/jsoncpp.a" />
+					<Add library="../zoidcom/lib/linux/libzoidcomd.so" />
 					<Add library="../irrlicht-1.7.1/lib/Linux/libIrrlicht.a" />
 				</Linker>
 			</Target>
@@ -31,10 +29,16 @@
 				<Option type="1" />
 				<Option compiler="gcc" />
 				<Compiler>
-					<Add option="-O2" />
+					<Add option="-fomit-frame-pointer" />
+					<Add option="-fexpensive-optimizations" />
+					<Add option="-O3" />
 				</Compiler>
 				<Linker>
 					<Add option="-s" />
+					<Add library="bullet3d/bin/Release/libbullet3d.a" />
+					<Add library="jsoncpp/bin/Release/libjsoncpp.a" />
+					<Add library="../zoidcom/lib/linux/libzoidcom.so" />
+					<Add library="../irrlicht-1.7.1/lib/Linux/libIrrlicht.a" />
 				</Linker>
 			</Target>
 		</Build>

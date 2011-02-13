@@ -4,8 +4,8 @@
 
 This software is provided 'as-is', without any express or implied warranty.
 In no event will the authors be held liable for any damages arising from the use of this software.
-Permission is granted to anyone to use this software for any purpose, 
-including commercial applications, and to alter it and redistribute it freely, 
+Permission is granted to anyone to use this software for any purpose,
+including commercial applications, and to alter it and redistribute it freely,
 subject to the following restrictions:
 
 1. The origin of this software must not be misrepresented; you must not claim that you wrote the original software. If you use this software in a product, an acknowledgment in the product documentation would be appreciated but is not required.
@@ -25,6 +25,8 @@ subject to the following restrictions:
 #include "MiniCLTaskScheduler.h"
 #include "MiniCLTask/MiniCLTask.h"
 #include "LinearMath/btMinMax.h"
+
+#include <cstdio>
 
 //#define DEBUG_MINICL_KERNELS 1
 
@@ -141,7 +143,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueReadBuffer(cl_command_queue     command
                     cl_mem               buffer ,
                     cl_bool             /* blocking_read */,
                     size_t               offset ,
-                    size_t               cb , 
+                    size_t               cb ,
                     void *               ptr ,
                     cl_uint             /* num_events_in_wait_list */,
                     const cl_event *    /* event_wait_list */,
@@ -185,7 +187,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueWriteBuffer(cl_command_queue     comman
                     cl_mem               buffer ,
                     cl_bool             /* blocking_read */,
                     size_t              offset,
-                    size_t               cb , 
+                    size_t               cb ,
                     const void *         ptr ,
                     cl_uint             /* num_events_in_wait_list */,
                     const cl_event *    /* event_wait_list */,
@@ -220,7 +222,7 @@ CL_API_ENTRY cl_int CL_API_CALL clEnqueueNDRangeKernel(cl_command_queue /* comma
                        cl_event *       /* event */) CL_API_SUFFIX__VERSION_1_0
 {
 
-	
+
 	MiniCLKernel* kernel = (MiniCLKernel*) clKernel;
 	for (unsigned int ii=0;ii<work_dim;ii++)
 	{
@@ -289,7 +291,7 @@ CL_API_ENTRY cl_int CL_API_CALL clSetKernelArg(cl_kernel    clKernel ,
 		if (arg_size != MINICL_MAX_ARGLENGTH)
 		{
 			printf("error: clSetKernelArg argdata too large: %d (maximum is %d)\n",arg_size,MINICL_MAX_ARGLENGTH);
-		} 
+		}
 		else
 		{
 			if(arg_value == NULL)
@@ -355,7 +357,7 @@ CL_API_ENTRY cl_kernel CL_API_CALL clCreateKernel(cl_program       program ,
 CL_API_ENTRY cl_int CL_API_CALL clBuildProgram(cl_program           /* program */,
                cl_uint              /* num_devices */,
                const cl_device_id * /* device_list */,
-               const char *         /* options */, 
+               const char *         /* options */,
                void (*pfn_notify)(cl_program /* program */, void * /* user_data */),
                void *               /* user_data */) CL_API_SUFFIX__VERSION_1_0
 {
@@ -391,8 +393,8 @@ CL_API_ENTRY cl_mem CL_API_CALL clCreateBuffer(cl_context   /* context */,
 }
 
 // Command Queue APIs
-CL_API_ENTRY cl_command_queue CL_API_CALL clCreateCommandQueue(cl_context                      context , 
-                     cl_device_id                   /* device */, 
+CL_API_ENTRY cl_command_queue CL_API_CALL clCreateCommandQueue(cl_context                      context ,
+                     cl_device_id                   /* device */,
                      cl_command_queue_properties    /* properties */,
                      cl_int *                        errcode_ret ) CL_API_SUFFIX__VERSION_1_0
 {
@@ -400,10 +402,10 @@ CL_API_ENTRY cl_command_queue CL_API_CALL clCreateCommandQueue(cl_context       
 	return (cl_command_queue) context;
 }
 
-extern CL_API_ENTRY cl_int CL_API_CALL clGetContextInfo(cl_context         /* context */, 
-                 cl_context_info    param_name , 
-                 size_t             param_value_size , 
-                 void *             param_value, 
+extern CL_API_ENTRY cl_int CL_API_CALL clGetContextInfo(cl_context         /* context */,
+                 cl_context_info    param_name ,
+                 size_t             param_value_size ,
+                 void *             param_value,
                  size_t *           param_value_size_ret ) CL_API_SUFFIX__VERSION_1_0
 {
 
@@ -426,7 +428,7 @@ extern CL_API_ENTRY cl_int CL_API_CALL clGetContextInfo(cl_context         /* co
 			printf("unsupported\n");
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -442,9 +444,9 @@ CL_API_ENTRY cl_context CL_API_CALL clCreateContextFromType(cl_context_propertie
 	gMiniCLNumOutstandingTasks = maxNumOutstandingTasks;
 	const int maxNumOfThreadSupports = 8;
 	static int sUniqueThreadSupportIndex = 0;
-	static char* sUniqueThreadSupportName[maxNumOfThreadSupports] = 
+	static char* sUniqueThreadSupportName[maxNumOfThreadSupports] =
 	{
-		"MiniCL_0", "MiniCL_1", "MiniCL_2", "MiniCL_3", "MiniCL_4", "MiniCL_5", "MiniCL_6", "MiniCL_7" 
+		"MiniCL_0", "MiniCL_1", "MiniCL_2", "MiniCL_3", "MiniCL_4", "MiniCL_5", "MiniCL_6", "MiniCL_7"
 	};
 
 #ifdef DEBUG_MINICL_KERNELS
@@ -467,8 +469,8 @@ CL_API_ENTRY cl_context CL_API_CALL clCreateContextFromType(cl_context_propertie
 #endif
 
 #endif //DEBUG_MINICL_KERNELS
-	
-	
+
+
 	MiniCLTaskScheduler* scheduler = new MiniCLTaskScheduler(threadSupport,maxNumOutstandingTasks);
 
 	*errcode_ret = 0;
@@ -479,11 +481,11 @@ CL_API_ENTRY cl_int CL_API_CALL clReleaseContext(cl_context  context ) CL_API_SU
 {
 
 	MiniCLTaskScheduler* scheduler = (MiniCLTaskScheduler*) context;
-	
+
 	btThreadSupportInterface* threadSupport = scheduler->getThreadSupportInterface();
 	delete scheduler;
 	delete threadSupport;
-	
+
 	return 0;
 }
 extern CL_API_ENTRY cl_int CL_API_CALL

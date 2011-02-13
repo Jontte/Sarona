@@ -9,8 +9,8 @@ namespace Sarona
     // ZCom Node registry ids
 	namespace TypeRegistry
 	{
-		extern int m_objectId;
-		extern int m_commId;
+		extern unsigned int m_objectId;
+		extern unsigned int m_commId;
 	};
 
 	template <class WorldType, class ObjectType>

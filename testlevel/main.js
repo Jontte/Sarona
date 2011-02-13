@@ -43,23 +43,28 @@ function loop()
 function create_car(pos)
 {
 	var ret = {};
-	pos[2] += 5;
+	pos[2] += 3.5;
 	var body = createObject({
 		texture: 'saronacube.png',
 		bodyScale: 2.5,
 		meshScale: 2.5,
 		position: pos,
-		mass: 10
+		mass: 20
 	});
-	pos[2]-=5;
+	pos[2]-=3.5;
 
 	ret.body = body;
 
+	body.restitution = 0;
+	body.friction = 1.0;
+
+	var width = 2;
+	var length = 1;
 	var tires = [
-		[-2.5+0.4,-2.5-1,-2.5, [1 ,0,0,1], 1],
-		[-2.5+0.4, 2.5+1,-2.5, [-1,0,0,1], -1],
-		[ 2.5-0.4,-2.5-1,-2.5, [1 ,0,0,1], 1],
-		[ 2.5-0.4, 2.5+1,-2.5, [-1,0,0,1], -1]
+		[-2.5-length,-2.5-width,-2.5, [1 ,0,0,1], 1],
+		[-2.5-length, 2.5+width,-2.5, [-1,0,0,1], -1],
+		[ 2.5+length,-2.5-width,-2.5, [1 ,0,0,1], 1],
+		[ 2.5+length, 2.5+width,-2.5, [-1,0,0,1], -1]
 	];
 
 	ret.tires = [];
@@ -73,17 +78,17 @@ function create_car(pos)
 		tires[i][2] += 5;
 		var tire = createObject({
 			mesh: 'tire.obj',
-			body: 'tire.obj',
+			body: 'cylinder',//'tire.obj',
 			texture: 'tire.png',
 			position: tires[i],
 			rotation: tires[i][3],
 			mass: 0.1,
-			bodyScale: 2,
+			bodyScale: 3,
 			meshScale: 2
 		});
 
 		tire.restitution = 0.0;
-		tire.friction = 2.0;
+		tire.friction = 1.90;
 		tires.push(tire);
 
 		try
@@ -113,8 +118,8 @@ function create_ground()
 		body: 'maailma.obj',//'pohja.obj', //'hill_heightmap.png',
 		mesh: 'maailma.obj',//'pohja.obj', //'hill_heightmap.png',
 		texture: 'maailma.png',//'tekstuuri.png', //'hill_texture.png',
-		meshScale: 5,
-		bodyScale: 5,
+		meshScale: 50,
+		bodyScale: 50,
 		rotation: [1,0,0,1],
 		position: [0,0,0]
 	});
@@ -126,19 +131,6 @@ function level_start()
 {
 	print('Welcome to testimappi!');
 
-/*	for(var i = 0 ; i < 100; i++)
-	{
-		var obj = createObject({
-			position : [0,0,1.5+i*3],
-			body : 'cube',//'saronacube.obj',
-			//mesh: 'saronacube.obj',
-			texture: 'saronacube.png',
-			mass : 1,
-			bodyScale: 3,
-			meshScale: 3
-        });
-	}
-*/
 	create_ground();
 //	loop();
 
@@ -148,15 +140,22 @@ function level_start()
 		var p = scene.players[i];
 		// Bind a key for each player in the scene.
 
-		var car = create_car([0,0,50]);
+		var car = create_car([0,0,310]);
 
-		p.cameraFollow(car.body, 50);
+		p.setCamera({
+			type: 'chase',
+			target: car.body,
+			distance: 50,
+			height: 30,
+			follow_pitch: false
+		});
 
 		var states = {
 			left : false,
 			right: false,
 			up   : false,
-			down : false
+			down : false,
+			Z	 : false
 		};
 
 		function key_update(major, minor)
@@ -165,8 +164,8 @@ function level_start()
 			{
 				states[minor] = (major=="keydown")?true:false;
 
-				var speed = 10;
-				var strength = 0.5;
+				var speed = 50;
+				var strength = 1;
 
 				var left = 0;
 				var right = 0;
@@ -178,8 +177,8 @@ function level_start()
 				}
 				else if(states.down && !states.up)
 				{
-					left = states.right?0:-1;
-					right = states.left?0:-1;
+					left = states.left?0:-1;
+					right = states.right?0:-1;
 				}
 				else if(states.left && !states.right)
 				{
@@ -190,16 +189,22 @@ function level_start()
 					left = 1; right = -1;
 				}
 
-				car.constraints[0].setMotor(right != 0, speed * right, strength);
-				car.constraints[2].setMotor(right != 0, speed * right, strength);
+				if(states.Z)
+				{
+					left = 0;
+					right = 0;
+				}
 
-				car.constraints[1].setMotor(left != 0, speed * left, strength);
-				car.constraints[3].setMotor(left != 0, speed * left, strength);
+				car.constraints[0].setMotor(right != 0 || states.Z, speed * right, strength);
+				car.constraints[2].setMotor(right != 0 || states.Z, speed * right, strength);
+
+				car.constraints[1].setMotor(left != 0 || states.Z, speed * left, strength);
+				car.constraints[3].setMotor(left != 0 || states.Z, speed * left, strength);
 			};
 		};
 
 		var states = ["keydown","keyup"];
-		var keys = ["down","up","left","right"];
+		var keys = ["down","up","left","right", "Z"];
 		for(var b = 0; b < 2; b++)
 		{
 			for(var a = 0; a < keys.length; a++)
@@ -207,7 +212,7 @@ function level_start()
 				p.bind(states[b], keys[a], key_update(states[b],keys[a]));
 			}
 		}
-		p.bind("keydown", "space", function(){car.body.push(0,0,20);});
+		p.bind("keydown", "space", function(){car.body.push(0,0,200);});
 
 		/*p.bind("keydown", "left", function(){
 				obj.push(10,0,0);

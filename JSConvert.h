@@ -45,14 +45,27 @@ namespace extractor
 	struct mapper
 	{
 		jsobj src;
+		bool last_operation_result; // 1 = success, 0 = failure
 
 		template <class T>
-		mapper operator()(string fieldname, T& fieldvar, int flags)
+		mapper operator()(string fieldname, T& fieldvar, int flags = 0)
 		{
+			last_operation_result = false;
+
 			v8::Handle<v8::String> key = v8::String::New(fieldname.c_str());
 			if(src->Has(key))
 			{
-				fieldvar = ::v8::juice::convert::CastFromJS<T>(src->Get(key));
+				try
+				{
+					fieldvar = ::v8::juice::convert::CastFromJS<T>(src->Get(key));
+					last_operation_result = true;
+				}
+				catch(...)
+				{
+					// Propagate error only if this field was marked as required
+					if(flags & REQUIRED)
+						throw;
+				}
 			}
 			else
 			{
@@ -63,28 +76,23 @@ namespace extractor
 			}
 			return *this; // copy of self
 		}
+		mapper operator()(string fieldname, v8::Handle<v8::Object> & fieldvar, int flags = 0)
+		{
+			v8::Handle<v8::Value> val;
+			(*this)(fieldname, val, flags);
+			if(!val->IsObject())
+				throw TypeException();
+			fieldvar = val->ToObject();
+			return *this;
+		}
+		operator bool()
+		{
+			return last_operation_result;
+		}
 	};
 
 	mapper emap(jsobj& obj);
+	mapper emap(v8::Handle<v8::Value>& obj);
 }
-
-/*
-	This code is used to simplify the catch(...) part around your JSObject member functions
-*/
-
-#define MANAGE_THROWS(CLASSNAME, METHODNAME)\
-	catch(TypeException&)\
-	{\
-		return ThrowException(v8::String::New("Type conversion error in "CLASSNAME"::"METHODNAME));\
-	}\
-	catch(std::out_of_range&)\
-	{\
-		return ThrowException(v8::String::New("Invalid number of arguments to "CLASSNAME"::"METHODNAME));\
-	}\
-	catch(...)\
-	{\
-		return ThrowException(v8::String::New("Unknown exception in "CLASSNAME"::"METHODNAME));\
-	}
-
 
 #endif

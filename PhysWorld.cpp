@@ -38,7 +38,7 @@ namespace Sarona
 		, m_constraintCounter(0)
 	{
 		m_timer.reset(new TimedEventReceiver);
-		ZCom_setUpstreamLimit(30000, 30000);
+//		ZCom_setUpstreamLimit(30000, 30000);
 
 		this->beginReplicationSetup(0);
 		this->endReplicationSetup();
@@ -319,14 +319,24 @@ namespace Sarona
 
 		std::cout << "Game starting!" << std::endl;
 
+			this->ZCom_processInput();
+			this->ZCom_processOutput();
 		// Start physics
 		CreateBulletContext();
+			this->ZCom_processInput();
+			this->ZCom_processOutput();
 		// Load level, initialize components
 		CreateV8Context();
+			this->ZCom_processInput();
+			this->ZCom_processOutput();
 		// Execute scripts
 		LoadLevel(true); // also load scripts
+			this->ZCom_processInput();
+			this->ZCom_processOutput();
 		// Create Player objects in Javascript and run level_start()
 		RunSceneJS();
+			this->ZCom_processInput();
+			this->ZCom_processOutput();
 
 		//CreateCube(btVector3(0,0,10), 5)->setMass(1);
 		//CreateCube(btVector3(-4.5,-4.5,16), 5)->setMass(100);
@@ -416,7 +426,8 @@ namespace Sarona
 		std::string mesh;
 		std::string body;
 		std::string texture;
-		double mass(0), bodyScale(1), meshScale(1);
+		double mass(0);
+		btVector3 bodyScale(1,1,1), meshScale(1,1,1);
 		btVector3 position(0,0,0);
 		btQuaternion rotation(btVector3(0,1,0), 0.0);
 
@@ -433,6 +444,16 @@ namespace Sarona
 				("mass",		mass,		0)
 				("bodyScale",	bodyScale,	0)
 				("meshScale",	meshScale,	0);
+
+			// in case the user provided a scalar instead of vector in bodyScale or meshScale, convert them here
+			double scalar_meshScale;
+			double scalar_bodyScale;
+			if(emap(obj)("meshScale",scalar_meshScale)){
+				meshScale = btVector3(scalar_meshScale,scalar_meshScale,scalar_meshScale);
+			}
+			if(emap(obj)("bodyScale",scalar_bodyScale)){
+				bodyScale = btVector3(scalar_bodyScale,scalar_bodyScale,scalar_bodyScale);
+			}
 		}
 		catch(...)
 		{
@@ -564,29 +585,47 @@ namespace Sarona
 		return v8::Undefined();
 	}
 
-	btCollisionShape* PhysWorld::getShape(const string& shape, bool isStatic)
+	btCollisionShape* PhysWorld::getShape(const string& shape, btVector3 scale, bool isStatic)
 	{
+		// check for primitives
+		if(shape == "cube")
+		{
+			return new btBoxShape(scale/2);
+		}
+		if(shape == "cylinder")
+		{
+			return new btCylinderShapeZ(scale/2);
+		}
+
 		// is the shape cached?
 		string cachename = shape;
-		cachename += isStatic ? "-static" : "-dynamic";
+		cachename += isStatic ? "s" : "d";
 		if(m_shapecache.find(cachename) != m_shapecache.end())
 		{
 			ShapeData & data = m_shapecache[cachename];
+
+			if(isStatic)
+			{
+				// A weak ref
+				// create a facade for the scaled object
+
+				// The cast is safe as all static objects are created as btBvhTriangleMeshShapes
+				ShapeData & scaled_model = m_shapecache[cachename+"f"];
+				scaled_model.shape = new btScaledBvhTriangleMeshShape(reinterpret_cast<btBvhTriangleMeshShape*>(data.shape), scale);
+				return scaled_model.shape;
+			}
 			return data.shape;
 		}
+		// load body from file using irrlicht
+		scene::IAnimatedMesh * irrmesh = NULL;
+		if(!(irrmesh = m_device->getSceneManager()->getMesh(shape.c_str())))
+		{
+			// loading failed.. return a basic cube
+			return getShape("cube", scale, isStatic);
+		}
+
 		// Create index
 		ShapeData & data = m_shapecache[cachename];
-		data.mesh_interface = NULL;
-
-		// load body from file using irrlicht unles its cub
-		scene::IAnimatedMesh * irrmesh = NULL;
-		if(shape == "cube" || !(irrmesh = m_device->getSceneManager()->getMesh(shape.c_str())))
-		{
-			float length = 1;
-			data.shape = new btBoxShape(btVector3(length/2, length/2, length/2));
-			return data.shape;
-		}
-
 		data.mesh_interface = new btTriangleMesh();
 
 		// Deal some rotation to the mesh since our coordinate system has Z axis up
@@ -599,7 +638,7 @@ namespace Sarona
 		}*/
 
 
-		const btScalar scale = 1.0;
+		const btScalar static_scale = 1.0;
 
 		for(unsigned i = 0; i < irrmesh->getMeshBufferCount(); i++)
 		{
@@ -623,7 +662,7 @@ namespace Sarona
 						if (index > vertexcount) continue;
 						//convert to btVector3
 						core::vector3df& pos = vertices[index].Pos;
-						triangle[k] = btVector3(pos.X, pos.Y, pos.Z) * scale;
+						triangle[k] = btVector3(pos.X, pos.Y, pos.Z) * static_scale;
 					}
 					data.mesh_interface->addTriangle(triangle[0], triangle[1], triangle[2]);
 				}
@@ -644,7 +683,7 @@ namespace Sarona
 					{
 						s32 index = indices[a+k];
 						if (index > vertexcount) continue;
-						core::vector3df pos = vertices[index].Pos * scale;
+						core::vector3df pos = vertices[index].Pos * static_scale;
 						triangle[k] = btVector3(pos.X, pos.Y, pos.Z);
 					}
 					data.mesh_interface->addTriangle(triangle[0], triangle[1], triangle[2]);
@@ -654,7 +693,13 @@ namespace Sarona
 		if(isStatic)
 		{
 			// Static shapes can be concave
+			// Here we store a reference to the actual mesh in the cache and return a lightweight scaled facade
 			data.shape = new btBvhTriangleMeshShape(data.mesh_interface, true, true);
+
+			// ensure the facade is cached too
+			ShapeData & scaled_model = m_shapecache[cachename+"f"];
+			scaled_model.shape = new btScaledBvhTriangleMeshShape(reinterpret_cast<btBvhTriangleMeshShape*>(data.shape), scale);
+			return scaled_model.shape;
 		}
 		else
 		{
@@ -673,7 +718,7 @@ namespace Sarona
 	}
 	void PhysWorld::ZCom_cbConnectionSpawned( ZCom_ConnID _id )
 	{
-		ZCom_requestDownstreamLimit(_id, (zU16)30000, (zU16)30000 );
+		ZCom_requestDownstreamLimit(_id, (zU16)50, (zU16)65535);
 		//ZCom_simulateLoss(_id, 0.5);
 	}
 	void PhysWorld::ZCom_cbConnectionClosed( ZCom_ConnID _id, eZCom_CloseReason _reason, ZCom_BitStream &_reasondata )

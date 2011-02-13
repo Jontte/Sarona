@@ -77,6 +77,9 @@ int main(int argc, char *argv[])
 		bool local_game = true;
 		bool server = true;
 
+		if(args.size()>1)
+			local_game = server = args[1]!="client";
+
 		// Run the main menu, let user decide what to do
 		//menu.Run(local_game, server);
 
@@ -89,14 +92,14 @@ int main(int argc, char *argv[])
 
 			serverworld->SetLevel("testlevel/");
 			serverworld->Bind(9192, local_game);
+			serverworld->Start();
+			std::cout << "Server started" << std::endl;
 		}
 
 		clientworld.reset(new Sarona::NetWorld(get_pointer(device)));
 		clientworld->SetLevel("testlevel/");
 		clientworld->Connect("localhost:9192", local_game);
 
-		if(serverworld)
-			serverworld->Start();
 
 		// The main thread has to run the irrlicht loop, apparently..
 		clientworld->Loop();

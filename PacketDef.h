@@ -82,7 +82,7 @@ namespace Sarona
 		DEF(0x0000, VersionCheck,		((s16, major)) ((s16, minor)))
 		DEF(0x0001, LevelHashCheck,		((string, sha1)))
 
-		DEF(0x0200, NodeStateUpdate, ((string, mesh))((string, texture))((float, mesh_scale)))
+		DEF(0x0200, NodeStateUpdate, ((string, mesh))((string, texture))((btVector3, mesh_scale)))
 
 		DEF(0x0300, KeyPressEvent, ((u8, keycode))((bool, press)))
 		DEF(0x0301, LevelRequest, ((string, name)))  // Client must send either of these two as a reply to LevelSelect
@@ -90,8 +90,11 @@ namespace Sarona
 
 		DEF(0x0400, LevelSelect, ((string, name)))
 		DEF(0x0401, GameStartNotify, ((bool, unused)))
-		DEF(0x0402, CameraFollow, ((u32, nodeid))((float, distance)))
-		DEF(0x0403, CameraSet, ((u32, nodeid))((btVector3, position))((btVector3, lookat))((float, seconds)))
+
+		// Camera setter packets
+		DEF(0x0402, SetCameraChase, ((u32, nodeid))((float, distance))((float, height))((bool, follow_pitch)));
+		DEF(0x0403, SetCameraPos, ((btVector3, position_begin))((btVector3, position_end))((btVector3, lookat_begin))((btVector3, lookat_end))((float, seconds)));
+		DEF(0x0404, SetCameraFree, ((bool, unused)));
 
 		// Cleanup..
 		#undef DEF

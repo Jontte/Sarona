@@ -65,19 +65,19 @@ namespace Sarona
 		// Data to be shared with peers through replicator interface:
 		string m_mesh;
 		string m_texture;
-		float m_meshScale;
+		btVector3 m_meshScale;
 
 		// Local data
 		btScalar m_mass;
 		string m_body;
-		float m_bodyScale;
+		btVector3 m_bodyScale;
 
 		// whether an update is required.
 		bool m_dirty;
 
 		void recreateBody(); // Used to update physics simulation parameters such as mass or mesh type
 
-		btCollisionShape* getShape(const string& shapetext);
+//		btCollisionShape* getShape(const string& shapetext);
 
 	public:
 		typedef ZCom_NodeID Id; // Used to implement weak refs to these objects
@@ -87,8 +87,8 @@ namespace Sarona
 		void setTexture(const std::string&);
 		void setBody(const std::string&);
 		void setMesh(const std::string&);
-		void setMeshScale(float in);
-		void setBodyScale(float in);
+		void setMeshScale(btVector3 in);
+		void setBodyScale(btVector3 in);
 
 		void push(const btVector3&);
 

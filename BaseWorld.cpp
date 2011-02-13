@@ -7,7 +7,7 @@ namespace Sarona
 	// ZCom Node registry ids
 	namespace TypeRegistry
 	{
-		int m_objectId;
-		int m_commId;
+		unsigned int m_objectId;
+		unsigned int m_commId;
 	};
 }
